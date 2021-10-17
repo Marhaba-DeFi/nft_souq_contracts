@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
-import "./ERC165.sol";
+import './ERC165.sol';
 
 /**
     @title ERC-1155 Multi Token Standard
@@ -47,11 +49,7 @@ interface IERC1155 {
     /**
         @dev MUST emit when approval for a second party/operator address to manage all tokens for an owner address is enabled or disabled (absense of an event assumes disabled).
     */
-    event ApprovalForAll(
-        address indexed _owner,
-        address indexed _operator,
-        bool _approved
-    );
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
     /**
         @dev MUST emit when the URI is updated for a token ID.
@@ -112,10 +110,7 @@ interface IERC1155 {
         @param _id     ID of the Token
         @return        The _owner's balance of the Token type requested
      */
-    function balanceOf(address _owner, uint256 _id)
-        external
-        view
-        returns (uint256);
+    function balanceOf(address _owner, uint256 _id) external view returns (uint256);
 
     /**
         @notice Get the balance of multiple account/token pairs
@@ -142,8 +137,5 @@ interface IERC1155 {
         @param _operator  Address of authorized operator
         @return           True if the operator is approved, false if not
     */
-    function isApprovedForAll(address _owner, address _operator)
-        external
-        view
-        returns (bool);
+    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }

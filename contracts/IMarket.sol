@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 interface IMarket {
@@ -6,15 +8,33 @@ interface IMarket {
         uint8[] _percentages;
     }
 
-    event Bid(uint256 tokenID, address bidder, uint256 bidAmount);
+    struct Bid {
+        // Amount of the currency being bid
+        uint256 _bidAmount;
+        // Amount of the tokens being bid
+        uint256 _amount;
+        // Address to the ERC20 token being used to bid
+        address _currency;
+        // Address of the bidder
+        address _bidder;
+        // Address of the recipient
+        address _recipient;
+    }
+
+    struct Ask {
+        // Amount of the currency being asked
+        uint256 _askAmount;
+        // Amount of the tokens being asked
+        uint256 _amount;
+        // Address to the ERC20 token being asked
+        address _currency;
+    }
+
+    event BidCreated(uint256 indexed tokenID, Bid bid);
+    event BidRemoved(uint256 indexed tokenID, Bid bid);
+    event AskCreated(uint256 indexed tokenID, Ask ask);
     event CancelBid(uint256 tokenID, address bidder);
-    event AcceptBid(
-        uint256 tokenID,
-        address owner,
-        uint256 amount,
-        address bidder,
-        uint256 bidAmount
-    );
+    event AcceptBid(uint256 tokenID, address owner, uint256 amount, address bidder, uint256 bidAmount);
     event Redeem(address userAddress, uint256 points);
 
     /**
@@ -22,10 +42,7 @@ interface IMarket {
      * @param _tokenID TokenID of the Token to Set Collaborators
      * @param _collaborators Struct of Collaborators to set
      */
-    function setCollaborators(
-        uint256 _tokenID,
-        Collaborators calldata _collaborators
-    ) external;
+    function setCollaborators(uint256 _tokenID, Collaborators calldata _collaborators) external;
 
     /**
      * @notice tHis method is used to set Royalty Points for the token
@@ -39,17 +56,19 @@ interface IMarket {
      *
      * @param _tokenID Token ID of the Token to place Bid on
      * @param _bidder Address of the Bidder
-     * @param _bidAmount Amount of the Bid
      *
      * @return bool Stransaction Status
      */
-    function bid(
+    function setBid(
         uint256 _tokenID,
         address _bidder,
-        uint256 _bidAmount,
-        uint256 _amount,
-        address _tokenOwner
+        IMarket.Bid calldata bid,
+        address owner
     ) external returns (bool);
+
+    // function setAsk(uint256 tokenId, Ask calldata ask) external;
+
+    // function removeBid(uint256 tokenId, address bidder) external;
 
     /**
      * @notice this function is used to Accept Bid
@@ -105,9 +124,7 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function setCommissionPecentage(uint8 _commissionPercentage)
-        external
-        returns (bool);
+    function setCommissionPecentage(uint8 _commissionPercentage) external returns (bool);
 
     /**
      * @notice This Method is used to set Admin's Address
@@ -149,9 +166,7 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function redeemPoints(address _userAddress, uint256 _amount)
-        external
-        returns (bool);
+    function redeemPoints(address _userAddress, uint256 _amount) external returns (bool);
 
     /**
      * @notice This method is used to get User's Redeemable Points
@@ -160,8 +175,5 @@ interface IMarket {
      *
      * @return uint Redeemable Points
      */
-    function getUsersRedeemablePoints(address _userAddress)
-        external
-        view
-        returns (uint256);
+    function getUsersRedeemablePoints(address _userAddress) external view returns (uint256);
 }

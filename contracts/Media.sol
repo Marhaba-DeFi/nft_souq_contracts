@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import './New_ERC1155Mintable.sol';
@@ -117,30 +119,34 @@ contract Media is IMedia {
         return _tokenCounter;
     }
 
-    function bid(
-        uint256 _tokenID,
-        uint256 _amount,
-        address _owner
-    ) external payable override whenTokenExist(_tokenID) returns (bool) {
+    function setBid(uint256 _tokenID, IMarket.Bid calldata bid)
+        external
+        payable
+        override
+        whenTokenExist(_tokenID)
+        returns (bool)
+    {
+        address _owner = tokenIDToToken[_tokenID]._currentOwner;
+        require(msg.sender == bid._bidder, 'Media: Bidder must be msg sender');
+        require(bid._bidder != address(0), 'Media: bidder cannot be 0 address');
         require(msg.value != 0, "Media: You Can't Bid With 0 Amount!");
-        require(tokenIDToToken[_tokenID]._currentOwner != msg.sender, "Media: The Token Owner Can't Bid!");
-        require(msg.sender != _owner, 'Media: You Cannot Bid For Your Own Token!');
+        require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
+        require(msg.sender != bid._bidder, 'Media: You Cannot Bid For Your Own Token!');
 
         Token memory token = tokenIDToToken[_tokenID];
         if (token._isFungible) {
             require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(_owner, _tokenID) >= _amount,
+                ERC1155Mintable(_ERC1155Address).balanceOf(_owner, _tokenID) >= bid._bidAmount,
                 'Media: The Owner Does Not Have That Much Tokens!'
             );
         } else {
-            require(_amount == 1, 'Media: Only 1 Token Is Available');
+            require(bid._bidAmount == 1, 'Media: Only 1 Token Is Available');
             require(nftToOwners[_tokenID] == _owner, 'Media: Invalid Owner Provided!');
         }
 
         payable(_marketAddress).transfer(msg.value);
         // amount, tokenOwner
-        IMarket(_marketAddress).bid(_tokenID, msg.sender, msg.value, _amount, _owner);
-
+        IMarket(_marketAddress).setBid(_tokenID, msg.sender, bid, _owner);
         return true;
     }
 

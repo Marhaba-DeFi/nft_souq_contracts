@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
-import "./SafeMath.sol";
-import "./Address.sol";
-import "./Common.sol";
-import "./IERC1155TokenReceiver.sol";
-import "./IERC1155.sol";
+import './SafeMath.sol';
+import './Address.sol';
+import './Common.sol';
+import './IERC1155TokenReceiver.sol';
+import './IERC1155.sol';
 
 // A sample implementation of core ERC1155 function.
 contract ERC1155 is IERC1155, ERC165, CommonConstants {
@@ -34,16 +36,8 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
     */
     bytes4 private constant INTERFACE_SIGNATURE_ERC1155 = 0xd9b67a26;
 
-    function supportsInterface(bytes4 _interfaceId)
-        public
-        pure
-        override
-        returns (bool)
-    {
-        if (
-            _interfaceId == INTERFACE_SIGNATURE_ERC165 ||
-            _interfaceId == INTERFACE_SIGNATURE_ERC1155
-        ) {
+    function supportsInterface(bytes4 _interfaceId) public pure override returns (bool) {
+        if (_interfaceId == INTERFACE_SIGNATURE_ERC165 || _interfaceId == INTERFACE_SIGNATURE_ERC1155) {
             return true;
         }
 
@@ -87,14 +81,7 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         // Now that the balance is updated and the event was emitted,
         // call onERC1155Received if the destination is a contract.
         if (_to.isContract()) {
-            _doSafeTransferAcceptanceCheck(
-                msg.sender,
-                _from,
-                _to,
-                _id,
-                _value,
-                _data
-            );
+            _doSafeTransferAcceptanceCheck(msg.sender, _from, _to, _id, _value, _data);
         }
     }
 
@@ -122,14 +109,11 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         bytes calldata _data
     ) external override {
         // MUST Throw on errors
-        require(_to != address(0x0), "destination address must be non-zero.");
-        require(
-            _ids.length == _values.length,
-            "_ids and _values array length must match."
-        );
+        require(_to != address(0x0), 'destination address must be non-zero.');
+        require(_ids.length == _values.length, '_ids and _values array length must match.');
         require(
             _from == msg.sender || operatorApproval[_from][msg.sender] == true,
-            "Need operator approval for 3rd party transfers."
+            'Need operator approval for 3rd party transfers.'
         );
 
         for (uint256 i = 0; i < _ids.length; ++i) {
@@ -153,14 +137,7 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         // Now that the balances are updated and the events are emitted,
         // call onERC1155BatchReceived if the destination is a contract.
         if (_to.isContract()) {
-            _doSafeBatchTransferAcceptanceCheck(
-                msg.sender,
-                _from,
-                _to,
-                _ids,
-                _values,
-                _data
-            );
+            _doSafeBatchTransferAcceptanceCheck(msg.sender, _from, _to, _ids, _values, _data);
         }
     }
 
@@ -170,13 +147,7 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         @param _id     ID of the Token
         @return        The _owner's balance of the Token type requested
      */
-    function balanceOf(address _owner, uint256 _id)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function balanceOf(address _owner, uint256 _id) public view virtual override returns (uint256) {
         // The balance of any account can be calculated from the Transfer events history.
         // However, since we need to keep the balances to validate transfer request,
         // there is no extra cost to also privide a querry function.
@@ -212,10 +183,7 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         @param _operator  Address to add to the set of authorized operators
         @param _approved  True if the operator is approved, false to revoke approval
     */
-    function setApprovalForAll(address _operator, bool _approved)
-        external
-        override
-    {
+    function setApprovalForAll(address _operator, bool _approved) external override {
         operatorApproval[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);
     }
@@ -226,12 +194,7 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         @param _operator  Address of authorized operator
         @return           True if the operator is approved, false if not
     */
-    function isApprovedForAll(address _owner, address _operator)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function isApprovedForAll(address _owner, address _operator) external view override returns (bool) {
         return operatorApproval[_owner][_operator];
     }
 
@@ -251,14 +214,8 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         // Note: if the below reverts in the onERC1155Received function of the _to address you will have an undefined revert reason returned rather than the one in the require test.
         // If you want predictable revert reasons consider using low level _to.call() style instead so the revert does not bubble up and you can revert yourself on the ERC1155_ACCEPTED test.
         require(
-            ERC1155TokenReceiver(_to).onERC1155Received(
-                _operator,
-                _from,
-                _id,
-                _value,
-                _data
-            ) == ERC1155_ACCEPTED,
-            "contract returned an unknown value from onERC1155Received"
+            ERC1155TokenReceiver(_to).onERC1155Received(_operator, _from, _id, _value, _data) == ERC1155_ACCEPTED,
+            'contract returned an unknown value from onERC1155Received'
         );
     }
 
@@ -276,14 +233,9 @@ contract ERC1155 is IERC1155, ERC165, CommonConstants {
         // Note: if the below reverts in the onERC1155BatchReceived function of the _to address you will have an undefined revert reason returned rather than the one in the require test.
         // If you want predictable revert reasons consider using low level _to.call() style instead so the revert does not bubble up and you can revert yourself on the ERC1155_BATCH_ACCEPTED test.
         require(
-            ERC1155TokenReceiver(_to).onERC1155BatchReceived(
-                _operator,
-                _from,
-                _ids,
-                _values,
-                _data
-            ) == ERC1155_BATCH_ACCEPTED,
-            "contract returned an unknown value from onERC1155BatchReceived"
+            ERC1155TokenReceiver(_to).onERC1155BatchReceived(_operator, _from, _ids, _values, _data) ==
+                ERC1155_BATCH_ACCEPTED,
+            'contract returned an unknown value from onERC1155BatchReceived'
         );
     }
 }

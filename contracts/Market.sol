@@ -1,7 +1,11 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import './IMarket.sol';
 import './SafeMath.sol';
+import './IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 contract Market is IMarket {
     using SafeMath for uint256;
@@ -16,6 +20,9 @@ contract Market is IMarket {
 
     // tokenID => (bidderAddress => BidAmount)
     mapping(uint256 => mapping(address => uint256)) private tokenBids;
+
+    // Mapping from token to mapping from bidder to bid
+    mapping(uint256 => mapping(address => Bid)) private _tokenBidders;
 
     // bidderAddress => its Total Bid amount
     mapping(address => uint256) private userTotalBids;
@@ -93,77 +100,65 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function bid(
+    function setBid(
         uint256 _tokenID,
         address _bidder,
-        uint256 _bidAmount,
-        uint256 _amount, // New Param for Token Quantity
-        address _tokenOwner // New Param for Token Owner
+        IMarket.Bid calldata _bid,
+        address owner
     ) external override onlyMediaCaller returns (bool) {
-        // require(_bidAmount != 0, "Market: You Can't Bid With 0 Amount!");
+        require(_bid._bidAmount != 0, "Market: You Can't Bid With 0 Amount!");
+        require(_bid._amount != 0, "Market: You Can't Bid For 0 Tokens");
+        require(!(_bid._amount < 0), "Market: You Can't Bid For Negative Tokens");
+        require(_bid._currency != address(0), 'Market: bid currency cannot be 0 address');
+        require(_bid._recipient != address(0), 'Market: bid recipient cannot be 0 address');
 
-        // // Minus the Previous bid, if any, else 0
-        // userTotalBids[_bidder] = userTotalBids[_bidder].sub(
-        //     tokenBids[_tokenID][_bidder]
-        // );
-
-        // // Set Bid for the Token
-        // tokenBids[_tokenID][_bidder] = _bidAmount;
-
-        // // Push The bidder in all bidder array
-        // tokenBidders[_tokenID].push(_bidder);
-
-        // // Add New bid
-        // userTotalBids[_bidder] = userTotalBids[_bidder].add(_bidAmount);
-
-        // // Add Redeem points for the user
-        // userRedeemPoints[_bidder] = userRedeemPoints[_bidder].add(_bidAmount);
-
-        // emit Bid(_tokenID, _bidder, _bidAmount);
-
-        // return true;
-
-        // New Code
-
-        require(_amount != 0, "Market: You Can't Bid For 0 Tokens");
-        require(!(_amount < 0), "Market: You Can't Bid For Negative Tokens");
-
-        // require(_newTokenBids[_tokenID][_tokenOwner][_bidder]._amount != _amount &&
-        //         _newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount != _bidAmount,
-        //         "Market: You Already Have Bid For Same Quantity and Same Amount");
-
-        if (_newTokenBids[_tokenID][_tokenOwner][_bidder]._amount == _amount)
-            if (_newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount == _bidAmount)
-                revert('Market: You Already Have Bid For Same Quantity and Same Amount');
+        // fetch existing bid, if there is any
+        Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
 
         // Minus the Previous bid, if any, else 0
-        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount);
+        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_newTokenBids[_tokenID][owner][_bidder]._bidAmount);
 
-        bool doesBidderHasBid = false;
-        for (uint8 index = 0; index < newTokenBidders[_tokenID][_tokenOwner].length; index++) {
-            if (newTokenBidders[_tokenID][_tokenOwner][index] == _bidder) {
-                doesBidderHasBid = true;
-                break;
-            }
+        // If there is an existing bid, refund it before continuing
+        if (existingBid._amount > 0) {
+            // removeBid(_tokenID, _bid._bidder);
         }
 
-        if (!doesBidderHasBid) {
-            // Push The bidder in all bidder array
-            newTokenBidders[_tokenID][_tokenOwner].push(_bidder);
-        }
+        IERC20 token = IERC20(_bid._currency);
+        // We must check the balance that was actually transferred to the market,
+        // as some tokens impose a transfer fee and would not actually transfer the
+        // full amount to the market, resulting in locked funds for refunds & bid acceptance
+        uint256 beforeBalance = token.balanceOf(address(this));
+        // TODO
+        // token.safeTransferFrom(_bidder, address(this), _bid._amount);
+        uint256 afterBalance = token.balanceOf(address(this));
 
-        // Set Bid for the Token
-        NewBid memory newBid = NewBid(_amount, _bidAmount);
-        _newTokenBids[_tokenID][_tokenOwner][_bidder] = newBid;
+        // Set New Bid for the Token
+        _tokenBidders[_tokenID][_bid._bidder] = Bid(
+            afterBalance.sub(beforeBalance),
+            _bid._amount,
+            _bid._currency,
+            _bid._bidder,
+            _bid._recipient
+        );
 
         // Add New bid
-        userTotalBids[_bidder] = userTotalBids[_bidder].add(_bidAmount);
+        userTotalBids[_bidder] = userTotalBids[_bidder].add(_bid._bidAmount);
 
         // Add Redeem points for the user
-        userRedeemPoints[_bidder] = userRedeemPoints[_bidder].add(_bidAmount);
+        userRedeemPoints[_bidder] = userRedeemPoints[_bidder].add(_bid._bidAmount);
 
-        emit Bid(_tokenID, _bidder, _bidAmount);
-
+        emit BidCreated(_tokenID, _bid);
+        // Needs to be taken care of
+        // // If a bid meets the criteria for an ask, automatically accept the bid.
+        // // If no ask is set or the bid does not meet the requirements, ignore.
+        // if (
+        //     _tokenAsks[_tokenID].currency != address(0) &&
+        //     _bid.currency == _tokenAsks[_tokenID].currency &&
+        //     _bid.amount >= _tokenAsks[_tokenID].amount
+        // ) {
+        //     // Finalize exchange
+        //     _finalizeNFTTransfer(_tokenID, _bid._bidder);
+        // }
         return true;
     }
 

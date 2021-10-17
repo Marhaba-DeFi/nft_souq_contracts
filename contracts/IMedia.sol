@@ -1,4 +1,8 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
+
+import {IMarket} from './IMarket.sol';
 
 interface IMedia {
     struct Token {
@@ -20,12 +24,7 @@ interface IMedia {
         uint8[] percentages
     );
 
-    event Transfer(
-        uint256 _tokenID,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    );
+    event Transfer(uint256 _tokenID, address _owner, address _recipient, uint256 _amount);
 
     /**
      * @notice This method is used to Mint a new Token
@@ -43,6 +42,11 @@ interface IMedia {
     ) external payable returns (uint256);
 
     /**
+     * @notice Set the ask on a piece of media
+     */
+    // function setAsk(uint256 tokenId, IMarket.Ask calldata ask) external;
+
+    /**
      * @notice This method is used to get details of the Token with ID _tokenID
      *
      * @param _tokenID TokenID of the Token to get details of
@@ -58,11 +62,12 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function bid(
-        uint256 _tokenID,
-        uint256 _amount,
-        address _owner
-    ) external payable returns (bool);
+    function setBid(uint256 _tokenID, IMarket.Bid calldata bid) external payable returns (bool);
+
+    /**
+     * @notice Remove the bid on a piece of media
+     */
+    // function removeBid(uint256 tokenId) external;
 
     /**
      * @notice This method is used to cancel bid for the Token with ID _tokenID
@@ -71,9 +76,7 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function cancelBid(uint256 _tokenID, address _owner)
-        external
-        returns (bool);
+    function cancelBid(uint256 _tokenID, address _owner) external returns (bool);
 
     /**
      * @notice This method is used to Reject bid for the Token with ID _tokenID and Bid of bidder with address _bidder
@@ -83,9 +86,7 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function rejectBid(uint256 _tokenID, address _bidder)
-        external
-        returns (bool);
+    function rejectBid(uint256 _tokenID, address _bidder) external returns (bool);
 
     /**
      * @notice This method is used to Accept the bid for the Token with ID _tokenID
