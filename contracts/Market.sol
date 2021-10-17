@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
-import "./IMarket.sol";
-import "./SafeMath.sol";
+import './IMarket.sol';
+import './SafeMath.sol';
 
 contract Market is IMarket {
     using SafeMath for uint256;
@@ -35,8 +35,8 @@ contract Market is IMarket {
     // tokenID => all Bidders
     mapping(uint256 => address[]) private tokenBidders;
 
-    modifier onlyMediaCaller {
-        require(msg.sender == _mediaContract, "Market: Unauthorized Access!");
+    modifier onlyMediaCaller() {
+        require(msg.sender == _mediaContract, 'Market: Unauthorized Access!');
         _;
     }
 
@@ -48,8 +48,7 @@ contract Market is IMarket {
     }
 
     // tokenID => owner => bidder => Bid Struct
-    mapping(uint256 => mapping(address => mapping(address => NewBid)))
-        private _newTokenBids;
+    mapping(uint256 => mapping(address => mapping(address => NewBid))) private _newTokenBids;
 
     // tokenID => owner => all bidders
     mapping(uint256 => mapping(address => address[])) private newTokenBidders;
@@ -67,14 +66,8 @@ contract Market is IMarket {
      */
     function configureMedia(address _mediaContractAddress) external {
         // TODO: Only Owner Modifier
-        require(
-            _mediaContractAddress != address(0),
-            "Market: Invalid Media Contract Address!"
-        );
-        require(
-            _mediaContract == address(0),
-            "Market: Media Contract Alredy Configured!"
-        );
+        require(_mediaContractAddress != address(0), 'Market: Invalid Media Contract Address!');
+        require(_mediaContract == address(0), 'Market: Media Contract Alredy Configured!');
 
         _mediaContract = _mediaContractAddress;
     }
@@ -82,21 +75,18 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setCollaborators(
-        uint256 _tokenID,
-        Collaborators calldata _collaborators
-    ) external override onlyMediaCaller {
+    function setCollaborators(uint256 _tokenID, Collaborators calldata _collaborators)
+        external
+        override
+        onlyMediaCaller
+    {
         tokenCollaborators[_tokenID] = _collaborators;
     }
 
     /**
      * @dev See {IMarket}
      */
-    function setRoyaltyPoints(uint256 _tokenID, uint8 _royaltyPoints)
-        external
-        override
-        onlyMediaCaller
-    {
+    function setRoyaltyPoints(uint256 _tokenID, uint8 _royaltyPoints) external override onlyMediaCaller {
         tokenRoyaltyPercentage[_tokenID] = _royaltyPoints;
     }
 
@@ -143,25 +133,14 @@ contract Market is IMarket {
         //         "Market: You Already Have Bid For Same Quantity and Same Amount");
 
         if (_newTokenBids[_tokenID][_tokenOwner][_bidder]._amount == _amount)
-            if (
-                _newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount ==
-                _bidAmount
-            )
-                revert(
-                    "Market: You Already Have Bid For Same Quantity and Same Amount"
-                );
+            if (_newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount == _bidAmount)
+                revert('Market: You Already Have Bid For Same Quantity and Same Amount');
 
         // Minus the Previous bid, if any, else 0
-        userTotalBids[_bidder] = userTotalBids[_bidder].sub(
-            _newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount
-        );
+        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_newTokenBids[_tokenID][_tokenOwner][_bidder]._bidAmount);
 
         bool doesBidderHasBid = false;
-        for (
-            uint8 index = 0;
-            index < newTokenBidders[_tokenID][_tokenOwner].length;
-            index++
-        ) {
+        for (uint8 index = 0; index < newTokenBidders[_tokenID][_tokenOwner].length; index++) {
             if (newTokenBidders[_tokenID][_tokenOwner][index] == _bidder) {
                 doesBidderHasBid = true;
                 break;
@@ -239,54 +218,31 @@ contract Market is IMarket {
         // require(msg.sender == ownerOf(_tokenID), "ERC1155Creator: Only Owner Can Appect Bid!");
         require(
             _newTokenBids[_tokenID][_owner][_bidder]._bidAmount != 0,
-            "Market: The Specified Bidder Has No bids For The Token!"
+            'Market: The Specified Bidder Has No bids For The Token!'
         );
         require(
             _newTokenBids[_tokenID][_owner][_bidder]._amount == _amount,
-            "Market: The Bidder Has Not Bid For The Specified Amount Of Tokens!"
+            'Market: The Bidder Has Not Bid For The Specified Amount Of Tokens!'
         );
 
         // Divide the points
-        divideMoney(
-            _tokenID,
-            _owner,
-            _newTokenBids[_tokenID][_owner][_bidder]._bidAmount
-        );
+        divideMoney(_tokenID, _owner, _newTokenBids[_tokenID][_owner][_bidder]._bidAmount);
 
         // Minus Bidder's Redeemable Points
-        userRedeemPoints[_bidder] = userRedeemPoints[_bidder].sub(
-            _newTokenBids[_tokenID][_owner][_bidder]._bidAmount
-        );
+        userRedeemPoints[_bidder] = userRedeemPoints[_bidder].sub(_newTokenBids[_tokenID][_owner][_bidder]._bidAmount);
 
         // Remove All The bids for the Token
-        for (
-            uint256 index;
-            index < newTokenBidders[_tokenID][_owner].length;
-            index++
-        ) {
-            userTotalBids[
+        for (uint256 index; index < newTokenBidders[_tokenID][_owner].length; index++) {
+            userTotalBids[newTokenBidders[_tokenID][_owner][index]] = userTotalBids[
                 newTokenBidders[_tokenID][_owner][index]
-            ] = userTotalBids[newTokenBidders[_tokenID][_owner][index]].sub(
-                _newTokenBids[_tokenID][_owner][
-                    newTokenBidders[_tokenID][_owner][index]
-                ]
-                ._bidAmount
-            );
-            delete _newTokenBids[_tokenID][_owner][
-                newTokenBidders[_tokenID][_owner][index]
-            ];
+            ].sub(_newTokenBids[_tokenID][_owner][newTokenBidders[_tokenID][_owner][index]]._bidAmount);
+            delete _newTokenBids[_tokenID][_owner][newTokenBidders[_tokenID][_owner][index]];
         }
 
         // Remove All Bidders from the list
         delete newTokenBidders[_tokenID][_owner];
 
-        emit AcceptBid(
-            _tokenID,
-            _owner,
-            _amount,
-            _bidder,
-            _newTokenBids[_tokenID][_owner][_bidder]._bidAmount
-        );
+        emit AcceptBid(_tokenID, _owner, _amount, _bidder, _newTokenBids[_tokenID][_owner][_bidder]._bidAmount);
 
         return true;
     }
@@ -324,19 +280,11 @@ contract Market is IMarket {
         // return true;
 
         // New Code -------------------
-        require(
-            userTotalBids[_bidder] != 0,
-            "Market: You Have Not Set Any Bid Yet!"
-        );
-        require(
-            _newTokenBids[_tokenID][_owner][_bidder]._bidAmount != 0,
-            "Market: You Have Not Bid For This Token."
-        );
+        require(userTotalBids[_bidder] != 0, 'Market: You Have Not Set Any Bid Yet!');
+        require(_newTokenBids[_tokenID][_owner][_bidder]._bidAmount != 0, 'Market: You Have Not Bid For This Token.');
 
         // Minus from Bidder's Total Bids
-        userTotalBids[_bidder] = userTotalBids[_bidder].sub(
-            _newTokenBids[_tokenID][_owner][_bidder]._bidAmount
-        );
+        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_newTokenBids[_tokenID][_owner][_bidder]._bidAmount);
 
         // Delete the User's Bid
         delete _newTokenBids[_tokenID][_owner][_bidder];
@@ -360,15 +308,11 @@ contract Market is IMarket {
         address _bidder,
         address _owner
     ) internal {
-        for (
-            uint256 index = 0;
-            index < newTokenBidders[_tokenID][_owner].length;
-            index++
-        ) {
+        for (uint256 index = 0; index < newTokenBidders[_tokenID][_owner].length; index++) {
             if (newTokenBidders[_tokenID][_owner][index] == _bidder) {
-                newTokenBidders[_tokenID][_owner][index] = newTokenBidders[
-                    _tokenID
-                ][_owner][newTokenBidders[_tokenID][_owner].length - 1];
+                newTokenBidders[_tokenID][_owner][index] = newTokenBidders[_tokenID][_owner][
+                    newTokenBidders[_tokenID][_owner].length - 1
+                ];
                 newTokenBidders[_tokenID][_owner].pop();
                 break;
             }
@@ -378,20 +322,9 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setAdminAddress(address _newAdminAddress)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        require(
-            _newAdminAddress != address(0),
-            "Market: Invalid Admin Address!"
-        );
-        require(
-            _adminAddress == address(0),
-            "Market: Admin Already Configured!"
-        );
+    function setAdminAddress(address _newAdminAddress) external override onlyMediaCaller returns (bool) {
+        require(_newAdminAddress != address(0), 'Market: Invalid Admin Address!');
+        require(_adminAddress == address(0), 'Market: Admin Already Configured!');
 
         _adminAddress = _newAdminAddress;
         return true;
@@ -400,25 +333,14 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function getAdminAddress()
-        external
-        view
-        override
-        onlyMediaCaller
-        returns (address)
-    {
+    function getAdminAddress() external view override onlyMediaCaller returns (address) {
         return _adminAddress;
     }
 
     /**
      * @dev See {IMarket}
      */
-    function setCommissionPecentage(uint8 _commissionPercentage)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
+    function setCommissionPecentage(uint8 _commissionPercentage) external override onlyMediaCaller returns (bool) {
         _adminCommissionPercentage = _commissionPercentage;
         return true;
     }
@@ -426,13 +348,7 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function getCommissionPercentage()
-        external
-        view
-        override
-        onlyMediaCaller
-        returns (uint8)
-    {
+    function getCommissionPercentage() external view override onlyMediaCaller returns (uint8) {
         return _adminCommissionPercentage;
     }
 
@@ -453,59 +369,38 @@ contract Market is IMarket {
 
         // If no royalty points have been set, transfer the amount to the owner
         if (tokenRoyaltyPercentage[_tokenID] == 0) {
-            userRedeemPoints[_owner] = userRedeemPoints[_owner].add(
-                _amountToDivide
-            );
+            userRedeemPoints[_owner] = userRedeemPoints[_owner].add(_amountToDivide);
             return true;
         }
 
         // Amount to divide among Collaborators
-        uint256 royaltyPoints = _amountToDivide
-        .mul(tokenRoyaltyPercentage[_tokenID])
-        .div(100);
+        uint256 royaltyPoints = _amountToDivide.mul(tokenRoyaltyPercentage[_tokenID]).div(100);
 
         Collaborators memory tokenColab = tokenCollaborators[_tokenID];
 
         uint256 amountToTransfer;
         uint256 totalAmountTransferred;
 
-        for (
-            uint256 index = 0;
-            index < tokenColab._collaborators.length;
-            index++
-        ) {
+        for (uint256 index = 0; index < tokenColab._collaborators.length; index++) {
             // Individual Collaborator's share Amount
-            amountToTransfer = royaltyPoints
-            .mul(tokenColab._percentages[index])
-            .div(100);
+            amountToTransfer = royaltyPoints.mul(tokenColab._percentages[index]).div(100);
 
             // Total Amount Transferred
-            totalAmountTransferred = totalAmountTransferred.add(
-                amountToTransfer
-            );
+            totalAmountTransferred = totalAmountTransferred.add(amountToTransfer);
 
             // Add Collaborator's Redeem points
-            userRedeemPoints[
-                tokenColab._collaborators[index]
-            ] = userRedeemPoints[tokenColab._collaborators[index]].add(
+            userRedeemPoints[tokenColab._collaborators[index]] = userRedeemPoints[tokenColab._collaborators[index]].add(
                 amountToTransfer
             );
         }
 
         // Add Remaining amount to Owner's redeem points
-        userRedeemPoints[_owner] = userRedeemPoints[_owner].add(
-            _amountToDivide.sub(royaltyPoints)
-        );
+        userRedeemPoints[_owner] = userRedeemPoints[_owner].add(_amountToDivide.sub(royaltyPoints));
 
-        totalAmountTransferred = totalAmountTransferred.add(
-            _amountToDivide.sub(royaltyPoints)
-        );
+        totalAmountTransferred = totalAmountTransferred.add(_amountToDivide.sub(royaltyPoints));
 
         // Check for Transfer amount error
-        require(
-            totalAmountTransferred == _amountToDivide,
-            "Market: Amount Transfer Value Error!"
-        );
+        require(totalAmountTransferred == _amountToDivide, 'Market: Amount Transfer Value Error!');
 
         return true;
     }
@@ -513,12 +408,7 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function addAdminCommission(uint256 _amount)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
+    function addAdminCommission(uint256 _amount) external override onlyMediaCaller returns (bool) {
         _adminPoints = _adminPoints.add(_amount);
         return true;
     }
@@ -526,36 +416,22 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function redeemPoints(address _userAddress, uint256 _amount)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
+    function redeemPoints(address _userAddress, uint256 _amount) external override onlyMediaCaller returns (bool) {
         // Admin's points
         if (_userAddress == _adminAddress) {
-            require(
-                _adminPoints >= _amount,
-                "Market: You Don't have that much points to redeem!"
-            );
+            require(_adminPoints >= _amount, "Market: You Don't have that much points to redeem!");
 
             _adminPoints = _adminPoints.sub(_amount);
             payable(_adminAddress).transfer(_amount);
         } else {
+            require(userRedeemPoints[_userAddress] >= _amount, "Market: You Don't Have That Much Points To Redeem!");
             require(
-                userRedeemPoints[_userAddress] >= _amount,
-                "Market: You Don't Have That Much Points To Redeem!"
-            );
-            require(
-                (userRedeemPoints[_userAddress] -
-                    userTotalBids[_userAddress]) >= _amount,
+                (userRedeemPoints[_userAddress] - userTotalBids[_userAddress]) >= _amount,
                 "Market: You Have Bids, You Can't Redeem That Much Points!"
             );
 
             payable(address(_userAddress)).transfer(_amount);
-            userRedeemPoints[_userAddress] = userRedeemPoints[_userAddress].sub(
-                _amount
-            );
+            userRedeemPoints[_userAddress] = userRedeemPoints[_userAddress].sub(_amount);
         }
 
         emit Redeem(_userAddress, _amount);
@@ -565,13 +441,7 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function getUsersRedeemablePoints(address _userAddress)
-        external
-        view
-        override
-        onlyMediaCaller
-        returns (uint256)
-    {
+    function getUsersRedeemablePoints(address _userAddress) external view override onlyMediaCaller returns (uint256) {
         if (_userAddress == _adminAddress) {
             return _adminPoints;
         }

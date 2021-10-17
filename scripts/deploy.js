@@ -12,12 +12,10 @@ async function main() {
   const erc721Name = 'NFT SOUQ'
   const erc721Symbol = 'NFTSOUQ'
   const adminAddress = '0x4281d6888D7a3A6736B0F596823810ffBd7D4808'
-  const adminCommissionPercentage = 5
+  const adminCommissionPercentage = 2
 
   let erc721 = await hre.ethers.getContractFactory('ERC721Create')
-  // erc721 = await erc721.deploy(erc721Name, erc721Symbol)
-
-  erc721 = await erc721.deploy()
+  erc721 = await erc721.deploy(erc721Name, erc721Symbol)
 
   await erc721.deployed()
 
