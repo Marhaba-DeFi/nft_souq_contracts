@@ -116,7 +116,7 @@ contract Market is IMarket {
         Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
 
         // Minus the Previous bid, if any, else 0
-        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_newTokenBids[_tokenID][owner][_bidder]._bidAmount);
+        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_tokenBidders[_tokenID][_bid._bidder]._bidAmount);
 
         // If there is an existing bid, refund it before continuing
         if (existingBid._amount > 0) {
@@ -242,18 +242,18 @@ contract Market is IMarket {
         return true;
     }
 
-    function removeBid(uint256 tokenId, address bidder) public override onlyMediaCaller {
-        Bid storage bid = _tokenBidders[tokenId][bidder];
+    function removeBid(uint256 _tokenID, address _bidder) public override onlyMediaCaller {
+        Bid storage bid = _tokenBidders[_tokenID][_bidder];
         uint256 bidAmount = bid._amount;
         address bidCurrency = bid._currency;
 
-        require(bid._bidder == bidder, 'Market: Only bidder can remove the bid');
+        require(bid._bidder == _bidder, 'Market: Only bidder can remove the bid');
         require(bid._amount > 0, 'Market: cannot remove bid amount of 0');
 
         IERC20 token = IERC20(bidCurrency);
-
-        emit BidRemoved(tokenId, bid);
-        delete _tokenBidders[tokenId][bidder];
+        userTotalBids[_bidder] = userTotalBids[_bidder].sub(_tokenBidders[_tokenID][bid._bidder]._bidAmount);
+        emit BidRemoved(_tokenID, bid);
+        delete _tokenBidders[_tokenID][_bidder];
         // token.safeTransfer(bidder, bidAmount);
     }
 
