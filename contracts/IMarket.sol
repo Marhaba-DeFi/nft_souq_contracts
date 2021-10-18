@@ -66,9 +66,9 @@ interface IMarket {
         address owner
     ) external returns (bool);
 
-    // function setAsk(uint256 tokenId, Ask calldata ask) external;
+    function removeBid(uint256 tokenId, address bidder) external;
 
-    // function removeBid(uint256 tokenId, address bidder) external;
+    // function setAsk(uint256 tokenId, Ask calldata ask) external;
 
     /**
      * @notice this function is used to Accept Bid

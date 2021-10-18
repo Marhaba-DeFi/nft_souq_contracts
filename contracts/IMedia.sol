@@ -64,6 +64,8 @@ interface IMedia {
      */
     function setBid(uint256 _tokenID, IMarket.Bid calldata bid) external payable returns (bool);
 
+    function removeBid(uint256 tokenId) external;
+
     /**
      * @notice Remove the bid on a piece of media
      */

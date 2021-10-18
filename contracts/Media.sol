@@ -150,6 +150,10 @@ contract Media is IMedia {
         return true;
     }
 
+    function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
+        IMarket(_marketAddress).removeBid(_tokenID, msg.sender);
+    }
+
     function cancelBid(uint256 _tokenID, address _owner) external override whenTokenExist(_tokenID) returns (bool) {
         IMarket(_marketAddress).cancelBid(_tokenID, msg.sender, _owner);
         return true;
