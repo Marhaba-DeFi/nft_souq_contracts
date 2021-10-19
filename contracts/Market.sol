@@ -3,12 +3,15 @@
 pragma solidity ^0.8.0;
 
 import './IMarket.sol';
-import './SafeMath.sol';
-import './IERC20.sol';
+// import './SafeMath.sol';
+// import './IERC20.sol';
+import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 contract Market is IMarket {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     address private _mediaContract;
     address private _adminAddress;
@@ -129,7 +132,7 @@ contract Market is IMarket {
         // full amount to the market, resulting in locked funds for refunds & bid acceptance
         uint256 beforeBalance = token.balanceOf(address(this));
         // TODO
-        // token.safeTransferFrom(_bidder, address(this), _bid._amount);
+        token.safeTransferFrom(_bidder, address(this), _bid._amount);
         uint256 afterBalance = token.balanceOf(address(this));
 
         // Set New Bid for the Token
@@ -171,46 +174,6 @@ contract Market is IMarket {
         address _bidder,
         uint256 _amount
     ) external override returns (bool) {
-        // // require(msg.sender == ownerOf(_tokenID), "ERC1155Creator: Only Owner Can Appect Bid!");
-        // require(
-        //     tokenBids[_tokenID][_bidder] != 0,
-        //     "ERC1155Creator: The Specified Bidder Has No bids For The Token!"
-        // );
-
-        // // _transferFrom(msg.sender, _bidder, _tokenID, _amount);
-
-        // // Divide the points
-        // divideMoney(_tokenID, _owner, tokenBids[_tokenID][_bidder]);
-
-        // // Minus User's Redeemable Points
-        // userRedeemPoints[_bidder] = userRedeemPoints[_bidder].sub(
-        //     tokenBids[_tokenID][_bidder]
-        // );
-
-        // // Remove All The bids for the Token
-        // for (uint256 index; index < tokenBidders[_tokenID].length; index++) {
-        //     userTotalBids[tokenBidders[_tokenID][index]] = userTotalBids[
-        //         tokenBidders[_tokenID][index]
-        //     ]
-        //         .sub(tokenBids[_tokenID][tokenBidders[_tokenID][index]]);
-        //     delete tokenBids[_tokenID][tokenBidders[_tokenID][index]];
-        // }
-
-        // // Remove All Bidders from the list
-        // delete tokenBidders[_tokenID];
-
-        // emit AcceptBid(
-        //     _tokenID,
-        //     _owner,
-        //     _amount,
-        //     _bidder,
-        //     tokenBids[_tokenID][_bidder]
-        // );
-
-        // return true;
-
-        // New Code -------------------
-        // require(msg.sender == ownerOf(_tokenID), "ERC1155Creator: Only Owner Can Appect Bid!");
         require(
             _newTokenBids[_tokenID][_owner][_bidder]._bidAmount != 0,
             'Market: The Specified Bidder Has No bids For The Token!'
@@ -254,7 +217,7 @@ contract Market is IMarket {
         userTotalBids[_bidder] = userTotalBids[_bidder].sub(_tokenBidders[_tokenID][bid._bidder]._bidAmount);
         emit BidRemoved(_tokenID, bid);
         delete _tokenBidders[_tokenID][_bidder];
-        // token.safeTransfer(bidder, bidAmount);
+        token.safeTransfer(bid._bidder, bidAmount);
     }
 
     /**
