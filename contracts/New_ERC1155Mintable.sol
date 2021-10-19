@@ -25,7 +25,7 @@ contract ERC1155Mintable is ERC1155 {
         address _owner,
         uint256 totalSupply
     ) external onlyMediaCaller {
-        balances[_tokenID][_owner] = totalSupply;
+        _mint(_owner, _tokenID, totalSupply, '');
     }
 
     /**

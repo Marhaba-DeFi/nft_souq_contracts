@@ -2,48 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import './IERC721.sol';
-import './IERC721Receiver.sol';
-import './IERC721Metadata.sol';
-// import './Address.sol';
-// import './Context.sol';
-// import './Strings.sol';
-import './ERC165.sol';
-import {Context} from '@openzeppelin/contracts/utils/Context.sol';
-import {Address} from '@openzeppelin/contracts/utils/Address.sol';
-import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
+import '@openzeppelin/contracts/utils/Address.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol';
+import '@openzeppelin/contracts/utils/introspection/ERC165.sol';
 
-/**
- * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
- * the Metadata extension, but not including the Enumerable extension, which is available separately as
- * {ERC721Enumerable}.
- */
 contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
-    /////////////////////////////////////////// ERC165 //////////////////////////////////////////////
-
-    /*
-        bytes4(keccak256('supportsInterface(bytes4)'));
-    */
-    bytes4 private constant INTERFACE_SIGNATURE_ERC165 = 0x01ffc9a7;
-
-    /*
-        bytes4(keccak256("safeTransferFrom(address,address,uint256,uint256,bytes)")) ^
-        bytes4(keccak256("safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)")) ^
-        bytes4(keccak256("balanceOf(address,uint256)")) ^
-        bytes4(keccak256("balanceOfBatch(address[],uint256[])")) ^
-        bytes4(keccak256("setApprovalForAll(address,bool)")) ^
-        bytes4(keccak256("isApprovedForAll(address,address)"));
-    */
-    bytes4 private constant INTERFACE_SIGNATURE_ERC1155 = 0xd9b67a26;
-
-    function supportsInterface(bytes4 _interfaceId) public pure override returns (bool) {
-        if (_interfaceId == INTERFACE_SIGNATURE_ERC165 || _interfaceId == INTERFACE_SIGNATURE_ERC1155) {
-            return true;
-        }
-
-        return false;
-    }
-
     using Address for address;
     using Strings for uint256;
 
@@ -76,10 +43,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    // function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-    //     return interfaceId == type(IERC721).interfaceId
-    //         || interfaceId == type(IERC721Metadata).interfaceId;
-    // }
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return
+            interfaceId == type(IERC721).interfaceId ||
+            interfaceId == type(IERC721Metadata).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 
     /**
      * @dev See {IERC721-balanceOf}.
@@ -206,7 +175,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         uint256 tokenId,
         bytes memory _data
     ) public virtual override {
-        // require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+        require(_isApprovedOrOwner(_msgSender(), tokenId), 'ERC721: transfer caller is not owner nor approved');
         _safeTransfer(from, to, tokenId, _data);
     }
 
@@ -400,12 +369,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     ) private returns (bool) {
         if (to.isContract()) {
             try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) {
-                return retval == IERC721Receiver(to).onERC721Received.selector;
+                return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
                     revert('ERC721: transfer to non ERC721Receiver implementer');
                 } else {
-                    // solhint-disable-next-line no-inline-assembly
                     assembly {
                         revert(add(32, reason), mload(reason))
                     }
