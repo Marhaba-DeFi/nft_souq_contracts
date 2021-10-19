@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {IMarket} from './IMarket.sol';
 
 interface IMedia {
-    struct Token {
+    struct MediaInfo {
         uint256 _tokenID;
         address _creator;
         address _currentOwner;
@@ -14,8 +14,18 @@ interface IMedia {
         bool _isFungible;
     }
 
+    struct MediaData {
+        bool isFungible;
+        string uri;
+        string title;
+        uint256 totalSupply;
+        uint8 royaltyPoints;
+        address[] collaborators;
+        uint8[] percentages;
+    }
+
     event MintToken(
-        bool _isFungible,
+        bool isFungible,
         string uri,
         string title,
         uint256 totalSupply,
@@ -31,15 +41,7 @@ interface IMedia {
      *
      * @return uint256 Token Id of the Minted Token
      */
-    function mintToken(
-        bool _isFungible,
-        string calldata uri,
-        string calldata title,
-        uint256 totalSupply,
-        uint8 royaltyPoints,
-        address[] calldata collaborators,
-        uint8[] calldata percentages
-    ) external payable returns (uint256);
+    function mintToken(MediaData calldata data) external payable returns (uint256);
 
     /**
      * @notice Set the ask on a piece of media
@@ -53,7 +55,7 @@ interface IMedia {
      *
      * @return Token Structure of the Token
      */
-    function getToken(uint256 _tokenID) external view returns (Token memory);
+    function getToken(uint256 _tokenID) external view returns (MediaInfo memory);
 
     /**
      * @notice This method is used to bid for the Token with ID _tokenID

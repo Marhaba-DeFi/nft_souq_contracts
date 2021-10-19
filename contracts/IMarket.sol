@@ -62,8 +62,7 @@ interface IMarket {
     function setBid(
         uint256 _tokenID,
         address _bidder,
-        IMarket.Bid calldata bid,
-        address owner
+        IMarket.Bid calldata bid
     ) external returns (bool);
 
     function removeBid(uint256 tokenId, address bidder) external;
@@ -124,7 +123,7 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function setCommissionPecentage(uint8 _commissionPercentage) external returns (bool);
+    function setCommissionPercentage(uint8 _commissionPercentage) external returns (bool);
 
     /**
      * @notice This Method is used to set Admin's Address

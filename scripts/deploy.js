@@ -12,7 +12,7 @@ async function main() {
   const erc721Name = 'NFT SOUQ'
   const erc721Symbol = 'NFTSOUQ'
   const adminAddress = '0x4281d6888D7a3A6736B0F596823810ffBd7D4808'
-  const adminCommissionPercentage = 2
+  const adminCommissionPercentage = 1
 
   let erc721 = await hre.ethers.getContractFactory('ERC721Create')
   erc721 = await erc721.deploy(erc721Name, erc721Symbol)
@@ -56,7 +56,7 @@ async function main() {
   await media.setAdminAddress(adminAddress)
   console.log('configured admin address')
 
-  await media.setCommissionPecentage(adminCommissionPercentage)
+  await media.setCommissionPercentage(adminCommissionPercentage)
   console.log('configured Commission Percentage address')
 }
 

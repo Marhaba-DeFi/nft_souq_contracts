@@ -106,8 +106,7 @@ contract Market is IMarket {
     function setBid(
         uint256 _tokenID,
         address _bidder,
-        IMarket.Bid calldata _bid,
-        address owner
+        IMarket.Bid calldata _bid
     ) external override onlyMediaCaller returns (bool) {
         require(_bid._bidAmount != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._amount != 0, "Market: You Can't Bid For 0 Tokens");
@@ -313,7 +312,7 @@ contract Market is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setCommissionPecentage(uint8 _commissionPercentage) external override onlyMediaCaller returns (bool) {
+    function setCommissionPercentage(uint8 _commissionPercentage) external override onlyMediaCaller returns (bool) {
         _adminCommissionPercentage = _commissionPercentage;
         return true;
     }
