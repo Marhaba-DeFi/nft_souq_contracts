@@ -7,6 +7,12 @@ import './ERC1155.sol';
 contract ERC1155Mintable is ERC1155 {
     address private _mediaContract;
 
+    // tokenId => Owner
+    mapping(uint256 => address) nftToOwners;
+
+    // tokenID => Creator
+    mapping(uint256 => address) nftToCreators;
+
     modifier onlyMediaCaller() {
         require(msg.sender == _mediaContract, 'ERC1155Mintable: Unauthorized Access!');
         _;
@@ -23,9 +29,13 @@ contract ERC1155Mintable is ERC1155 {
     function mint(
         uint256 _tokenID,
         address _owner,
-        uint256 totalSupply
+        uint256 _totalSupply,
+        address _marketAddress
     ) external onlyMediaCaller {
-        _mint(_owner, _tokenID, totalSupply, '');
+        nftToOwners[_tokenID] = _owner;
+        nftToCreators[_tokenID] = _owner;
+        _mint(_owner, _tokenID, _totalSupply, '');
+        setApprovalForAll(_marketAddress, true);
     }
 
     /**

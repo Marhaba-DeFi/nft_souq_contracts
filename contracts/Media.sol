@@ -31,6 +31,11 @@ contract Media is IMedia {
         _;
     }
 
+    // modifier onlyApprovedOrOwner(address spender, uint256 _tokenID) {
+    //     require(_isApprovedOrOwner(spender, _tokenID), 'Media: Only approved or owner');
+    //     _;
+    // }
+
     constructor(
         address _ERC1155,
         address _ERC721,
@@ -62,9 +67,9 @@ contract Media is IMedia {
         _tokenHashToTokenID[tokenHash] = _tokenCounter;
 
         if (data.isFungible) {
-            ERC1155Mintable(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply);
+            ERC1155Mintable(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, _marketAddress);
         } else {
-            ERC721Create(_ERC721Address).mint(_tokenCounter, msg.sender);
+            ERC721Create(_ERC721Address).mint(_tokenCounter, msg.sender, _marketAddress);
 
             nftToOwners[_tokenCounter] = msg.sender;
         }
@@ -90,12 +95,19 @@ contract Media is IMedia {
         IMarket(_marketAddress).setRoyaltyPoints(_tokenCounter, data.royaltyPoints);
 
         tokenIDToToken[_tokenCounter] = newToken;
-
-        // Transfer the admin commission
-        payable(_marketAddress).transfer(msg.value);
-        // Set Admin Points
-        IMarket(_marketAddress).addAdminCommission(msg.value);
-
+        Iutils.Ask memory askDetail = Iutils.Ask(
+            data._reserveAmount,
+            data._askAmount,
+            data.totalSupply,
+            data.currencyAsked,
+            data.askType
+        );
+        IMarket(_marketAddress).setAsk(_tokenCounter, askDetail);
+        // TODO
+        // // Transfer the admin commission
+        // payable(_marketAddress).transfer(msg.value);
+        // // Set Admin Points
+        // IMarket(_marketAddress).addAdminCommission(msg.value);
         emit MintToken(
             data.isFungible,
             data.uri,
@@ -126,7 +138,7 @@ contract Media is IMedia {
         return _tokenCounter;
     }
 
-    function setBid(uint256 _tokenID, IMarket.Bid calldata bid)
+    function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
         payable
         override
@@ -150,11 +162,19 @@ contract Media is IMedia {
             require(nftToOwners[_tokenID] == _owner, 'Media: Invalid Owner Provided!');
         }
 
-        payable(_marketAddress).transfer(msg.value);
+        // payable(_marketAddress).transfer(msg.value);
         // amount, tokenOwner
         IMarket(_marketAddress).setBid(_tokenID, msg.sender, bid);
         return true;
     }
+
+    /**
+     * @notice see IMedia
+     */
+    // TODO _isApprovedOrOwner
+    // function setAsk(uint256 _tokenID, IMarket.Ask memory ask) public override {
+    //     IMarket(_marketAddress).setAsk(_tokenID, ask);
+    // }
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);

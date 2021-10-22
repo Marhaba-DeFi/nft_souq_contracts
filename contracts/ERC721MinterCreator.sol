@@ -36,12 +36,15 @@ contract ERC721Create is ERC721 {
     @dev 'msg.sender' will pass the '_tokenID' and 
      the respective NFT details.
     */
-    function mint(uint256 _tokenID, address _creator) external onlyMediaCaller returns (bool) {
+    function mint(
+        uint256 _tokenID,
+        address _creator,
+        address _marketAddress
+    ) external onlyMediaCaller returns (bool) {
         nftToOwners[_tokenID] = _creator;
         nftToCreators[_tokenID] = _creator;
-
         _safeMint(_creator, _tokenID);
-
+        _approve(_marketAddress, _tokenID);
         return true;
     }
 
@@ -71,10 +74,10 @@ contract ERC721Create is ERC721 {
         uint256 _tokenID
     ) public onlyMediaCaller returns (bool) {
         require(_tokenID > 0, 'ERC721Create: Token Id should be non-zero');
-        // require(
-        //     _isApprovedOrOwner(_msgSender, _tokenID),
-        //     "ERC721Create: transfer caller is neither owner nor approved"
-        // );
+        require(
+            _isApprovedOrOwner(_msgSender(), _tokenID),
+            'ERC721Create: transfer caller is neither owner nor approved'
+        );
 
         safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called
 

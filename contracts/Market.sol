@@ -25,10 +25,13 @@ contract Market is IMarket {
     mapping(uint256 => mapping(address => uint256)) private tokenBids;
 
     // Mapping from token to mapping from bidder to bid
-    mapping(uint256 => mapping(address => Bid)) private _tokenBidders;
+    mapping(uint256 => mapping(address => Iutils.Bid)) private _tokenBidders;
 
     // bidderAddress => its Total Bid amount
     mapping(address => uint256) private userTotalBids;
+
+    // Mapping from token to the current ask for the token
+    mapping(uint256 => Iutils.Ask) private _tokenAsks;
 
     // userAddress => its Redeem points
     mapping(address => uint256) private userRedeemPoints;
@@ -106,16 +109,18 @@ contract Market is IMarket {
     function setBid(
         uint256 _tokenID,
         address _bidder,
-        IMarket.Bid calldata _bid
+        Iutils.Bid calldata _bid
     ) external override onlyMediaCaller returns (bool) {
         require(_bid._bidAmount != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._amount != 0, "Market: You Can't Bid For 0 Tokens");
         require(!(_bid._amount < 0), "Market: You Can't Bid For Negative Tokens");
         require(_bid._currency != address(0), 'Market: bid currency cannot be 0 address');
         require(_bid._recipient != address(0), 'Market: bid recipient cannot be 0 address');
+        require(_tokenAsks[_tokenID]._currency != address(0), 'Token is not open for Sale');
+        require(_bid._bidAmount > _tokenAsks[_tokenID]._reserveAmount, 'Bid Cannot be placed below the reserve Amount');
 
         // fetch existing bid, if there is any
-        Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
+        Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
 
         // Minus the Previous bid, if any, else 0
         userTotalBids[_bidder] = userTotalBids[_bidder].sub(_tokenBidders[_tokenID][_bid._bidder]._bidAmount);
@@ -135,7 +140,7 @@ contract Market is IMarket {
         uint256 afterBalance = token.balanceOf(address(this));
 
         // Set New Bid for the Token
-        _tokenBidders[_tokenID][_bid._bidder] = Bid(
+        _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
             afterBalance.sub(beforeBalance),
             _bid._amount,
             _bid._currency,
@@ -162,6 +167,15 @@ contract Market is IMarket {
         //     _finalizeNFTTransfer(_tokenID, _bid._bidder);
         // }
         return true;
+    }
+
+    // /**
+    //  * @notice Sets the ask on a particular media. If the ask cannot be evenly split into the media's
+    //  * bid shares, this reverts.
+    //  */
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override onlyMediaCaller {
+        _tokenAsks[_tokenID] = ask;
+        emit AskCreated(_tokenID, ask);
     }
 
     /**
@@ -205,7 +219,7 @@ contract Market is IMarket {
     }
 
     function removeBid(uint256 _tokenID, address _bidder) public override onlyMediaCaller {
-        Bid storage bid = _tokenBidders[_tokenID][_bidder];
+        Iutils.Bid storage bid = _tokenBidders[_tokenID][_bidder];
         uint256 bidAmount = bid._amount;
         address bidCurrency = bid._currency;
 

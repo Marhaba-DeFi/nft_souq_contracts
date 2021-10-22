@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {IMarket} from './IMarket.sol';
+import './Iutils.sol';
 
 interface IMedia {
     struct MediaInfo {
@@ -22,6 +23,10 @@ interface IMedia {
         uint8 royaltyPoints;
         address[] collaborators;
         uint8[] percentages;
+        Iutils.AskTypes askType;
+        uint256 _askAmount;
+        uint256 _reserveAmount;
+        address currencyAsked;
     }
 
     event MintToken(
@@ -64,7 +69,7 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function setBid(uint256 _tokenID, IMarket.Bid calldata bid) external payable returns (bool);
+    function setBid(uint256 _tokenID, Iutils.Bid calldata bid) external payable returns (bool);
 
     function removeBid(uint256 tokenId) external;
 
