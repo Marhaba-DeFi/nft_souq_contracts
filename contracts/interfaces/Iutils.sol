@@ -8,9 +8,9 @@ interface Iutils {
         FIXED
     }
     struct Bid {
-        // Amount of the currency being bid
+        // quantity of the tokens being bid
         uint256 _bidAmount;
-        // Amount of the tokens being bid
+        // amount of ERC20 token being used to bid
         uint256 _amount;
         // Address to the ERC20 token being used to bid
         address _currency;
@@ -20,6 +20,7 @@ interface Iutils {
         address _recipient;
     }
     struct Ask {
+        // min amount Asked
         uint256 _reserveAmount;
         // Amount of the currency being asked
         uint256 _askAmount;

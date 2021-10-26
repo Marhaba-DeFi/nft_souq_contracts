@@ -39,6 +39,8 @@ interface IMedia {
         uint8[] percentages
     );
 
+    event TokenCounter(uint256 _tokenCounter);
+
     event Transfer(uint256 _tokenID, address _owner, address _recipient, uint256 _amount);
 
     /**
@@ -74,45 +76,6 @@ interface IMedia {
     function removeBid(uint256 tokenId) external;
 
     /**
-     * @notice Remove the bid on a piece of media
-     */
-    // function removeBid(uint256 tokenId) external;
-
-    /**
-     * @notice This method is used to cancel bid for the Token with ID _tokenID
-     *
-     * @param _tokenID TokenID of the Token to cancel Bid for
-     *
-     * @return bool Transaction status
-     */
-    function cancelBid(uint256 _tokenID, address _owner) external returns (bool);
-
-    /**
-     * @notice This method is used to Reject bid for the Token with ID _tokenID and Bid of bidder with address _bidder
-     *
-     * @param _tokenID TokenID of the Token to Reject Bid for
-     * @param _bidder Address of the Bidder to Reject Bid of
-     *
-     * @return bool Transaction status
-     */
-    function rejectBid(uint256 _tokenID, address _bidder) external returns (bool);
-
-    /**
-     * @notice This method is used to Accept the bid for the Token with ID _tokenID
-     *
-     * @param _tokenID TokenID of the Token to Accept Bid For
-     * @param _bidder Address of the Bidder
-     * @param _amount Number of tokens to be transferred to the Bidder - in case of ERC1155 Token
-     *
-     * @return bool Transaction status
-     */
-    function acceptBid(
-        uint256 _tokenID,
-        address _bidder,
-        uint256 _amount
-    ) external returns (bool);
-
-    /**
      * @notice This method is used to Buy Token with ID _tokenID
      *
      * @param _tokenID TokenID of the Token to Buy
@@ -145,20 +108,4 @@ interface IMedia {
         address _recipient,
         uint256 _amount
     ) external returns (bool);
-
-    /**
-     * @notice This method is used to Redeem points
-     *
-     * @param _amount Amount Points to Redeem
-     *
-     * @return bool Transaction status
-     */
-    function redeemPoints(uint256 _amount) external returns (bool);
-
-    /**
-     * @notice This Method is used to get Redeemable Points of the caller
-     *
-     * @return uint Redeemable Points
-     */
-    function getUsersRedeemablePoints() external view returns (uint256);
 }

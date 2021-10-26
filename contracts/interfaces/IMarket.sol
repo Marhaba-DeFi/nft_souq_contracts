@@ -7,6 +7,7 @@ interface IMarket {
     struct Collaborators {
         address[] _collaborators;
         uint8[] _percentages;
+        bool _receiveCollabShare;
     }
 
     event BidCreated(uint256 indexed tokenID, Iutils.Bid bid);
@@ -41,7 +42,9 @@ interface IMarket {
     function setBid(
         uint256 _tokenID,
         address _bidder,
-        Iutils.Bid calldata bid
+        Iutils.Bid calldata bid,
+        address _owner,
+        address _creator
     ) external returns (bool);
 
     function removeBid(uint256 tokenId, address bidder) external;
@@ -49,50 +52,19 @@ interface IMarket {
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
     /**
-     * @notice this function is used to Accept Bid
-     *
-     * @param _tokenID TokenID of the Token
-     * @param _owner Address of the Owner of the Token
-     * @param _bidder Address of the Bidder
-     * @param _amount Bid Amount
-     *
-     * @return bool Transaction status
-     */
-    function acceptBid(
-        uint256 _tokenID,
-        address _owner,
-        address _bidder,
-        uint256 _amount
-    ) external returns (bool);
-
-    /**
-     * @notice This function is used to Cancel Bid
-     * @dev This methos is also used to Reject Bid
-     *
-     * @param _tokenID Token ID of the Token to cancel bid for
-     * @param _bidder Address of the Bidder to cancel bid of
-     *
-     * @return bool Transaction status
-     */
-    function cancelBid(
-        uint256 _tokenID,
-        address _bidder,
-        address _owner
-    ) external returns (bool);
-
-    /**
      * @notice This method is used to Divide the selling amount among Owner, Creator and Collaborators
      *
      * @param _tokenID Token ID of the Token sold
      * @param _owner Address of the Owner of the Token
-     * @param _amountToDivide Amount to divide -  Selling amount of the Token
-     *
+     * @param _amount Amount to divide -  Selling amount of the Token
+     * @param _creator Original Owner of contract
      * @return bool Transaction status
      */
     function divideMoney(
         uint256 _tokenID,
         address _owner,
-        uint256 _amountToDivide
+        uint256 _amount,
+        address _creator
     ) external returns (bool);
 
     /**
@@ -135,23 +107,4 @@ interface IMarket {
      * @return bool Transaction status
      */
     function addAdminCommission(uint256 _amount) external returns (bool);
-
-    /**
-     * @notice This method is used to Redeem Points
-     *
-     * @param _userAddress Address of the User to Redeem Points of
-     * @param _amount Amount of points to redeem
-     *
-     * @return bool Transaction status
-     */
-    function redeemPoints(address _userAddress, uint256 _amount) external returns (bool);
-
-    /**
-     * @notice This method is used to get User's Redeemable Points
-     *
-     * @param _userAddress Address of the User to get Points of
-     *
-     * @return uint Redeemable Points
-     */
-    function getUsersRedeemablePoints(address _userAddress) external view returns (uint256);
 }

@@ -12,9 +12,9 @@ async function main() {
   const erc721Name = 'NFT SOUQ'
   const erc721Symbol = 'NFTSOUQ'
   const adminAddress = '0x4281d6888D7a3A6736B0F596823810ffBd7D4808'
-  const adminCommissionPercentage = 1
+  const adminCommissionPercentage = '1'
 
-  let erc721 = await hre.ethers.getContractFactory('ERC721Create')
+  let erc721 = await hre.ethers.getContractFactory('ERC721Factory')
   erc721 = await erc721.deploy(erc721Name, erc721Symbol)
 
   await erc721.deployed()
@@ -22,10 +22,11 @@ async function main() {
   console.log('erc721 Token deployed at:', erc721.address)
 
   const erc1155Uri = ''
-
-  let erc1155 = await hre.ethers.getContractFactory('ERC1155Mintable')
+  const erc1155Name = 'NFT SOUQ'
+  const erc1155Symbol = 'NFTSOUQ'
+  let erc1155 = await hre.ethers.getContractFactory('ERC1155Factory')
   // erc1155 = await erc1155.deploy(erc1155Uri)
-  erc1155 = await erc1155.deploy()
+  erc1155 = await erc1155.deploy(erc1155Name, erc1155Symbol)
 
   await erc1155.deployed()
 

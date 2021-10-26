@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import './New_ERC1155Mintable.sol';
-import './IMedia.sol';
-import './IMarket.sol';
-import './ERC721MinterCreator.sol';
+import './ERC1155Factory.sol';
+import './interfaces/IMedia.sol';
+import './interfaces/IMarket.sol';
+import './ERC721Factory.sol';
+import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 contract Media is IMedia {
+    using SafeMath for uint256;
+
     address private _ERC1155Address;
     address private _marketAddress;
     address private _ERC721Address;
@@ -18,7 +21,7 @@ contract Media is IMedia {
     mapping(bytes32 => uint256) private _tokenHashToTokenID;
 
     // tokenID => Owner
-    mapping(uint256 => address) nftToOwners;
+    mapping(uint256 => address) public nftToOwners;
 
     // tokenID => Creator
     mapping(uint256 => address) nftToCreators;
@@ -50,10 +53,17 @@ contract Media is IMedia {
         _marketAddress = _market;
     }
 
-    event TokenCounter(uint256);
-
     function mintToken(MediaData memory data) external payable override returns (uint256) {
-        require(msg.value != 0, 'Media: No Commission Amount Provided!');
+        // require(msg.value != 0, 'Media: No Commission Amount Provided!');
+
+        require(data.collaborators.length == data.percentages.length, 'Media: Collaborators Info is not correct');
+
+        // verify sum of collaborators percentages needs to be less then or equals to 100
+        uint256 sumOfCollabRoyalty = 0;
+        for (uint256 index = 0; index < data.collaborators.length; index++) {
+            sumOfCollabRoyalty = sumOfCollabRoyalty.add(data.percentages[index]);
+        }
+        require(sumOfCollabRoyalty <= 100, 'Media: Sum of Collaborators Percentages are more then 100');
 
         // Calculate hash of the Token
         bytes32 tokenHash = keccak256(abi.encodePacked(data.uri, data.title, data.totalSupply));
@@ -66,10 +76,11 @@ contract Media is IMedia {
         // Store the hash
         _tokenHashToTokenID[tokenHash] = _tokenCounter;
 
+        // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (data.isFungible) {
-            ERC1155Mintable(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, _marketAddress);
+            ERC1155Factory(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, _marketAddress);
         } else {
-            ERC721Create(_ERC721Address).mint(_tokenCounter, msg.sender, _marketAddress);
+            ERC721Factory(_ERC721Address).mint(_tokenCounter, msg.sender, _marketAddress);
 
             nftToOwners[_tokenCounter] = msg.sender;
         }
@@ -89,25 +100,21 @@ contract Media is IMedia {
             newToken._currentOwner = address(0);
         }
 
-        IMarket.Collaborators memory newTokenColab = IMarket.Collaborators(data.collaborators, data.percentages);
+        IMarket.Collaborators memory newTokenColab = IMarket.Collaborators(data.collaborators, data.percentages, false);
 
         IMarket(_marketAddress).setCollaborators(_tokenCounter, newTokenColab);
         IMarket(_marketAddress).setRoyaltyPoints(_tokenCounter, data.royaltyPoints);
 
         tokenIDToToken[_tokenCounter] = newToken;
-        Iutils.Ask memory askDetail = Iutils.Ask(
+        Iutils.Ask memory _askDetail = Iutils.Ask(
             data._reserveAmount,
             data._askAmount,
             data.totalSupply,
             data.currencyAsked,
             data.askType
         );
-        IMarket(_marketAddress).setAsk(_tokenCounter, askDetail);
-        // TODO
-        // // Transfer the admin commission
-        // payable(_marketAddress).transfer(msg.value);
-        // // Set Admin Points
-        // IMarket(_marketAddress).addAdminCommission(msg.value);
+        IMarket(_marketAddress).setAsk(_tokenCounter, _askDetail);
+
         emit MintToken(
             data.isFungible,
             data.uri,
@@ -148,13 +155,12 @@ contract Media is IMedia {
         address _owner = tokenIDToToken[_tokenID]._currentOwner;
         require(msg.sender == bid._bidder, 'Media: Bidder must be msg sender');
         require(bid._bidder != address(0), 'Media: bidder cannot be 0 address');
-        require(msg.value != 0, "Media: You Can't Bid With 0 Amount!");
         require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
 
         MediaInfo memory token = tokenIDToToken[_tokenID];
         if (token._isFungible) {
             require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(_owner, _tokenID) >= bid._bidAmount,
+                ERC1155Factory(_ERC1155Address).balanceOf(_owner, _tokenID) >= bid._bidAmount,
                 'Media: The Owner Does Not Have That Much Tokens!'
             );
         } else {
@@ -162,9 +168,8 @@ contract Media is IMedia {
             require(nftToOwners[_tokenID] == _owner, 'Media: Invalid Owner Provided!');
         }
 
-        // payable(_marketAddress).transfer(msg.value);
-        // amount, tokenOwner
-        IMarket(_marketAddress).setBid(_tokenID, msg.sender, bid);
+        bool tokenSold = IMarket(_marketAddress).setBid(_tokenID, msg.sender, bid, _owner, nftToCreators[_tokenID]);
+        if (tokenSold) _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
         return true;
     }
 
@@ -178,48 +183,6 @@ contract Media is IMedia {
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);
-    }
-
-    function cancelBid(uint256 _tokenID, address _owner) external override whenTokenExist(_tokenID) returns (bool) {
-        IMarket(_marketAddress).cancelBid(_tokenID, msg.sender, _owner);
-        return true;
-    }
-
-    function rejectBid(uint256 _tokenID, address _bidder) external override whenTokenExist(_tokenID) returns (bool) {
-        MediaInfo memory token = tokenIDToToken[_tokenID];
-        if (token._isFungible) {
-            require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(msg.sender, _tokenID) >= 0,
-                'Media: Only Owner Can Reject Bid!'
-            );
-        } else {
-            require(nftToOwners[_tokenID] == msg.sender, 'Media: Only Owner Can Reject Bid!');
-        }
-        // require(msg.sender == nftToOwners[_tokenID], "Media: Only Owner Can Reject Bid!");
-        IMarket(_marketAddress).cancelBid(_tokenID, _bidder, msg.sender);
-        return true;
-    }
-
-    function acceptBid(
-        uint256 _tokenID,
-        address _bidder,
-        uint256 _amount
-    ) external override whenTokenExist(_tokenID) returns (bool) {
-        MediaInfo memory mediainfo = tokenIDToToken[_tokenID];
-        if (mediainfo._isFungible) {
-            require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(msg.sender, _tokenID) >= _amount,
-                "Media: You Don't have The Tokens!"
-            );
-        } else {
-            require(nftToOwners[_tokenID] == msg.sender, 'Media: Only Owner Can Accept Bid!');
-        }
-        IMarket(_marketAddress).acceptBid(_tokenID, msg.sender, _bidder, _amount);
-
-        _transfer(_tokenID, msg.sender, _bidder, _amount);
-
-        nftToOwners[_tokenID] = _bidder;
-        return true;
     }
 
     function setAdminAddress(address _adminAddress) external returns (bool) {
@@ -256,7 +219,7 @@ contract Media is IMedia {
         MediaInfo memory mediainfo = tokenIDToToken[_tokenID];
         if (mediainfo._isFungible) {
             require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(_owner, _tokenID) >= _amount,
+                ERC1155Factory(_ERC1155Address).balanceOf(_owner, _tokenID) >= _amount,
                 'Media: The Owner Does Not Have That Much Tokens!'
             );
         } else {
@@ -268,7 +231,7 @@ contract Media is IMedia {
 
         _transfer(_tokenID, _owner, _recipient, _amount);
 
-        IMarket(_marketAddress).divideMoney(_tokenID, _owner, msg.value);
+        // IMarket(_marketAddress).divideMoney(_tokenID, _owner, msg.value);
 
         return true;
     }
@@ -284,7 +247,7 @@ contract Media is IMedia {
         MediaInfo memory mediainfo = tokenIDToToken[_tokenID];
         if (mediainfo._isFungible) {
             require(
-                ERC1155Mintable(_ERC1155Address).balanceOf(msg.sender, _tokenID) >= _amount,
+                ERC1155Factory(_ERC1155Address).balanceOf(msg.sender, _tokenID) >= _amount,
                 "Media: You Don't have The Tokens!"
             );
         } else {
@@ -302,33 +265,13 @@ contract Media is IMedia {
         uint256 _amount
     ) internal {
         if (tokenIDToToken[_tokenID]._isFungible) {
-            ERC1155Mintable(_ERC1155Address).transferFrom(_owner, _recipient, _tokenID, _amount);
+            ERC1155Factory(_ERC1155Address).transferFrom(_owner, _recipient, _tokenID, _amount);
         } else {
-            ERC721Create(_ERC721Address).TransferFrom(_owner, _recipient, _tokenID);
+            ERC721Factory(_ERC721Address).transferFrom(_owner, _recipient, _tokenID);
             tokenIDToToken[_tokenID]._currentOwner = _recipient;
             nftToOwners[_tokenID] = _recipient;
         }
 
         emit Transfer(_tokenID, _owner, _recipient, _amount);
-    }
-
-    /**
-     * @notice This method is used to redeem points
-     *
-     * @param _amount Amount of points to redeem
-     *
-     * @return bool Transaction status
-     */
-    function redeemPoints(uint256 _amount) external override returns (bool) {
-        require(_amount > 0, 'Media: Cannot Redeem 0 Amount');
-        IMarket(_marketAddress).redeemPoints(msg.sender, _amount);
-        return true;
-    }
-
-    /**
-     * @dev See {IMedia}
-     */
-    function getUsersRedeemablePoints() external view override returns (uint256) {
-        return IMarket(_marketAddress).getUsersRedeemablePoints(msg.sender);
     }
 }

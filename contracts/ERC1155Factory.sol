@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import './ERC1155.sol';
 
-contract ERC1155Mintable is ERC1155 {
+contract ERC1155Factory is ERC1155 {
     address private _mediaContract;
 
     // tokenId => Owner
@@ -13,15 +13,20 @@ contract ERC1155Mintable is ERC1155 {
     // tokenID => Creator
     mapping(uint256 => address) nftToCreators;
 
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     */
+    constructor(string memory name_, string memory symbol_) ERC1155(name_, symbol_) {}
+
     modifier onlyMediaCaller() {
-        require(msg.sender == _mediaContract, 'ERC1155Mintable: Unauthorized Access!');
+        require(msg.sender == _mediaContract, 'ERC1155Factory: Unauthorized Access!');
         _;
     }
 
     function configureMedia(address _mediaContractAddress) external {
         // TODO: Only Owner Modifier
-        require(_mediaContractAddress != address(0), 'ERC1155Mintable: Invalid Media Contract Address!');
-        require(_mediaContract == address(0), 'ERC1155Mintable: Media Contract Alredy Configured!');
+        require(_mediaContractAddress != address(0), 'ERC1155Factory: Invalid Media Contract Address!');
+        require(_mediaContract == address(0), 'ERC1155Factory: Media Contract Alredy Configured!');
 
         _mediaContract = _mediaContractAddress;
     }
@@ -55,12 +60,12 @@ contract ERC1155Mintable is ERC1155 {
         uint256 _tokenID,
         uint256 _amount
     ) external onlyMediaCaller returns (bool) {
-        require(_to != address(0x0), 'ERC1155Mintable: _to must be non-zero.');
+        require(_to != address(0x0), 'ERC1155Factory: _to must be non-zero.');
 
-        // require(
-        //     _from == _msgSender || operatorApproval[_from][_msgSender] == true,
-        //     "ERC1155Mintable: Need operator approval for 3rd party transfers."
-        // );
+        require(
+            _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
+            'ERC1155Factory: Need operator approval for 3rd party transfers.'
+        );
 
         safeTransferFrom(_from, _to, _tokenID, _amount, '');
 
