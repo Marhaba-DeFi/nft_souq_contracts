@@ -54,16 +54,16 @@ contract Media is IMedia {
     }
 
     function mintToken(MediaData memory data) external payable override returns (uint256) {
-        // require(msg.value != 0, 'Media: No Commission Amount Provided!');
-
         require(data.collaborators.length == data.percentages.length, 'Media: Collaborators Info is not correct');
+
+        bool _isFungible = data.totalSupply > 1 ? true : false;
 
         // verify sum of collaborators percentages needs to be less then or equals to 100
         uint256 sumOfCollabRoyalty = 0;
         for (uint256 index = 0; index < data.collaborators.length; index++) {
             sumOfCollabRoyalty = sumOfCollabRoyalty.add(data.percentages[index]);
         }
-        require(sumOfCollabRoyalty <= 100, 'Media: Sum of Collaborators Percentages are more then 100');
+        require(sumOfCollabRoyalty <= 10, 'Media: Sum of Collaborators Percentages can be maximum 10');
 
         // Calculate hash of the Token
         bytes32 tokenHash = keccak256(abi.encodePacked(data.uri, data.title, data.totalSupply));
@@ -77,46 +77,42 @@ contract Media is IMedia {
         _tokenHashToTokenID[tokenHash] = _tokenCounter;
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
-        if (data.isFungible) {
-            ERC1155Factory(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, _marketAddress);
+        if (_isFungible) {
+            ERC1155Factory(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, address(this));
         } else {
-            ERC721Factory(_ERC721Address).mint(_tokenCounter, msg.sender, _marketAddress);
-
+            ERC721Factory(_ERC721Address).mint(_tokenCounter, msg.sender, address(this));
             nftToOwners[_tokenCounter] = msg.sender;
         }
 
         nftToCreators[_tokenCounter] = msg.sender;
 
-        MediaInfo memory newToken = MediaInfo(
-            _tokenCounter,
-            msg.sender,
-            msg.sender,
-            data.uri,
-            data.title,
-            data.isFungible
+        MediaInfo memory newToken = MediaInfo(_tokenCounter, msg.sender, msg.sender, data.uri, data.title, _isFungible);
+        // Hold token info
+        tokenIDToToken[_tokenCounter] = newToken;
+
+        // add collabs, percentages and sum of percentage
+        IMarket.Collaborators memory newTokenColab = IMarket.Collaborators(
+            data.collaborators,
+            data.percentages,
+            sumOfCollabRoyalty == 0 ? true : false
         );
-
-        if (data.isFungible) {
-            newToken._currentOwner = address(0);
-        }
-
-        IMarket.Collaborators memory newTokenColab = IMarket.Collaborators(data.collaborators, data.percentages, false);
-
+        // route to market contract
         IMarket(_marketAddress).setCollaborators(_tokenCounter, newTokenColab);
         IMarket(_marketAddress).setRoyaltyPoints(_tokenCounter, data.royaltyPoints);
 
-        tokenIDToToken[_tokenCounter] = newToken;
-        Iutils.Ask memory _askDetail = Iutils.Ask(
+        // Put token on sale asa token got minted
+        Iutils.Ask memory _ask = Iutils.Ask(
             data._reserveAmount,
             data._askAmount,
             data.totalSupply,
             data.currencyAsked,
             data.askType
         );
-        IMarket(_marketAddress).setAsk(_tokenCounter, _askDetail);
+        IMarket(_marketAddress).setAsk(_tokenCounter, _ask);
 
+        // fire events
         emit MintToken(
-            data.isFungible,
+            _isFungible,
             data.uri,
             data.title,
             data.totalSupply,

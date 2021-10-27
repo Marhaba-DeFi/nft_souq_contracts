@@ -16,7 +16,6 @@ interface IMedia {
     }
 
     struct MediaData {
-        bool isFungible;
         string uri;
         string title;
         uint256 totalSupply;

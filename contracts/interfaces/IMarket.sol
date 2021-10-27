@@ -56,6 +56,7 @@ interface IMarket {
      *
      * @param _tokenID Token ID of the Token sold
      * @param _owner Address of the Owner of the Token
+     * @param _bidder Address of the _bidder of the Token
      * @param _amount Amount to divide -  Selling amount of the Token
      * @param _creator Original Owner of contract
      * @return bool Transaction status
@@ -63,6 +64,7 @@ interface IMarket {
     function divideMoney(
         uint256 _tokenID,
         address _owner,
+        address _bidder,
         uint256 _amount,
         address _creator
     ) external returns (bool);

@@ -28,7 +28,7 @@ contract Market is IMarket {
     mapping(uint256 => mapping(address => Iutils.Bid)) private _tokenBidders;
 
     // Mapping from token to the current ask for the token
-    mapping(uint256 => Iutils.Ask) public _tokenAsks;
+    mapping(uint256 => Iutils.Ask) private _tokenAsks;
 
     // userAddress => its Redeem points
     mapping(address => uint256) private userRedeemPoints;
@@ -50,6 +50,10 @@ contract Market is IMarket {
         _;
     }
 
+    uint256 constant EXPO = 1e18;
+
+    uint256 constant BASE = 100 * EXPO;
+
     // New Code -----------
 
     struct NewBid {
@@ -62,12 +66,6 @@ contract Market is IMarket {
 
     // tokenID => owner => all bidders
     mapping(uint256 => mapping(address => address[])) private newTokenBidders;
-
-    // -------------------
-
-    fallback() external {}
-
-    receive() external payable {}
 
     /**
      * @notice This method is used to Set Media Contract's Address
@@ -118,10 +116,10 @@ contract Market is IMarket {
         require(_tokenAsks[_tokenID]._currency != address(0), 'Token is not open for Sale');
         require(_bid._amount >= _tokenAsks[_tokenID]._reserveAmount, 'Bid Cannot be placed below the min Amount');
         require(_bid._currency == _tokenAsks[_tokenID]._currency, 'Incorrect payment Method');
-        require(
-            IERC20(_bid._currency).allowance(_bid._bidder, address(this)) >= _bid._amount,
-            'Please Approve Tokens Before You Bid'
-        );
+
+        IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
+
+        require(token.allowance(_bid._bidder, address(this)) >= _bid._amount, 'Please Approve Tokens Before You Bid');
 
         // fetch existing bid, if there is any
         Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
@@ -131,7 +129,6 @@ contract Market is IMarket {
             removeBid(_tokenID, _bid._bidder);
         }
 
-        IERC20 token = IERC20(_bid._currency);
         // We must check the balance that was actually transferred to the market,
         // as some tokens impose a transfer fee and would not actually transfer the
         // full amount to the market, resulting in locked funds for refunds & bid acceptance
@@ -157,7 +154,7 @@ contract Market is IMarket {
             _bid._amount >= _tokenAsks[_tokenID]._askAmount
         ) {
             // Finalize Exchange
-            divideMoney(_tokenID, _owner, _bid._amount, _creator);
+            divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
         }
         return true;
     }
@@ -222,61 +219,67 @@ contract Market is IMarket {
         return _adminCommissionPercentage;
     }
 
-    // TODO: To be removed
-    function getMarketBalance() external view returns (uint256) {
-        return payable(this).balance;
-    }
-
     /**
      * @dev See {IMarket}
      */
     function divideMoney(
         uint256 _tokenID,
         address _owner,
-        uint256 _amount,
+        address _bidder,
+        uint256 _amountToDistribute,
         address _creator
     ) public override returns (bool) {
-        require(_amount > 0, "Market: Amount To Divide Can't Be 0!");
+        require(_amountToDistribute > 0, "Market: Amount To Divide Can't Be 0!");
 
         Iutils.Ask memory _ask = _tokenAsks[_tokenID];
         IERC20 token = IERC20(_ask._currency);
 
+        // first send admin cut
+        uint256 adminCommission = _amountToDistribute.mul(_adminCommissionPercentage * EXPO).div(BASE);
+        uint256 _amount = _amountToDistribute - adminCommission;
+
+        token.transfer(_adminAddress, adminCommission);
+
         // fetch owners added royality points
-        uint256 royaltyPoints = _amount.mul(tokenRoyaltyPercentage[_tokenID]).div(100);
+        uint256 collabPercentage = tokenRoyaltyPercentage[_tokenID];
+        uint256 royaltyPoints = _amount.mul(collabPercentage * EXPO).div(BASE);
 
         // royaltyPoints represents amount going to divide among Collaborators
-        if (royaltyPoints == 0) {
-            // send payment to current owner if creator does not set any royalty
-            token.safeTransferFrom(address(this), _owner, _amount.sub(royaltyPoints));
-            return true;
-        }
+        token.transfer(_owner, _amount.sub(royaltyPoints));
 
         // Collaboratoes will only receive share when creator have set some royalty and sale is occuring for the first time
         Collaborators memory tokenColab = tokenCollaborators[_tokenID];
         uint256 totalAmountTransferred = 0;
 
         if (royaltyPoints != 0 && tokenColab._receiveCollabShare == true) {
-            token.safeTransferFrom(address(this), _creator, royaltyPoints);
-            token.safeTransferFrom(address(this), _owner, _amount.sub(royaltyPoints));
+            token.transfer(_creator, royaltyPoints);
             return true;
         }
 
         if (tokenColab._receiveCollabShare == false) {
             for (uint256 index = 0; index < tokenColab._collaborators.length; index++) {
                 // Individual Collaborator's share Amount
-                uint256 amountToTransfer = royaltyPoints.mul(tokenColab._percentages[index]).div(100);
+
+                uint256 amountToTransfer = royaltyPoints.mul(tokenColab._percentages[index] * EXPO).div(BASE);
                 // transfer Individual Collaborator's share Amount
-                token.safeTransferFrom(address(this), tokenColab._collaborators[index], _amount);
+                token.transfer(tokenColab._collaborators[index], amountToTransfer);
                 // Total Amount Transferred
                 totalAmountTransferred = totalAmountTransferred.add(amountToTransfer);
             }
+            // after transfering to collabs, remaining would be sent to creator
             // update collaborators got the shares
             tokenColab._receiveCollabShare = true;
         }
 
+        token.transfer(_creator, royaltyPoints.sub(totalAmountTransferred));
+        totalAmountTransferred = totalAmountTransferred.add(royaltyPoints.sub(totalAmountTransferred));
+
         totalAmountTransferred = totalAmountTransferred.add(_amount.sub(royaltyPoints));
         // Check for Transfer amount error
         require(totalAmountTransferred == _amount, 'Market: Amount Transfer Value Error!');
+        delete _tokenBidders[_tokenID][_bidder];
+        delete _tokenAsks[_tokenID];
+
         return true;
     }
 

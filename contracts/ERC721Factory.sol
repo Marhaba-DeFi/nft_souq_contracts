@@ -37,12 +37,12 @@ contract ERC721Factory is ERC721 {
     function mint(
         uint256 _tokenID,
         address _creator,
-        address _mediaAddress
+        address _marketAddress
     ) external onlyMediaCaller {
         nftToOwners[_tokenID] = _creator;
         nftToCreators[_tokenID] = _creator;
         _safeMint(_creator, _tokenID);
-        _approve(_mediaAddress, _tokenID);
+        _approve(_marketAddress, _tokenID);
     }
 
     /*

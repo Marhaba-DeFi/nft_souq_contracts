@@ -62,10 +62,10 @@ contract ERC1155Factory is ERC1155 {
     ) external onlyMediaCaller returns (bool) {
         require(_to != address(0x0), 'ERC1155Factory: _to must be non-zero.');
 
-        require(
-            _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
-            'ERC1155Factory: Need operator approval for 3rd party transfers.'
-        );
+        // require(
+        //     _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
+        //     'ERC1155Factory: Need operator approval for 3rd party transfers.'
+        // );
 
         safeTransferFrom(_from, _to, _tokenID, _amount, '');
 
