@@ -145,6 +145,7 @@ describe('Media Contract', async function () {
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
       const [_tokenCounter] = event.args
       expect(_tokenCounter.toString()).to.equals('1')
+      console.log('token minted with id ', _tokenCounter.toString())
 
       // approve tokens before making request
       await this.marhabaToken.connect(this.bob).approve(this.market.address, convertToBigNumber(1000))

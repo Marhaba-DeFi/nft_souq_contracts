@@ -8,6 +8,7 @@ import './interfaces/Iutils.sol';
 import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 contract Market is IMarket {
     using SafeMath for uint256;
@@ -135,6 +136,11 @@ contract Market is IMarket {
         uint256 beforeBalance = token.balanceOf(address(this));
         token.safeTransferFrom(_bidder, address(this), _bid._amount);
         uint256 afterBalance = token.balanceOf(address(this));
+        require(
+            beforeBalance.add(_bid._amount) == afterBalance,
+            'Token transfer call did not transfer expected amount'
+        );
+
         // Set New Bid for the Token
         _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
             _bid._bidAmount,
@@ -164,10 +170,9 @@ contract Market is IMarket {
     //  * bid shares, this reverts.
     //  */
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override onlyMediaCaller {
-        // require(
-        //     (ask.askType != Iutils.AskTypes.FIXED) && (ask._reserveAmount == ask._amount),
-        //     'Amount observe and Asked Need to be same for Fixed Sale'
-        // );
+        if (ask.askType == Iutils.AskTypes.FIXED) {
+            require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
+        }
         _tokenAsks[_tokenID] = ask;
         emit AskCreated(_tokenID, ask);
     }
