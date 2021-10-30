@@ -78,9 +78,9 @@ contract Media is IMedia {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            ERC1155Factory(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply, address(this));
+            ERC1155Factory(_ERC1155Address).mint(_tokenCounter, msg.sender, data.totalSupply);
         } else {
-            ERC721Factory(_ERC721Address).mint(_tokenCounter, msg.sender, address(this));
+            ERC721Factory(_ERC721Address).mint(_tokenCounter, msg.sender);
             nftToOwners[_tokenCounter] = msg.sender;
         }
 
@@ -173,9 +173,9 @@ contract Media is IMedia {
      * @notice see IMedia
      */
     // TODO _isApprovedOrOwner
-    // function setAsk(uint256 _tokenID, IMarket.Ask memory ask) public override {
-    //     IMarket(_marketAddress).setAsk(_tokenID, ask);
-    // }
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
+        IMarket(_marketAddress).setAsk(_tokenID, ask);
+    }
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);
@@ -264,10 +264,9 @@ contract Media is IMedia {
             ERC1155Factory(_ERC1155Address).transferFrom(_owner, _recipient, _tokenID, _amount);
         } else {
             ERC721Factory(_ERC721Address).transferFrom(_owner, _recipient, _tokenID);
-            tokenIDToToken[_tokenID]._currentOwner = _recipient;
             nftToOwners[_tokenID] = _recipient;
         }
-
+        tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
     }
 }

@@ -34,13 +34,12 @@ contract ERC1155Factory is ERC1155 {
     function mint(
         uint256 _tokenID,
         address _owner,
-        uint256 _totalSupply,
-        address _marketAddress
+        uint256 _totalSupply
     ) external onlyMediaCaller {
         nftToOwners[_tokenID] = _owner;
         nftToCreators[_tokenID] = _owner;
         _mint(_owner, _tokenID, _totalSupply, '');
-        setApprovalForAll(_marketAddress, true);
+        setApprovalForAll(_mediaContract, true);
     }
 
     /**
@@ -68,7 +67,7 @@ contract ERC1155Factory is ERC1155 {
         // );
 
         safeTransferFrom(_from, _to, _tokenID, _amount, '');
-
+        setApprovalForAll(_mediaContract, true);
         return true;
     }
 }

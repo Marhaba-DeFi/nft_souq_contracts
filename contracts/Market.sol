@@ -114,13 +114,26 @@ contract Market is IMarket {
         require(!(_bid._bidAmount < 0), "Market: You Can't Bid For Negative Tokens");
         require(_bid._currency != address(0), 'Market: bid currency cannot be 0 address');
         require(_bid._recipient != address(0), 'Market: bid recipient cannot be 0 address');
-        require(_tokenAsks[_tokenID]._currency != address(0), 'Token is not open for Sale');
-        require(_bid._amount >= _tokenAsks[_tokenID]._reserveAmount, 'Bid Cannot be placed below the min Amount');
-        require(_bid._currency == _tokenAsks[_tokenID]._currency, 'Incorrect payment Method');
+        require(_tokenAsks[_tokenID]._currency != address(0), 'Market: Token is not open for Sale');
+        require(
+            _bid._amount >= _tokenAsks[_tokenID]._reserveAmount,
+            'Market: Bid Cannot be placed below the min Amount'
+        );
+        require(_bid._currency == _tokenAsks[_tokenID]._currency, 'Market: Incorrect payment Method');
+
+        if (_tokenAsks[_tokenID].askType == Iutils.AskTypes.FIXED) {
+            require(
+                _bid._amount <= _tokenAsks[_tokenID]._askAmount,
+                'Market: You Cannot Pay more then Max Asked Amount '
+            );
+        }
 
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
-        require(token.allowance(_bid._bidder, address(this)) >= _bid._amount, 'Please Approve Tokens Before You Bid');
+        require(
+            token.allowance(_bid._bidder, address(this)) >= _bid._amount,
+            'Market: Please Approve Tokens Before You Bid'
+        );
 
         // fetch existing bid, if there is any
         Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
@@ -253,13 +266,8 @@ contract Market is IMarket {
         token.transfer(_owner, _amount.sub(royaltyPoints));
 
         // Collaboratoes will only receive share when creator have set some royalty and sale is occuring for the first time
-        Collaborators memory tokenColab = tokenCollaborators[_tokenID];
+        Collaborators storage tokenColab = tokenCollaborators[_tokenID];
         uint256 totalAmountTransferred = 0;
-
-        if (royaltyPoints != 0 && tokenColab._receiveCollabShare == true) {
-            token.transfer(_creator, royaltyPoints);
-            return true;
-        }
 
         if (tokenColab._receiveCollabShare == false) {
             for (uint256 index = 0; index < tokenColab._collaborators.length; index++) {

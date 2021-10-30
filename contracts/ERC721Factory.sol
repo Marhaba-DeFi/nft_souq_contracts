@@ -34,15 +34,11 @@ contract ERC721Factory is ERC721 {
     @dev 'msg.sender' will pass the '_tokenID' and 
      the respective NFT details.
     */
-    function mint(
-        uint256 _tokenID,
-        address _creator,
-        address _marketAddress
-    ) external onlyMediaCaller {
+    function mint(uint256 _tokenID, address _creator) external onlyMediaCaller {
         nftToOwners[_tokenID] = _creator;
         nftToCreators[_tokenID] = _creator;
         _safeMint(_creator, _tokenID);
-        _approve(_marketAddress, _tokenID);
+        _approve(_mediaContract, _tokenID);
     }
 
     /*
@@ -76,7 +72,7 @@ contract ERC721Factory is ERC721 {
         );
 
         safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called
-
+        _approve(_mediaContract, _tokenID);
         nftToOwners[_tokenID] = _recipient;
     }
 }

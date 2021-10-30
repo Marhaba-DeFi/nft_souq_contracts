@@ -27,16 +27,6 @@ describe('Media Contract', async function () {
     this.alice = this.signers[2]
     this.bob = this.signers[3]
     this.carol = this.signers[4]
-    this.ipfsHash = 'QmTw4wfzNam6Rom59uhPjoxbarXi4oJrfzKp8Xr3nfWsr3'
-    this.title = 'My Langs NFT'
-    this.totalSupply = 1
-    this.royaltyPoints = 5
-    this.collabsAddresses = ['0x0000000000000000000000000000000000000000']
-    this.collabsPercentages = [0]
-    this.auctionType = 1 // askType  AUCTION - 0 , FIXED - 1
-    this.askAmount = convertToBigNumber(5)
-    this.reserveAmount = convertToBigNumber(5)
-    console.log(this.deployer.address, this.admin.address, this.alice.address, this.bob.address)
   })
 
   // `beforeEach` will run before each test, re-deploying the contract every
@@ -90,6 +80,21 @@ describe('Media Contract', async function () {
   })
   context('With ERC/LP token added to the field', function () {
     beforeEach(async function () {
+      // variables for maintaining Bid
+      this.ipfsHash = 'QmTw4wfzNam6Rom59uhPjoxbarXi4oJrfzKp8Xr3nfWsr3'
+      this.title = 'My Langs NFT'
+      this.totalSupply = 1
+      this.royaltyPoints = 5
+      this.collabsAddresses = ['0x0000000000000000000000000000000000000000']
+      this.collabsPercentages = [0]
+      this.auctionType = 1 // askType  AUCTION - 0 , FIXED - 1
+      this.askAmount = convertToBigNumber(5)
+      this.reserveAmount = convertToBigNumber(5)
+      // variables for maintaining asks
+      this.askReserveAmount = 4
+      this.askMaxAmount = 4
+      console.log(this.deployer.address, this.admin.address, this.alice.address, this.bob.address)
+
       // * Math.pow(10, 18)
       const totalSupply = 10000000000
       this.marhabaToken = await this.ERC20Mock.deploy('Marhaba', 'MRHB', convertToBigNumber(totalSupply))
@@ -234,8 +239,8 @@ describe('Media Contract', async function () {
     })
 
     it('Buy 1155 NFT without collabs', async function () {
-      this.askAmount = 3
-      this.reserveAmount = 3
+      this.askAmount = convertToBigNumber(3)
+      this.reserveAmount = convertToBigNumber(3)
       this.totalSupply = 5
       this.ipfsHash = 'generaterandom234234444'
       let mintTx = await this.media.connect(this.alice).mintToken([
@@ -280,11 +285,180 @@ describe('Media Contract', async function () {
       console.log('adminBalance ', adminBalance)
 
       expect(_tokenCounter.toString()).to.equals('1')
+      expect(aliceBalance).to.equals('1002.94')
+      expect(bobBalance).to.equals('997.0')
+      expect(collabsBalance).to.equals('0.0')
+      expect(adminBalance).to.equals('0.06')
+      expect(parseFloat(aliceBalance) + parseFloat(bobBalance)).to.equals(1999.94)
+    })
+    it('Should Fail Again Buy, Sold 1155 NFT without collabs', async function () {
+      this.askAmount = convertToBigNumber(3)
+      this.reserveAmount = convertToBigNumber(3)
+      this.totalSupply = 5
+      this.ipfsHash = 'generaterandom234234444'
+      let mintTx = await this.media.connect(this.alice).mintToken([
+        this.ipfsHash, // IPFS hash
+        this.title, // title
+        this.totalSupply, // totalSupply
+        this.royaltyPoints, // royaltyPoints
+        this.collabsAddresses, // collaborators
+        this.collabsPercentages, // percentages
+        this.auctionType, // askType  AUCTION - 0 , FIXED - 1
+        this.askAmount, // _askAmount
+        this.reserveAmount, // _reserveAmount
+        this.marhabaToken.address, // currencyAsked
+      ])
+      mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
+      const event = mintTx.events.find((event) => event.event === 'TokenCounter')
+      const [_tokenCounter] = event.args
+      expect(_tokenCounter.toString()).to.equals('1')
+
+      // approve tokens before making request
+      await this.marhabaToken.connect(this.bob).approve(this.market.address, convertToBigNumber(1000))
+
+      await this.media.connect(this.bob).setBid(
+        _tokenCounter, // _tokenCounter.toString(),
+        [
+          2, // quantity of the tokens being bid
+          convertToBigNumber(3), // amount of ERC20 token being used to bid
+          this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+          this.bob.address, // bidder address
+          this.bob.address, // recipient address
+        ],
+        { from: this.bob.address }
+      )
+      const aliceBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.alice.address))
+      const bobBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.bob.address))
+      const collabsBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.collabsAddresses[0]))
+      const adminBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.admin.address))
+
+      console.log('aliceBalance ', aliceBalance)
+      console.log('bobBalance ', bobBalance)
+      console.log('collabsBalance ', collabsBalance)
+      console.log('adminBalance ', adminBalance)
+
+      expect(_tokenCounter.toString()).to.equals('1')
+      expect(aliceBalance).to.equals('1002.94')
+      expect(bobBalance).to.equals('997.0')
+      expect(collabsBalance).to.equals('0.0')
+      expect(adminBalance).to.equals('0.06')
+      expect(parseFloat(aliceBalance) + parseFloat(bobBalance)).to.equals(1999.94)
+      // Bought again request
+
+      await expect(
+        this.media.connect(this.alice).setBid(
+          _tokenCounter, // _tokenCounter.toString(),
+          [
+            2, // quantity of the tokens being bid
+            convertToBigNumber(3), // amount of ERC20 token being used to bid
+            this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+            this.alice.address, // bidder address
+            this.alice.address, // recipient address
+          ],
+          { from: this.alice.address }
+        )
+      ).to.be.revertedWith('Token is not open for Sale')
+    })
+    it('Should Pass Again Buy, Sold 1155 NFT without collabs', async function () {
+      this.collabsAddresses = ['0x5CB88D82E01C6C6FeB89fA5021706b449ad0b303']
+      this.collabsPercentages = [10]
+
+      this.askAmount = convertToBigNumber(3)
+      this.reserveAmount = convertToBigNumber(3)
+      this.totalSupply = 5
+      this.ipfsHash = 'generaterandom234234444'
+      let mintTx = await this.media.connect(this.alice).mintToken([
+        this.ipfsHash, // IPFS hash
+        this.title, // title
+        this.totalSupply, // totalSupply
+        this.royaltyPoints, // royaltyPoints
+        this.collabsAddresses, // collaborators
+        this.collabsPercentages, // percentages
+        this.auctionType, // askType  AUCTION - 0 , FIXED - 1
+        this.askAmount, // _askAmount
+        this.reserveAmount, // _reserveAmount
+        this.marhabaToken.address, // currencyAsked
+      ])
+      mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
+      const event = mintTx.events.find((event) => event.event === 'TokenCounter')
+      const [_tokenCounter] = event.args
+      expect(_tokenCounter.toString()).to.equals('1')
+
+      // approve tokens before making request
+      await this.marhabaToken.connect(this.bob).approve(this.market.address, convertToBigNumber(1000))
+
+      // console.log('ask detail before first bid ', await this.market._tokenAsks(_tokenCounter))
+      await this.media.connect(this.bob).setBid(
+        _tokenCounter, // _tokenCounter.toString(),
+        [
+          this.totalSupply, // quantity of the tokens being bid
+          convertToBigNumber(3), // amount of ERC20 token being used to bid
+          this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+          this.bob.address, // bidder address
+          this.bob.address, // recipient address
+        ],
+        { from: this.bob.address }
+      )
+      // console.log('ask detail after first bid ', await this.market._tokenAsks(_tokenCounter))
+      // console.log('tokenCollaborators after bid ', await this.market.tokenCollaborators(_tokenCounter))
+
+      let aliceBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.alice.address))
+      let bobBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.bob.address))
+      let collabsBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.collabsAddresses[0]))
+      let adminBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.admin.address))
+
+      // console.log('aliceBalance ', aliceBalance)
+      // console.log('bobBalance ', bobBalance)
+      // console.log('collabsBalance ', collabsBalance)
+      // console.log('adminBalance ', adminBalance)
+
+      expect(_tokenCounter.toString()).to.equals('1')
       expect(aliceBalance).to.equals('1002.9253')
       expect(bobBalance).to.equals('997.0')
       expect(collabsBalance).to.equals('0.0147')
       expect(adminBalance).to.equals('0.06')
       expect(parseFloat(aliceBalance) + parseFloat(bobBalance)).to.equals(1999.9252999999999)
+      // Bought again request
+
+      await this.marhabaToken.connect(this.alice).approve(this.market.address, convertToBigNumber(1000))
+      this.askAmount = convertToBigNumber(100)
+      this.reserveAmount = convertToBigNumber(100)
+
+      console.log('ask placed')
+      await this.media
+        .connect(this.bob)
+        .setAsk(
+          _tokenCounter,
+          [this.askAmount, this.reserveAmount, this.totalSupply, this.marhabaToken.address, this.auctionType],
+          {
+            from: this.bob.address,
+          }
+        )
+      // console.log('ask detail after first ask ', await this.market._tokenAsks(_tokenCounter))
+
+      await this.media.connect(this.alice).setBid(
+        _tokenCounter, // _tokenCounter.toString(),
+        [
+          this.totalSupply, // quantity of the tokens being bid
+          convertToBigNumber(100), // amount of ERC20 token being used to bid
+          this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+          this.alice.address, // bidder address
+          this.alice.address, // recipient address
+        ],
+        { from: this.alice.address }
+      )
+
+      aliceBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.alice.address))
+      bobBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.bob.address))
+      collabsBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.collabsAddresses[0]))
+      adminBalance = convertFromBigNumber(await this.marhabaToken.balanceOf(this.admin.address))
+
+      console.log(aliceBalance, bobBalance, collabsBalance, adminBalance)
+      expect(aliceBalance).to.equals('907.8253')
+      expect(bobBalance).to.equals('1090.1')
+      expect(collabsBalance).to.equals('0.0147')
+      expect(adminBalance).to.equals('2.06')
+      expect(parseFloat(aliceBalance) + parseFloat(bobBalance) + parseFloat(adminBalance)).to.equals(1999.9852999999998)
     })
   })
 })

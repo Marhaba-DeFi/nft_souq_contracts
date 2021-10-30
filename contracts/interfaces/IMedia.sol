@@ -52,7 +52,7 @@ interface IMedia {
     /**
      * @notice Set the ask on a piece of media
      */
-    // function setAsk(uint256 tokenId, IMarket.Ask calldata ask) external;
+    function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
     /**
      * @notice This method is used to get details of the Token with ID _tokenID
