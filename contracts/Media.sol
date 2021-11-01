@@ -106,7 +106,11 @@ contract Media is IMedia {
             data._askAmount,
             data.totalSupply,
             data.currencyAsked,
-            data.askType
+            data.askType,
+            0,
+            0,
+            address(0),
+            data._duation
         );
         IMarket(_marketAddress).setAsk(_tokenCounter, _ask);
 
@@ -172,13 +176,30 @@ contract Media is IMedia {
     /**
      * @notice see IMedia
      */
-    // TODO _isApprovedOrOwner
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
         IMarket(_marketAddress).setAsk(_tokenID, ask);
     }
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);
+    }
+
+    function endAuction(uint256 _tokenID) external override whenTokenExist(_tokenID) returns (bool) {
+        // TODO check either token is of type auction or not
+        address _owner = tokenIDToToken[_tokenID]._currentOwner;
+        address _creator = nftToCreators[_tokenID];
+        IMarket(_marketAddress).endAuction(_tokenID, _owner, _creator);
+
+        return true;
+    }
+
+    function cancelAuction(uint256 _tokenID) external override returns (bool) {
+        require(
+            tokenIDToToken[_tokenID]._currentOwner == msg.sender,
+            'Can only be called by auction creator or curator'
+        );
+        IMarket(_marketAddress).cancelAuction(_tokenID);
+        return true;
     }
 
     function setAdminAddress(address _adminAddress) external returns (bool) {
@@ -199,36 +220,6 @@ contract Media is IMedia {
         require(_newCommissionPercentage <= 100, 'Media: Commission Percentage Must Be Less Than 100!');
 
         IMarket(_marketAddress).setCommissionPercentage(_newCommissionPercentage);
-        return true;
-    }
-
-    function buyNow(
-        uint256 _tokenID,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    ) external payable override whenTokenExist(_tokenID) returns (bool) {
-        require(msg.value != 0, "Media: You Can't Buy Token With 0 Amount!");
-        require(_owner != _recipient, "Media: You Can't Buy Your Token!");
-        require(tokenIDToToken[_tokenID]._currentOwner != _recipient, "Media: The Token Owner Can't Buy!");
-
-        MediaInfo memory mediainfo = tokenIDToToken[_tokenID];
-        if (mediainfo._isFungible) {
-            require(
-                ERC1155Factory(_ERC1155Address).balanceOf(_owner, _tokenID) >= _amount,
-                'Media: The Owner Does Not Have That Much Tokens!'
-            );
-        } else {
-            require(_amount == 1, 'Media: Only 1 Token Is Available');
-            require(nftToOwners[_tokenID] == _owner, 'Media: Invalid Owner Provided!');
-        }
-
-        payable(_marketAddress).transfer(msg.value);
-
-        _transfer(_tokenID, _owner, _recipient, _amount);
-
-        // IMarket(_marketAddress).divideMoney(_tokenID, _owner, msg.value);
-
         return true;
     }
 

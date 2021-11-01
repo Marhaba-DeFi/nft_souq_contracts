@@ -26,6 +26,7 @@ interface IMedia {
         uint256 _askAmount;
         uint256 _reserveAmount;
         address currencyAsked;
+        uint256 _duation;
     }
 
     event MintToken(
@@ -54,6 +55,10 @@ interface IMedia {
      */
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
+    function endAuction(uint256 _tokenID) external returns (bool);
+
+    function cancelAuction(uint256 _tokenID) external returns (bool);
+
     /**
      * @notice This method is used to get details of the Token with ID _tokenID
      *
@@ -73,23 +78,6 @@ interface IMedia {
     function setBid(uint256 _tokenID, Iutils.Bid calldata bid) external payable returns (bool);
 
     function removeBid(uint256 tokenId) external;
-
-    /**
-     * @notice This method is used to Buy Token with ID _tokenID
-     *
-     * @param _tokenID TokenID of the Token to Buy
-     * @param _owner Address of the Owner of the Token
-     * @param _recipient Address of the recipient
-     * @param _amount Number of tokens to be transferred to the recipient - in case of ERC1155 Token
-     *
-     * @return bool Transaction status
-     */
-    function buyNow(
-        uint256 _tokenID,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    ) external payable returns (bool);
 
     /**
      * @notice This method is used to Transfer Token

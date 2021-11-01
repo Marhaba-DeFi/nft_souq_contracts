@@ -93,6 +93,7 @@ describe('Media Contract', async function () {
       // variables for maintaining asks
       this.askReserveAmount = 4
       this.askMaxAmount = 4
+      this.duration = parseInt(Date.now() + 86400)
       console.log(this.deployer.address, this.admin.address, this.alice.address, this.bob.address)
 
       // * Math.pow(10, 18)
@@ -127,6 +128,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       tx = await tx.wait() // 0ms, as tx is already confirmed
       const event = tx.events.find((event) => event.event === 'TokenCounter')
@@ -145,6 +147,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
@@ -200,6 +203,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
@@ -254,6 +258,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
@@ -307,6 +312,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
@@ -378,6 +384,7 @@ describe('Media Contract', async function () {
         this.askAmount, // _askAmount
         this.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
+        this.duration, // Auction End Time
       ])
       mintTx = await mintTx.wait() // 0ms, as tx is already confirmed
       const event = mintTx.events.find((event) => event.event === 'TokenCounter')
@@ -429,7 +436,17 @@ describe('Media Contract', async function () {
         .connect(this.bob)
         .setAsk(
           _tokenCounter,
-          [this.askAmount, this.reserveAmount, this.totalSupply, this.marhabaToken.address, this.auctionType],
+          [
+            this.askAmount,
+            this.reserveAmount,
+            this.totalSupply,
+            this.marhabaToken.address,
+            this.auctionType,
+            0,
+            0,
+            this.collabsAddresses[0],
+            0,
+          ],
           {
             from: this.bob.address,
           }

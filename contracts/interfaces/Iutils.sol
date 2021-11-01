@@ -30,5 +30,14 @@ interface Iutils {
         address _currency;
         // Type of ask
         AskTypes askType;
+        // following attribute used for managing auction ask
+        // The length of time to run the auction for, after the first bid was made
+        uint256 _duration;
+        // The time of the first bid
+        uint256 _firstBidTime;
+        // The address of the current highest bid
+        address _bidder;
+        // The current highest bid amount
+        uint256 _highestBid;
     }
 }

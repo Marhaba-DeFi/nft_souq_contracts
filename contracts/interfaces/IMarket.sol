@@ -51,6 +51,14 @@ interface IMarket {
 
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
+    function endAuction(
+        uint256 _tokenID,
+        address _owner,
+        address _creator
+    ) external returns (bool);
+
+    function cancelAuction(uint256 _tokenID) external;
+
     /**
      * @notice This method is used to Divide the selling amount among Owner, Creator and Collaborators
      *
@@ -61,13 +69,6 @@ interface IMarket {
      * @param _creator Original Owner of contract
      * @return bool Transaction status
      */
-    function divideMoney(
-        uint256 _tokenID,
-        address _owner,
-        address _bidder,
-        uint256 _amount,
-        address _creator
-    ) external returns (bool);
 
     /**
      * @notice This Method is used to set Commission percentage of The Admin

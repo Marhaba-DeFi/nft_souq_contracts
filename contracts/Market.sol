@@ -9,10 +9,13 @@ import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
 
 contract Market is IMarket {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+    using Counters for Counters.Counter;
+    Counters.Counter private _auctionIdTracker;
 
     address private _mediaContract;
     address private _adminAddress;
@@ -46,6 +49,9 @@ contract Market is IMarket {
     // tokenID => all Bidders
     mapping(uint256 => address[]) private tokenBidders;
 
+    // The minimum percentage difference between the last bid amount and the current bid.
+    uint8 public minBidIncrementPercentage = 5;
+
     modifier onlyMediaCaller() {
         require(msg.sender == _mediaContract, 'Market: Unauthorized Access!');
         _;
@@ -54,6 +60,9 @@ contract Market is IMarket {
     uint256 constant EXPO = 1e18;
 
     uint256 constant BASE = 100 * EXPO;
+
+    // The minimum amount of time left in an auction after a new bid is created
+    uint256 public timeBuffer = 15 * 60; // extend 15 minutes after every bid made in last 15 minutes
 
     // New Code -----------
 
@@ -121,61 +130,116 @@ contract Market is IMarket {
         );
         require(_bid._currency == _tokenAsks[_tokenID]._currency, 'Market: Incorrect payment Method');
 
+        IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
+
+        // fetch existing bid, if there is any
+        require(
+            token.allowance(_bid._bidder, address(this)) >= _bid._amount,
+            'Market: Please Approve Tokens Before You Bid'
+        );
+        Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
+
         if (_tokenAsks[_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
                 _bid._amount <= _tokenAsks[_tokenID]._askAmount,
                 'Market: You Cannot Pay more then Max Asked Amount '
             );
-        }
+            // If there is an existing bid, refund it before continuing
+            if (existingBid._amount > 0) {
+                removeBid(_tokenID, _bid._bidder);
+            }
+            _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
 
+            // Set New Bid for the Token
+            _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
+                _bid._bidAmount,
+                _bid._amount,
+                _bid._currency,
+                _bid._bidder,
+                _bid._recipient
+            );
+
+            emit BidCreated(_tokenID, _bid);
+            // Needs to be taken care of
+            // // If a bid meets the criteria for an ask, automatically accept the bid.
+            // // If no ask is set or the bid does not meet the requirements, ignore.
+            if (
+                _tokenAsks[_tokenID]._currency != address(0) &&
+                _bid._currency == _tokenAsks[_tokenID]._currency &&
+                _bid._amount >= _tokenAsks[_tokenID]._askAmount
+            ) {
+                // Finalize Exchange
+                divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
+            }
+        } else {
+            _handleAuction(_tokenID, _bid);
+        }
+        return true;
+    }
+
+    function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid) internal {
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
+        // fetch existing bid, if there is any
         require(
             token.allowance(_bid._bidder, address(this)) >= _bid._amount,
             'Market: Please Approve Tokens Before You Bid'
         );
-
-        // fetch existing bid, if there is any
-        Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
-
-        // If there is an existing bid, refund it before continuing
-        if (existingBid._amount > 0) {
-            removeBid(_tokenID, _bid._bidder);
-        }
-
-        // We must check the balance that was actually transferred to the market,
-        // as some tokens impose a transfer fee and would not actually transfer the
-        // full amount to the market, resulting in locked funds for refunds & bid acceptance
-        uint256 beforeBalance = token.balanceOf(address(this));
-        token.safeTransferFrom(_bidder, address(this), _bid._amount);
-        uint256 afterBalance = token.balanceOf(address(this));
+        // Manage if the Bid is of Auction Type
+        address lastBidder = _tokenAsks[_tokenID]._bidder;
         require(
-            beforeBalance.add(_bid._amount) == afterBalance,
-            'Token transfer call did not transfer expected amount'
+            _tokenAsks[_tokenID]._firstBidTime == 0 ||
+                block.timestamp < _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration),
+            'Market: Auction expired'
         );
 
-        // Set New Bid for the Token
-        _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
-            _bid._bidAmount,
-            afterBalance.sub(beforeBalance),
-            _bid._currency,
-            _bid._bidder,
-            _bid._recipient
+        require(
+            _bid._amount >=
+                _tokenAsks[_tokenID]._highestBid.add(
+                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage * BASE).div(100)
+                ),
+            'Market: Must send more than last bid by minBidIncrementPercentage amount'
         );
-
-        emit BidCreated(_tokenID, _bid);
-        // Needs to be taken care of
-        // // If a bid meets the criteria for an ask, automatically accept the bid.
-        // // If no ask is set or the bid does not meet the requirements, ignore.
-        if (
-            _tokenAsks[_tokenID]._currency != address(0) &&
-            _bid._currency == _tokenAsks[_tokenID]._currency &&
-            _bid._amount >= _tokenAsks[_tokenID]._askAmount
-        ) {
-            // Finalize Exchange
-            divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
+        if (_tokenAsks[_tokenID]._firstBidTime == 0) {
+            // If this is the first valid bid, we should set the starting time now.
+            _tokenAsks[_tokenID]._firstBidTime = block.timestamp;
+        } else if (lastBidder != address(0)) {
+            // If it's not, then we should refund the last bidder
+            token.safeTransfer(lastBidder, _tokenAsks[_tokenID]._highestBid);
+            _tokenAsks[_tokenID]._highestBid = _bid._amount;
+            _tokenAsks[_tokenID]._bidder = _bid._bidder;
         }
-        return true;
+        _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
+
+        bool extended = false;
+
+        // at this point we know that the timestamp is less than start + duration (since the auction would be over, otherwise)
+        // we want to know by how much the timestamp is less than start + duration
+        // if the difference is less than the timeBuffer, increase the duration by the timeBuffer
+        uint256 auctionDuration = _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration);
+        if (auctionDuration.sub(block.timestamp) < timeBuffer) {
+            uint256 oldDuration = _tokenAsks[_tokenID]._duration;
+            uint256 _firstBidTime = _tokenAsks[_tokenID]._firstBidTime;
+            _tokenAsks[_tokenID]._duration = oldDuration.add(
+                timeBuffer.sub(_firstBidTime.add(oldDuration).sub(block.timestamp))
+            );
+            extended = true;
+        }
+    }
+
+    function _handleIncomingBid(
+        uint256 _amount,
+        address _currency,
+        address _bidder
+    ) internal {
+        // We must check the balance that was actually transferred to the auction,
+        // as some tokens impose a transfer fee and would not actually transfer the
+        // full amount to the market, resulting in potentally locked funds
+        IERC20 token = IERC20(_currency);
+        uint256 beforeBalance = token.balanceOf(address(this));
+        token.safeTransferFrom(_bidder, address(this), _amount);
+        uint256 afterBalance = token.balanceOf(address(this));
+        require(beforeBalance.add(_amount) == afterBalance, 'Token transfer call did not transfer expected amount');
     }
 
     // /**
@@ -186,6 +250,7 @@ contract Market is IMarket {
         if (ask.askType == Iutils.AskTypes.FIXED) {
             require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
         }
+
         _tokenAsks[_tokenID] = ask;
         emit AskCreated(_tokenID, ask);
     }
@@ -237,6 +302,29 @@ contract Market is IMarket {
         return _adminCommissionPercentage;
     }
 
+    function endAuction(
+        uint256 _tokenID,
+        address _owner,
+        address _creator
+    ) external override onlyMediaCaller returns (bool) {
+        require(uint256(_tokenAsks[_tokenID]._firstBidTime) != 0, "Market.Auction hasn't begun");
+        require(
+            block.timestamp >= _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration),
+            "Auction hasn't completed"
+        );
+        // address(0) for _bidder is only need when sale type is of type Auction
+        divideMoney(_tokenID, _owner, address(0), _tokenAsks[_tokenID]._highestBid, _creator);
+    }
+
+    /**
+     * @notice Cancel an auction.
+     * @dev Transfers the NFT back to the auction creator and emits an AuctionCanceled event
+     */
+    function cancelAuction(uint256 _tokenID) external override onlyMediaCaller {
+        require(uint256(_tokenAsks[_tokenID]._firstBidTime) == 0, "Can't cancel an auction once it's begun");
+        delete _tokenAsks[_tokenID];
+    }
+
     /**
      * @dev See {IMarket}
      */
@@ -246,7 +334,7 @@ contract Market is IMarket {
         address _bidder,
         uint256 _amountToDistribute,
         address _creator
-    ) public override returns (bool) {
+    ) internal returns (bool) {
         require(_amountToDistribute > 0, "Market: Amount To Divide Can't Be 0!");
 
         Iutils.Ask memory _ask = _tokenAsks[_tokenID];
