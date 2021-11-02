@@ -1,16 +1,16 @@
-require('@nomiclabs/hardhat-waffle')
-require('@nomiclabs/hardhat-etherscan')
-require('dotenv').config()
+require('@nomiclabs/hardhat-waffle');
+require('@nomiclabs/hardhat-etherscan');
+require('dotenv').config();
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task('accounts', 'Prints the list of accounts', async () => {
-  const accounts = await ethers.getSigners()
+  const accounts = await ethers.getSigners();
 
   for (const account of accounts) {
-    console.log(account.address)
+    console.log(account.address);
   }
-})
-const { removeConsoleLog } = require('hardhat-preprocessor')
+});
+const { removeConsoleLog } = require('hardhat-preprocessor');
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -24,7 +24,7 @@ module.exports = {
     hardhat: {
       forking: {
         enabled: process.env.FORKING === 'true',
-        url: `https://eth-kovan.alchemyapi.io/v2/7hXx5tOjA95V0sjNScp2g6Uf-RXq5cU6`,
+        url: 'https://eth-kovan.alchemyapi.io/v2/7hXx5tOjA95V0sjNScp2g6Uf-RXq5cU6',
       },
       live: false,
       saveDeployments: true,
@@ -54,7 +54,7 @@ module.exports = {
       url: 'http://localhost:8545',
       accounts: {
         mnemonic: 'cupboard tennis easy year sunset puppy silent soul athlete good flight resemble',
-        path: "m/44'/60'/0'/0",
+        path: 'm/44\'/60\'/0\'/0',
         initialIndex: 0,
         count: 20,
       },
@@ -98,4 +98,4 @@ module.exports = {
     // Obtain one at https://etherscan.io/
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
-}
+};

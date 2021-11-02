@@ -203,13 +203,26 @@ contract Market is IMarket {
         if (_tokenAsks[_tokenID]._firstBidTime == 0) {
             // If this is the first valid bid, we should set the starting time now.
             _tokenAsks[_tokenID]._firstBidTime = block.timestamp;
+            // Set New Bid for the Token
         } else if (lastBidder != address(0)) {
             // If it's not, then we should refund the last bidder
+            delete _tokenBidders[_tokenID][lastBidder];
             token.safeTransfer(lastBidder, _tokenAsks[_tokenID]._highestBid);
             _tokenAsks[_tokenID]._highestBid = _bid._amount;
             _tokenAsks[_tokenID]._bidder = _bid._bidder;
         }
         _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
+
+        // create new Bid
+        _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
+            _bid._bidAmount,
+            _bid._amount,
+            _bid._currency,
+            _bid._bidder,
+            _bid._recipient
+        );
+
+        emit BidCreated(_tokenID, _bid);
 
         bool extended = false;
 
