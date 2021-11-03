@@ -102,6 +102,7 @@ contract Media is IMedia {
 
         // Put token on sale asa token got minted
         Iutils.Ask memory _ask = Iutils.Ask(
+            msg.sender,
             data._reserveAmount,
             data._askAmount,
             data.totalSupply,
@@ -178,6 +179,7 @@ contract Media is IMedia {
      * @notice see IMedia
      */
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
+        require(msg.sender == ask._sender, 'MEDIA: sender in ask tuple needs to be msg.sender');
         IMarket(_marketAddress).setAsk(_tokenID, ask);
     }
 

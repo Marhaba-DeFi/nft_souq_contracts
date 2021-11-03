@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "dotenv": "^10.0.0",
-    "eslint-plugin-promise": "^5.1.1"
+    "eslint-plugin-promise": "^5.1.1",
+    "randomstring": "^1.2.1"
   }
 }

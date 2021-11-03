@@ -18,8 +18,11 @@ interface Iutils {
         address _bidder;
         // Address of the recipient
         address _recipient;
+        // Type of ask
+        AskTypes askType;
     }
     struct Ask {
+        address _sender;
         // min amount Asked
         uint256 _reserveAmount;
         // Amount of the currency being asked
@@ -35,7 +38,7 @@ interface Iutils {
         uint256 _duration;
         // The time of the first bid
         uint256 _firstBidTime;
-        // The address of the current highest bid
+        // The address of the current highest bidder
         address _bidder;
         // The current highest bid amount
         uint256 _highestBid;

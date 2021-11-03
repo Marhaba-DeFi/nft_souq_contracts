@@ -156,7 +156,8 @@ contract Market is IMarket {
                 _bid._amount,
                 _bid._currency,
                 _bid._bidder,
-                _bid._recipient
+                _bid._recipient,
+                _bid.askType
             );
 
             emit BidCreated(_tokenID, _bid);
@@ -219,7 +220,8 @@ contract Market is IMarket {
             _bid._amount,
             _bid._currency,
             _bid._bidder,
-            _bid._recipient
+            _bid._recipient,
+            _bid.askType
         );
 
         emit BidCreated(_tokenID, _bid);

@@ -1,6 +1,5 @@
-const hre = require('hardhat');
-const ethers = hre.ethers;
-// const ethers = require('ethers')
+// const hre = require('hardhat');
+const ethers = require('ethers');
 const privateKeys = [
   '0x5f4445ba69d36a98174d0d4584b2e663ae35dd570dfdca63639fda511ad76b5c',
   '0x1deb83a0b24016f1d0de84963a3c60ceff6a7c08dcebefc5e40ac92247848b65',
@@ -9,6 +8,7 @@ const privateKeys = [
 ];
 
 function generatedWallets (provider) {
+  console.log('got the call *******');
   return privateKeys.map((key) => {
     return new ethers.Wallet(key, provider);
   });

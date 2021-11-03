@@ -1,11 +1,14 @@
 // We import Chai to use its asserting functions here.
 const { expect } = require('chai');
-// const { ethers } = require('ethers')
+const fs = require('fs');
 const hre = require('hardhat');
 const ethers = hre.ethers;
 const { convertToBigNumber } = require('../utils/util');
 const { generatedWallets } = require('../utils/wallets');
+const { mintObject } = require('./Media.Objects');
 const { JsonRpcProvider } = require('@ethersproject/providers');
+const path = require('path');
+
 const {
   mintTokens,
   fetchMintEvent,
@@ -31,10 +34,6 @@ describe('Media Contract', async function () {
       : await ethers.getSigners();
     this.deployer = this.signers[0];
     this.admin = this.signers[1];
-    this.ERC20Mock = await ethers.getContractFactory(
-      'ERC20Mock',
-      this.deployer,
-    );
     this.alice = this.signers[2];
     this.bob = this.signers[3];
     this.carol = this.signers[4];
@@ -43,74 +42,66 @@ describe('Media Contract', async function () {
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    this.ERC20Mock = await ethers.getContractFactory('ERC20Mock');
-    // const erc721 = await hre.ethers.getContractFactory('ERC721Factory');
-    // const erc1155 = await hre.ethers.getContractFactory('ERC1155Factory');
-    // const market = await hre.ethers.getContractFactory('Market');
-    // const media = await hre.ethers.getContractFactory('Media');
-    // this.erc721 = await erc721.attach('0xE3F1fe1c936eA0532abbB194EADa1618D0a92A01')
-    // this.erc1155 = await erc1155.attach('0xB29aaEEab8145145D6df72fAA269f5d8B0700a13')
-    // this.market = await market.attach('0xB337015fba42D497C298DDde1a7c822A78677B30')
-    // this.media = await media.attach('0x8713C75a8192E9Ec0992a6eb3ea1626c5B0230fC')
-    // // 0x45202955b5a2770A4dc526B6FB3634dDB275c8Df BSC
-    // // 0xf865baC31648eb5d5BB67f954664734D870405Bf kovan
-    // // this.marhabaToken = this.ERC20Mock.attach('0xf865baC31648eb5d5BB67f954664734D870405Bf')
+    if (network) {
+      const contractAddresses = JSON.parse(
+        fs.readFileSync(path.resolve(__dirname, '../config.json'), 'utf8'),
+      );
+      const erc721 = await hre.ethers.getContractFactory('ERC721Factory');
+      const erc1155 = await hre.ethers.getContractFactory('ERC1155Factory');
+      const market = await hre.ethers.getContractFactory('Market');
+      const media = await hre.ethers.getContractFactory('Media');
+      this.erc721 = await erc721.attach(contractAddresses[network].ERC721);
+      this.erc1155 = await erc1155.attach(contractAddresses[network].ERC1155);
+      this.market = await market.attach(contractAddresses[network].MARKET);
+      this.media = await media.attach(contractAddresses[network].MEDIA);
+      // 0x45202955b5a2770A4dc526B6FB3634dDB275c8Df BSC
+      // 0xf865baC31648eb5d5BB67f954664734D870405Bf kovan
+      this.marhabaToken = this.ERC20Mock.attach('0x45202955b5a2770A4dc526B6FB3634dDB275c8Df');
+    } else {
+      this.ERC20Mock = await ethers.getContractFactory('ERC20Mock');
 
-    // // Get the ContractFactory and Signers here.
-    const erc721Name = 'NFT SOUQ';
-    const erc721Symbol = 'NFTSOUQ';
-    const adminCommissionPercentage = 2;
-    this.erc721 = await ethers.getContractFactory('ERC721Factory');
-    this.erc721 = await this.erc721.deploy(erc721Name, erc721Symbol);
-    await this.erc721.deployed();
-    // console.log('erc721 Token deployed at:', this.erc721.address)
-    const erc1155Name = 'NFT SOUQ';
-    const erc1155Symbol = 'NFTSOUQ';
-    this.erc1155 = await hre.ethers.getContractFactory('ERC1155Factory');
-    // erc1155 = await erc1155.deploy(erc1155Uri)
-    this.erc1155 = await this.erc1155.deploy(erc1155Name, erc1155Symbol);
-    await this.erc1155.deployed();
-    // console.log('erc1155 Token deployed at:', this.erc1155.address)
-    this.market = await hre.ethers.getContractFactory('Market');
-    this.market = await this.market.deploy();
-    await this.market.deployed();
-    // console.log('Market deployed at:', this.market.address)
-    this.media = await hre.ethers.getContractFactory('Media');
-    this.media = await this.media.deploy(
-      this.erc1155.address,
-      this.erc721.address,
-      this.market.address,
-    );
-    await this.media.deployed();
-    // console.log('media deployed at:', this.media.address)
-    await this.market.configureMedia(this.media.address);
-    // console.log('Configure Media address In market')
-    await this.erc1155.configureMedia(this.media.address);
-    await this.erc721.configureMedia(this.media.address);
-    console.log('Media Added In ERC');
-    await this.media.setAdminAddress(this.admin.address);
-    // console.log('configured admin address')
-    await this.media
-      .connect(this.admin)
-      .setCommissionPercentage(adminCommissionPercentage);
-    console.log('configured Commission Percentage address');
+      // // Get the ContractFactory and Signers here.
+      const erc721Name = 'NFT SOUQ';
+      const erc721Symbol = 'NFTSOUQ';
+      const adminCommissionPercentage = 2;
+      this.erc721 = await ethers.getContractFactory('ERC721Factory');
+      this.erc721 = await this.erc721.deploy(erc721Name, erc721Symbol);
+      await this.erc721.deployed();
+      // console.log('erc721 Token deployed at:', this.erc721.address)
+      const erc1155Name = 'NFT SOUQ';
+      const erc1155Symbol = 'NFTSOUQ';
+      this.erc1155 = await hre.ethers.getContractFactory('ERC1155Factory');
+      // erc1155 = await erc1155.deploy(erc1155Uri)
+      this.erc1155 = await this.erc1155.deploy(erc1155Name, erc1155Symbol);
+      await this.erc1155.deployed();
+      // console.log('erc1155 Token deployed at:', this.erc1155.address)
+      this.market = await hre.ethers.getContractFactory('Market');
+      this.market = await this.market.deploy();
+      await this.market.deployed();
+      // console.log('Market deployed at:', this.market.address)
+      this.media = await hre.ethers.getContractFactory('Media');
+      this.media = await this.media.deploy(
+        this.erc1155.address,
+        this.erc721.address,
+        this.market.address,
+      );
+      await this.media.deployed();
+      // console.log('media deployed at:', this.media.address)
+      await this.market.configureMedia(this.media.address);
+      // console.log('Configure Media address In market')
+      await this.erc1155.configureMedia(this.media.address);
+      await this.erc721.configureMedia(this.media.address);
+      console.log('Media Added In ERC');
+      await this.media.setAdminAddress(this.admin.address);
+      // console.log('configured admin address')
+      await this.media
+        .connect(this.admin)
+        .setCommissionPercentage(adminCommissionPercentage);
+      console.log('configured Commission Percentage address');
+    }
   });
   context('With ERC/LP token added to the field', function () {
     beforeEach(async function () {
-      // variables for maintaining Bid
-      this.ipfsHash = 'QmTw4wfzNam6Rom59uhPjoxbarXi4oJrfzKp8Xr3nfWsr3';
-      this.title = 'My Langs NFT';
-      this.totalSupply = 1;
-      this.royaltyPoints = 5;
-      this.collabsAddresses = ['0x0000000000000000000000000000000000000000'];
-      this.collabsPercentages = [0];
-      this.auctionType = 1; // askType  AUCTION - 0 , FIXED - 1
-      this.askAmount = convertToBigNumber(5);
-      this.reserveAmount = convertToBigNumber(5);
-      // variables for maintaining asks
-      this.askReserveAmount = 4;
-      this.askMaxAmount = 4;
-      this.duration = parseInt(Date.now() + 86400);
       console.log(
         this.deployer.address,
         this.admin.address,
@@ -126,19 +117,18 @@ describe('Media Contract', async function () {
         convertToBigNumber(totalSupply),
       );
       this.mintParamsTuples = [
-        this.ipfsHash, // IPFS hash
-        this.title, // title
-        this.totalSupply, // totalSupply
-        this.royaltyPoints, // royaltyPoints
-        this.collabsAddresses, // collaborators
-        this.collabsPercentages, // percentages
-        this.auctionType, // askType  AUCTION - 0 , FIXED - 1
-        this.askAmount, // _askAmount
-        this.reserveAmount, // _reserveAmount
+        mintObject.ipfsHash, // IPFS hash
+        mintObject.title, // title
+        mintObject.totalSupply, // totalSupply
+        mintObject.royaltyPoints, // royaltyPoints
+        mintObject.collabsAddresses, // collaborators
+        mintObject.collabsPercentages, // percentages
+        mintObject.auctionType, // askType  AUCTION - 0 , FIXED - 1
+        mintObject.askAmount, // _askAmount
+        mintObject.reserveAmount, // _reserveAmount
         this.marhabaToken.address, // currencyAsked
-        this.duration, // Auction End Time
+        mintObject.duration, // Auction End Time
       ];
-      // console.log((await this.marhabaToken.balanceOf(this.deployer.address)).toString())
 
       await this.marhabaToken.transfer(
         this.alice.address,
@@ -149,8 +139,6 @@ describe('Media Contract', async function () {
         this.bob.address,
         convertToBigNumber(1000),
       );
-
-      // await this.marhabaToken.transfer(this.carol.address, convertToBigNumber(1000))
 
       this.wrapperToken = await this.ERC20Mock.deploy(
         'Wrapper BNB',
@@ -167,8 +155,6 @@ describe('Media Contract', async function () {
         this.bob.address,
         convertToBigNumber(1000),
       );
-
-      // await this.wrapperToken.transfer(this.carol.address, convertToBigNumber(1000))
     });
 
     it('It should Mint NFT for user', async function () {
@@ -203,6 +189,8 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
         this.bob.address, // recipient address
+        this.mintParamsTuples[6],
+
       ]);
       // fetch balances
       const balances = await getBalance(this.marhabaToken, [
@@ -251,6 +239,8 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
         this.bob.address, // recipient address
+        this.mintParamsTuples[6],
+
       ]);
       // fetch balances
       const balances = await getBalance(this.marhabaToken, [
@@ -301,6 +291,7 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
         this.bob.address, // recipient address
+        this.mintParamsTuples[6],
       ]);
       // fetch balances
       const balances = await getBalance(this.marhabaToken, [
@@ -347,6 +338,8 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
         this.bob.address, // recipient address
+        this.mintParamsTuples[6],
+
       ]);
       // fetch balances
       const balances = await getBalance(this.marhabaToken, [
@@ -373,6 +366,7 @@ describe('Media Contract', async function () {
           this.marhabaToken.address, // Address to the ERC20 token being used to bid,
           this.alice.address, // bidder address
           this.alice.address, // recipient address
+          this.mintParamsTuples[6],
         ]),
       ).to.be.revertedWith('Token is not open for Sale');
     });
@@ -406,6 +400,7 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
         this.bob.address, // recipient address
+        this.mintParamsTuples[6],
       ]);
       // fetch balances
       let balances = await getBalance(this.marhabaToken, [
@@ -435,20 +430,21 @@ describe('Media Contract', async function () {
       this.mintParamsTuples[7] = convertToBigNumber(100); // ask Amount
       this.mintParamsTuples[8] = convertToBigNumber(100); // reserve Amount
 
-      console.log('ask placed');
+      console.log('ask placed in pass buy');
       await this.media
         .connect(this.bob)
         .setAsk(
           _tokenCounter,
           [
+            this.bob.address,
             this.mintParamsTuples[7],
             this.mintParamsTuples[8],
             this.mintParamsTuples[2],
             this.marhabaToken.address,
-            this.auctionType,
+            this.mintParamsTuples[6],
             0,
             0,
-            this.collabsAddresses[0],
+            this.mintParamsTuples[4][0],
             0,
           ],
           {
@@ -462,6 +458,7 @@ describe('Media Contract', async function () {
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.alice.address, // bidder address
         this.alice.address, // recipient address
+        this.mintParamsTuples[6],
       ]);
       balances = await getBalance(this.marhabaToken, [
         { name: 'alice', address: this.alice.address },
