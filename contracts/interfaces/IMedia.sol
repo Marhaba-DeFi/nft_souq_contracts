@@ -30,6 +30,7 @@ interface IMedia {
     }
 
     event MintToken(
+        uint256 _tokenCounter,
         bool isFungible,
         string uri,
         string title,

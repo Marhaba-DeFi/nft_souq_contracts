@@ -30,7 +30,7 @@ module.exports = {
       saveDeployments: true,
       tags: ['test', 'local'],
     },
-    testnet: {
+    bscTestnet: {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       gasPrice: 20000000000,
@@ -53,7 +53,8 @@ module.exports = {
     ganache: {
       url: 'http://localhost:8545',
       accounts: {
-        mnemonic: 'cupboard tennis easy year sunset puppy silent soul athlete good flight resemble',
+        mnemonic:
+          'cupboard tennis easy year sunset puppy silent soul athlete good flight resemble',
         path: 'm/44\'/60\'/0\'/0',
         initialIndex: 0,
         count: 20,
@@ -67,7 +68,10 @@ module.exports = {
   },
   // solidity: "0.7.3",
   preprocess: {
-    eachLine: removeConsoleLog((bre) => bre.network.name !== 'hardhat' && bre.network.name !== 'localhost'),
+    eachLine: removeConsoleLog(
+      (bre) =>
+        bre.network.name !== 'hardhat' && bre.network.name !== 'localhost',
+    ),
   },
   solidity: {
     compilers: [

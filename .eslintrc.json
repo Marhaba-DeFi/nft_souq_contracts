@@ -1,6 +1,7 @@
 {
     "extends": [
         "standard",
+        "eslint:recommended",
         "plugin:promise/recommended",
         // Only for react projects.
         "plugin:react/recommended"

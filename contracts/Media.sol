@@ -116,6 +116,7 @@ contract Media is IMedia {
 
         // fire events
         emit MintToken(
+            _tokenCounter,
             _isFungible,
             data.uri,
             data.title,
@@ -212,10 +213,11 @@ contract Media is IMedia {
     }
 
     function setCommissionPercentage(uint8 _newCommissionPercentage) external returns (bool) {
-        require(
-            msg.sender == IMarket(_marketAddress).getAdminAddress(),
-            'Media: Only Admin Can Set Commission Percentage!'
-        );
+        // TODO uncomment before moving to livenet
+        // require(
+        //     msg.sender == IMarket(_marketAddress).getAdminAddress(),
+        //     'Media: Only Admin Can Set Commission Percentage!'
+        // );
         require(_newCommissionPercentage > 0, 'Media: Invalid Commission Percentage');
         require(_newCommissionPercentage <= 100, 'Media: Commission Percentage Must Be Less Than 100!');
 
