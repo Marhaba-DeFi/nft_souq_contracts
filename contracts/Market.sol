@@ -406,4 +406,8 @@ contract Market is IMarket {
         _adminPoints = _adminPoints.add(_amount);
         return true;
     }
+
+    function getTokenAsks(uint256 _tokenId) external view override returns( Iutils.Ask memory) {
+        return _tokenAsks[_tokenId];
+    }
 }

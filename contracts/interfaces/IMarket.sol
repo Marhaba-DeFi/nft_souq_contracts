@@ -110,4 +110,7 @@ interface IMarket {
      * @return bool Transaction status
      */
     function addAdminCommission(uint256 _amount) external returns (bool);
+
+    function getTokenAsks(uint256 _tokenId) external view returns( Iutils.Ask memory);
+    
 }

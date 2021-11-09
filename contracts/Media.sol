@@ -55,7 +55,7 @@ contract Media is IMedia {
 
     function mintToken(MediaData memory data) external payable override returns (uint256) {
         require(data.collaborators.length == data.percentages.length, 'Media: Collaborators Info is not correct');
-
+        require(data.totalSupply == 1 || data.totalSupply > 1, "Media: Supply Error");
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
         // verify sum of collaborators percentages needs to be less then or equals to 100
@@ -166,7 +166,7 @@ contract Media is IMedia {
                 'Media: The Owner Does Not Have That Much Tokens!'
             );
         } else {
-            require(bid._bidAmount == 1, 'Media: Only 1 Token Is Available');
+            require(bid._bidAmount == 1, 'Media: Only 1 Token Is Available'); //_bidAmount is the amount of tokens
             require(nftToOwners[_tokenID] == _owner, 'Media: Invalid Owner Provided!');
         }
 
@@ -263,5 +263,9 @@ contract Media is IMedia {
         }
         tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
+    }
+
+    function getTokenAsks(uint256 _tokenId) external view returns(Iutils.Ask memory) {
+        return IMarket(_marketAddress).getTokenAsks(_tokenId);
     }
 }
