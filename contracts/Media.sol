@@ -192,7 +192,7 @@ contract Media is IMedia, Ownable {
     }
 
     function endAuction(uint256 _tokenID) external override whenTokenExist(_tokenID) returns (bool) {
-        // TODO check either token is of type auction or not
+        // TODO this is done now below, check either token is of type auction or not
         Iutils.Ask memory _ask = IMarket(_marketAddress).getTokenAsks(_tokenID);
         Iutils.Bid memory _bid = IMarket(_marketAddress).getTokenBid(_tokenID);
         require(_ask.askType == Iutils.AskTypes.AUCTION, "Media: Invalid Ask Type");
