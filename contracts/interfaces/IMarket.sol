@@ -113,4 +113,5 @@ interface IMarket {
 
     function getTokenAsks(uint256 _tokenId) external view returns( Iutils.Ask memory);
     
+    function getTokenBid(uint256 _tokenId) external view returns( Iutils.Bid memory);
 }

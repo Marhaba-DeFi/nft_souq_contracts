@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import './ERC721.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract ERC721Factory is ERC721 {
+contract ERC721Factory is ERC721, Ownable {
     address private _mediaContract;
 
     modifier onlyMediaCaller() {
@@ -12,7 +13,7 @@ contract ERC721Factory is ERC721 {
         _;
     }
 
-    function configureMedia(address _mediaContractAddress) external {
+    function configureMedia(address _mediaContractAddress) external onlyOwner {
         // TODO: Only Owner Modifier
         require(_mediaContractAddress != address(0), 'ERC1155Factory: Invalid Media Contract Address!');
         require(_mediaContract == address(0), 'ERC1155Factory: Media Contract Alredy Configured!');

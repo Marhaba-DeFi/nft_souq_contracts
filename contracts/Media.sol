@@ -5,10 +5,13 @@ pragma solidity ^0.8.0;
 import './ERC1155Factory.sol';
 import './interfaces/IMedia.sol';
 import './interfaces/IMarket.sol';
+import './interfaces/Iutils.sol';
 import './ERC721Factory.sol';
 import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract Media is IMedia {
+
+contract Media is IMedia, Ownable {
     using SafeMath for uint256;
 
     address private _ERC1155Address;
@@ -55,7 +58,6 @@ contract Media is IMedia {
 
     function mintToken(MediaData memory data) external payable override returns (uint256) {
         require(data.collaborators.length == data.percentages.length, 'Media: Collaborators Info is not correct');
-        require(data.totalSupply == 1 || data.totalSupply > 1, "Media: Supply Error");
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
         // verify sum of collaborators percentages needs to be less then or equals to 100
@@ -111,7 +113,7 @@ contract Media is IMedia {
             0,
             0,
             address(0),
-            data._duation
+            0
         );
         IMarket(_marketAddress).setAsk(_tokenCounter, _ask);
 
@@ -171,7 +173,9 @@ contract Media is IMedia {
         }
 
         bool tokenSold = IMarket(_marketAddress).setBid(_tokenID, msg.sender, bid, _owner, nftToCreators[_tokenID]);
-        if (tokenSold) _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
+        if (tokenSold){
+            _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
+        } 
         return true;
     }
 
@@ -189,9 +193,14 @@ contract Media is IMedia {
 
     function endAuction(uint256 _tokenID) external override whenTokenExist(_tokenID) returns (bool) {
         // TODO check either token is of type auction or not
-        address _owner = tokenIDToToken[_tokenID]._currentOwner;
+        Iutils.Ask memory _ask = IMarket(_marketAddress).getTokenAsks(_tokenID);
+        Iutils.Bid memory _bid = IMarket(_marketAddress).getTokenBid(_tokenID);
+        require(_ask.askType == Iutils.AskTypes.AUCTION, "Media: Invalid Ask Type");
+        address _owner = tokenIDToToken[_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         address _creator = nftToCreators[_tokenID];
         IMarket(_marketAddress).endAuction(_tokenID, _owner, _creator);
+       
+        _transfer(_tokenID, _owner, _bid._recipient, _bid._bidAmount);
 
         return true;
     }

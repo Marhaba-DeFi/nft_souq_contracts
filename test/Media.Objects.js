@@ -33,7 +33,7 @@ const mintObjectAuction = {
   collabsAddresses: ['0x3306ea6DfbB7a24eF7AB2E3e1E8C6A1afAfC3E42', '0xC3cd11dA4d47B17EDe50313F3CF6e91cD67EE960'],
   collabsPercentages: [2, 3],
   auctionType: 0, // askType  AUCTION - 0 , FIXED - 1
-  askAmount: convertToBigNumber(50),
+  askAmount: convertToBigNumber(100),
   reserveAmount: convertToBigNumber(50),
   askReserveAmount: 10,
   askMaxAmount: 10,

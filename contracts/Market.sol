@@ -10,8 +10,10 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract Market is IMarket {
+
+contract Market is IMarket, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
@@ -82,8 +84,7 @@ contract Market is IMarket {
      *
      * @param _mediaContractAddress Address of the Media Contract to set
      */
-    function configureMedia(address _mediaContractAddress) external {
-        // TODO: Only Owner Modifier
+    function configureMedia(address _mediaContractAddress) external onlyOwner {
         require(_mediaContractAddress != address(0), 'Market: Invalid Media Contract Address!');
         require(_mediaContract == address(0), 'Market: Media Contract Alredy Configured!');
 
@@ -172,10 +173,11 @@ contract Market is IMarket {
                 // Finalize Exchange
                 divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
             }
+            return true;
         } else {
             _handleAuction(_tokenID, _bid);
+            return false;
         }
-        return true;
     }
 
     function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid) internal {
@@ -188,6 +190,7 @@ contract Market is IMarket {
         );
         // Manage if the Bid is of Auction Type
         address lastBidder = _tokenAsks[_tokenID]._bidder;
+
         require(
             _tokenAsks[_tokenID]._firstBidTime == 0 ||
                 block.timestamp < _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration),
@@ -197,7 +200,7 @@ contract Market is IMarket {
         require(
             _bid._amount >=
                 _tokenAsks[_tokenID]._highestBid.add(
-                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage * BASE).div(100)
+                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage).div(100)
                 ),
             'Market: Must send more than last bid by minBidIncrementPercentage amount'
         );
@@ -223,6 +226,21 @@ contract Market is IMarket {
             _bid._recipient,
             _bid.askType
         );
+
+        Iutils.Ask memory _ask = Iutils.Ask(
+            _tokenAsks[_tokenID]._sender,
+            _tokenAsks[_tokenID]._reserveAmount,
+            _tokenAsks[_tokenID]._askAmount,
+            _tokenAsks[_tokenID]._amount,
+            _tokenAsks[_tokenID]._currency,
+            _tokenAsks[_tokenID].askType,
+            _tokenAsks[_tokenID]._duration,
+            _tokenAsks[_tokenID]._firstBidTime,
+            _bid._bidder,
+            _bid._amount
+        );
+
+        setAsk(_tokenID, _ask);
 
         emit BidCreated(_tokenID, _bid);
 
@@ -328,7 +346,7 @@ contract Market is IMarket {
             "Auction hasn't completed"
         );
         // address(0) for _bidder is only need when sale type is of type Auction
-        divideMoney(_tokenID, _owner, address(0), _tokenAsks[_tokenID]._highestBid, _creator);
+        return divideMoney(_tokenID, _owner, address(0), _tokenAsks[_tokenID]._highestBid, _creator);
     }
 
     /**
@@ -388,6 +406,7 @@ contract Market is IMarket {
         }
 
         token.transfer(_creator, royaltyPoints.sub(totalAmountTransferred));
+        
         totalAmountTransferred = totalAmountTransferred.add(royaltyPoints.sub(totalAmountTransferred));
 
         totalAmountTransferred = totalAmountTransferred.add(_amount.sub(royaltyPoints));
@@ -409,5 +428,10 @@ contract Market is IMarket {
 
     function getTokenAsks(uint256 _tokenId) external view override returns( Iutils.Ask memory) {
         return _tokenAsks[_tokenId];
+    }
+
+    function getTokenBid(uint256 _tokenId) external view override returns( Iutils.Bid memory) {
+        address bidder = _tokenAsks[_tokenId]._bidder;
+        return _tokenBidders[_tokenId][bidder];
     }
 }

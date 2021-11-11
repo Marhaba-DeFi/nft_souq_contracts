@@ -65,8 +65,67 @@ async function getBalance (contract, users) {
       await contract.balanceOf(address),
     );
   }
-  console.log('balances ', balances);
+  console.log('Token Balances ', balances);
   return balances;
+}
+
+/**
+ *
+ * @param {*} contract
+ * @param {*} users
+ * @returns
+ */
+async function getBalanceNFT (contract, users) {
+  // fetch balances for an multiple addresses
+  const balances = {};
+  for (let index = 0; index < users.length; index++) {
+    const address = users[index].address;
+    balances[users[index].name] = parseInt(
+      await contract.balanceOf(address),
+    );
+  }
+  console.log('NFT Balances ', balances);
+  return balances;
+}
+
+/**
+ * @param {*} contract
+ * @param {*} tokenId
+ * @returns
+ */
+async function endAuction (mediaContract, from, tokenId) {
+  // send bid to Media Contract
+  return mediaContract.connect(from).endAuction(
+    tokenId, // _tokenCounter.toString(),
+    { from: from.address },
+  );
+}
+
+/**
+ * @param {*} contract
+ * @param {*} tokenId
+ * @returns
+ */
+async function cancelAuction (mediaContract, from, tokenId) {
+  // send bid to Media Contract
+  return mediaContract.connect(from).cancelAuction(
+    tokenId, // _tokenCounter.toString(),
+    { from: from.address },
+  );
+}
+
+/**
+ * @param {*} contract
+ * @param {*} tokenId
+ * @returns
+ */
+async function setAsk (mediaContract, from, tokenId, askParams) {
+  // send bid to Media Contract
+  return mediaContract.connect(from).setAsk(
+    tokenId, // _tokenCounter.toString(),
+    askParams,
+    { from: from.address },
+  );
 }
 
 module.exports = {
@@ -75,4 +134,8 @@ module.exports = {
   approveTokens,
   setBid,
   getBalance,
+  endAuction,
+  getBalanceNFT,
+  cancelAuction,
+  setAsk,
 };
