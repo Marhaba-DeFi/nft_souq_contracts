@@ -20,6 +20,7 @@ const {
   getBalanceNFT,
   cancelAuction,
   setAsk,
+  updateAsk,
 } = require('./Media.helper');
 // `describe` is a Mocha function that allows you to organize your tests. It's
 // not actually needed, but having your tests organized makes debugging them
@@ -43,7 +44,6 @@ describe('marketContract', async function () {
     this.bob = this.signers[3];
     this.carol = this.signers[4];
   });
-
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -99,6 +99,7 @@ describe('marketContract', async function () {
       await this.erc721.configureMedia(this.media.address);
       // console.log('Media Added In ERC');
       await this.media.setAdminAddress(this.admin.address);
+
       // console.log('configured admin address')
       await this.media
         .connect(this.admin)
@@ -156,12 +157,25 @@ describe('marketContract', async function () {
       ];
 
       this.askParams = [
-        this.bob.address,
+        this.bob.address, // sender address who is setting ask
         mintObject.reserveAmount, // _reserveAmount
         mintObject.askAmount, // _askAmount
         mintObjectAuction.totalSupply,
         this.marhabaToken.address,
         mintObject.auctionType, // fixed for the first test and then auction for the second test
+        mintObjectAuction.duration,
+        0,
+        '0x0000000000000000000000000000000000000000',
+        0,
+      ];
+
+      this.updateParams = [
+        this.alice.address, // sender address who is setting ask
+        mintObject.reserveAmount, // _reserveAmount
+        mintObject.askAmount, // _askAmount
+        mintObjectAuction.totalSupply,
+        this.marhabaToken.address,
+        mintObject.auctionType, // fixed or auction
         mintObjectAuction.duration,
         0,
         '0x0000000000000000000000000000000000000000',
@@ -203,6 +217,9 @@ describe('marketContract', async function () {
         this.carol.address,
         convertToBigNumber(1000),
       );
+      
+      // admin is approving the currency that can used while ask and bid time
+      await this.media.connect(this.admin).addCurrency(this.marhabaToken.address);
     });
 
     it('It should Mint NFT for user', async function () {
@@ -324,6 +341,7 @@ describe('marketContract', async function () {
       const event = mintTx.events.find(
         (event) => event.event === 'TokenCounter',
       );
+      // console.log(event);
       const [_tokenCounter] = event.args;
       expect(_tokenCounter.toString()).to.equals('1');
 
@@ -848,6 +866,137 @@ describe('marketContract', async function () {
       expect(nftowner).to.equals(this.alice.address);
 
       const mediaInfo = await this.media.getToken(1);
+    });
+
+    it('Mint Token, Place Bid by the bidder and update ask by the ask Sender', async function () {
+      let mintTx = await this.media
+        .connect(this.alice)
+        .mintToken(this.mintParamsAuction);
+      mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
+      const event = mintTx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
+      const [_tokenCounter] = event.args;
+      expect(_tokenCounter.toString()).to.equals('1');
+
+      // approve tokens before making request
+      approveTokens(
+        this.marhabaToken,
+        this.bob,
+        this.market.address,
+        convertToBigNumber(51),
+      );
+    
+      // // place bid
+      await setBid(this.media, this.bob, _tokenCounter, [
+        1, // quantity of the tokens being bid
+        convertToBigNumber(51), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[6],
+
+      ]);
+
+      console.log('Ask Details Before Update');
+      
+      let getAskDetails = await this.media.getTokenAsks(1);
+      console.log(getAskDetails);
+      for (let i = 0; i < getAskDetails.length; i++) {
+        console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      }
+
+      // update the auction sell of the NFT
+      // 100 is the ask amount and 50 is reserve amount, which is greater then reserve amount
+      // eslint-disable-next-line max-len
+      await updateAsk(this.media, this.alice, _tokenCounter, convertToBigNumber(50), convertToBigNumber(100), this.askParams[3], this.askParams[4], this.mintParamsAuction[6]);
+
+      // ask details after udpating
+      console.log(' Ask Details After updating');
+      getAskDetails = await this.media.getTokenAsks(1);
+      console.log(getAskDetails);
+      for (let i = 0; i < getAskDetails.length; i++) {
+        console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      }
+
+      // approving againg tokens before making another bid request for new ask
+      approveTokens(
+        this.marhabaToken,
+        this.bob,
+        this.market.address,
+        convertToBigNumber(70),
+      );
+    
+      // // place bid
+      await setBid(this.media, this.bob, _tokenCounter, [
+        1, // quantity of the tokens being bid
+        convertToBigNumber(70), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[6],
+
+      ]);
+
+      console.log('***************');
+      // ask details after udpating
+      console.log(' Ask Details After second bid');
+      getAskDetails = await this.media.getTokenAsks(1);
+      for (let i = 0; i < getAskDetails.length; i++) {
+        console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      }
+
+      // get token bid details
+      const getBidDetails = await this.media.getTokenBid(1);
+      for (let i = 0; i < getBidDetails.length; i++) {
+        console.log(convertFromBigNumber(getBidDetails[i].toString()));
+      }
+      console.log('*************************************');
+
+      // increasing time so that auction can be ended
+      
+      const oneDay = 1 * 24 * 60 * 60;
+      
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+      const timestampBefore = blockBefore.timestamp;
+      console.log('timestamp before', timestampBefore);
+      
+      await ethers.provider.send('evm_increaseTime', [oneDay]);
+      await ethers.provider.send('evm_mine');
+      
+      const blockNumAfter = await ethers.provider.getBlockNumber();
+      const blockAfter = await ethers.provider.getBlock(blockNumAfter);
+      const timestampAfter = blockAfter.timestamp;
+      console.log('timestamp after', timestampAfter);
+    
+      expect(timestampAfter).to.greaterThan(parseInt(getAskDetails[6]));
+
+      await endAuction(this.media, this.alice, _tokenCounter);
+      
+      // balances after auction end
+      // eslint-disable-next-line no-unused-vars
+      const balances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'collabs1', address: this.mintParamsAuction[4][0] },
+        { name: 'collabs2', address: this.mintParamsAuction[4][1] },
+        { name: 'admin', address: this.admin.address },
+        { name: 'marketContract ', address: this.market.address },
+        { name: 'carol ', address: this.carol.address },
+
+      ]);
+
+      // nft balances after auction end
+      // eslint-disable-next-line no-unused-vars
+      const nftBalance = await getBalanceNFT(this.erc721, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'collabs1', address: this.mintParamsAuction[4][0] },
+        { name: 'collabs2', address: this.mintParamsAuction[4][1] },
+        { name: 'admin', address: this.admin.address },
+        { name: 'carol ', address: this.carol.address },
+      ]);
     });
   });
 });

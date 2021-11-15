@@ -51,6 +51,10 @@ contract Market is IMarket, Ownable {
     // tokenID => all Bidders
     mapping(uint256 => address[]) private tokenBidders;
 
+    mapping(address => bool) private approvedCurrency;
+
+    address[] public allApprovedCurrencies;
+
     // The minimum percentage difference between the last bid amount and the current bid.
     uint8 public minBidIncrementPercentage = 5;
 
@@ -123,6 +127,7 @@ contract Market is IMarket, Ownable {
         require(_bid._bidAmount != 0, "Market: You Can't Bid For 0 Tokens");
         require(!(_bid._bidAmount < 0), "Market: You Can't Bid For Negative Tokens");
         require(_bid._currency != address(0), 'Market: bid currency cannot be 0 address');
+        require(this.isTokenApproved(_bid._currency), 'Market: bid currency not approved by admin');
         require(_bid._recipient != address(0), 'Market: bid recipient cannot be 0 address');
         require(_tokenAsks[_tokenID]._currency != address(0), 'Market: Token is not open for Sale');
         require(
@@ -283,7 +288,9 @@ contract Market is IMarket, Ownable {
         if (ask.askType == Iutils.AskTypes.FIXED) {
             require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
         }
-
+        //TODO reserve amount cannot be greater than ask amoutn
+        // require(ask._reserveAmount < ask._askAmount, 'Market reserve amount error');
+        require(this.isTokenApproved(ask._currency), 'Market: ask currency not approved by admin');
         _tokenAsks[_tokenID] = ask;
         emit AskCreated(_tokenID, ask);
     }
@@ -298,8 +305,10 @@ contract Market is IMarket, Ownable {
 
         IERC20 token = IERC20(bidCurrency);
         emit BidRemoved(_tokenID, bid);
-        delete _tokenBidders[_tokenID][_bidder];
+        // line safeTransfer should be upper before delete??
         token.safeTransfer(bid._bidder, bidAmount);
+        delete _tokenBidders[_tokenID][_bidder];
+
     }
 
     /**
@@ -311,6 +320,69 @@ contract Market is IMarket, Ownable {
 
         _adminAddress = _newAdminAddress;
         return true;
+    }
+
+    /**
+     * @dev See {IMarket}
+     */
+    function addCurrency(address _tokenAddress) external override onlyMediaCaller returns (bool) {
+        
+        require(_tokenAddress != address(0), 'Market: Invalid Token Address!');
+        require(!this.isTokenApproved(_tokenAddress), 'Market: Token Already Configured!');
+
+        approvedCurrency[_tokenAddress] = true;
+        allApprovedCurrencies.push(_tokenAddress);
+        return true;
+    }
+
+    /**
+     * @dev See {IMarket}
+     */
+    function removeCurrency(address _tokenAddress) external override onlyMediaCaller returns (bool) {
+        
+        require(_tokenAddress != address(0), 'Market: Invalid Token Address!');
+        require(this.isTokenApproved(_tokenAddress), 'Market: Token not found!');
+
+        delete approvedCurrency[_tokenAddress];
+        _removeCurrency(_getIndex(_tokenAddress, allApprovedCurrencies));
+        return true;
+    }
+
+    function _removeCurrency(uint index) internal {
+       for (uint256 i = index; i < allApprovedCurrencies.length.sub(1); i++) {
+            allApprovedCurrencies[i] = allApprovedCurrencies[i + 1];
+        }
+        allApprovedCurrencies.pop(); 
+    }
+
+    //get index of the token address from the approved currencies
+    function _getIndex(address _tokenAddress, address [] memory from)
+        internal
+        pure
+        returns (uint256 index)
+    {
+        for (uint256 i = 0; i < from.length; i++) {
+            if (from[i] == _tokenAddress) {
+                return i;
+            }
+        }
+    }
+
+     /** 
+    @dev check function if Token Contract address is already added 
+    @param _tokenAddress token address */
+    function isTokenApproved(address _tokenAddress)
+        external
+        view
+        override
+        returns (bool)
+    {
+        for (uint256 i = 0; i < allApprovedCurrencies.length; i++) {
+            if (allApprovedCurrencies[i] == _tokenAddress) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -424,6 +496,36 @@ contract Market is IMarket, Ownable {
     function addAdminCommission(uint256 _amount) external override onlyMediaCaller returns (bool) {
         _adminPoints = _adminPoints.add(_amount);
         return true;
+    }
+
+    function updateAsk(uint256 _tokenID, uint256 _reserveAmount, uint256 _askAmount, uint256 _amount, address _currency, Iutils.AskTypes _askType) public override onlyMediaCaller {
+        if (_askType == Iutils.AskTypes.FIXED) {
+            require(_reserveAmount == _askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
+        } else {
+            require(_reserveAmount < _askAmount, 'Market reserve amount error');
+
+        }
+
+        require(this.isTokenApproved(_currency), 'Market: ask currency not approved by admin');
+        Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
+
+        // this require should be use if we don't remove the highest bid for the ask Price.
+        require(_askAmount > _oldAsk._highestBid, "Market: Ask Amount Should be greater than highest bid");
+        Iutils.Ask memory _updatedAsk = Iutils.Ask(
+            _oldAsk._sender,
+            _reserveAmount,
+            _askAmount,
+            _amount,
+            _currency,
+            _askType,
+            _oldAsk._duration,
+            _oldAsk._firstBidTime,
+            _oldAsk._bidder,
+            _oldAsk._highestBid
+        );
+        
+        _tokenAsks[_tokenID] = _updatedAsk;
+        emit AskUpdated(_tokenID, _reserveAmount,  _askAmount,  _amount,  _currency, _askType);
     }
 
     function getTokenAsks(uint256 _tokenId) external view override returns( Iutils.Ask memory) {

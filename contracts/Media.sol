@@ -58,6 +58,7 @@ contract Media is IMedia, Ownable {
 
     function mintToken(MediaData memory data) external payable override returns (uint256) {
         require(data.collaborators.length == data.percentages.length, 'Media: Collaborators Info is not correct');
+        require(IMarket(_marketAddress).isTokenApproved(data.currencyAsked), 'Media: ask curreny not approved ');
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
         // verify sum of collaborators percentages needs to be less then or equals to 100
@@ -155,8 +156,9 @@ contract Media is IMedia, Ownable {
         override
         whenTokenExist(_tokenID)
         returns (bool)
-    {
+        {
         address _owner = tokenIDToToken[_tokenID]._currentOwner;
+        require(IMarket(_marketAddress).isTokenApproved(bid._currency), 'Media: ask curreny not approved ');
         require(msg.sender == bid._bidder, 'Media: Bidder must be msg sender');
         require(bid._bidder != address(0), 'Media: bidder cannot be 0 address');
         require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
@@ -183,9 +185,20 @@ contract Media is IMedia, Ownable {
      * @notice see IMedia
      */
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
+        require(IMarket(_marketAddress).isTokenApproved(ask._currency), 'Media: ask curreny not approved ');
         require(msg.sender == ask._sender, 'MEDIA: sender in ask tuple needs to be msg.sender');
         IMarket(_marketAddress).setAsk(_tokenID, ask);
     }
+
+    function updateAsk(uint256 _tokenID, uint256 _reserveAmount, uint256 _askAmount, uint256 _amount, address _currency, Iutils.AskTypes _askType ) public override {
+        
+        Iutils.Ask memory oldAsk =IMarket(_marketAddress).getTokenAsks(_tokenID);
+        require(IMarket(_marketAddress).isTokenApproved(_currency), 'Media: ask curreny not approved ');
+        require(msg.sender == oldAsk._sender, 'MEDIA: sender needs to be msg.sender for update ask');
+        IMarket(_marketAddress).updateAsk(_tokenID, _reserveAmount,  _askAmount,  _amount, _currency, _askType);
+
+    }
+
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);
@@ -218,6 +231,19 @@ contract Media is IMedia, Ownable {
         IMarket(_marketAddress).setAdminAddress(_adminAddress);
         return true;
     }
+
+    function addCurrency(address _tokenAddress) external returns (bool) {
+        
+        require(msg.sender == IMarket(_marketAddress).getAdminAddress(), 'Media: Only Admin Can add new tokens!');
+        return IMarket(_marketAddress).addCurrency(_tokenAddress);
+    }
+
+    function removeCurrency(address _tokenAddress) external returns (bool) {
+        
+        require(msg.sender == IMarket(_marketAddress).getAdminAddress(), 'Media: Only Admin Can add new tokens!');
+        return IMarket(_marketAddress).removeCurrency(_tokenAddress);
+    }
+    
 
     function getAdminCommissionPercentage() external view returns (uint256) {
         return IMarket(_marketAddress).getCommissionPercentage();
@@ -276,5 +302,9 @@ contract Media is IMedia, Ownable {
 
     function getTokenAsks(uint256 _tokenId) external view returns(Iutils.Ask memory) {
         return IMarket(_marketAddress).getTokenAsks(_tokenId);
+    }
+
+     function getTokenBid(uint256 _tokenId) external view returns( Iutils.Bid memory) {
+        return IMarket(_marketAddress).getTokenBid(_tokenId);
     }
 }

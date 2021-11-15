@@ -128,6 +128,26 @@ async function setAsk (mediaContract, from, tokenId, askParams) {
   );
 }
 
+async function updateAsk (mediaContract, from, tokenId, reserveAmount, askAmount, amount, currency, askType) {
+  // update ask to Media Contract
+  return mediaContract.connect(from).updateAsk(
+    tokenId,
+    reserveAmount,
+    askAmount,
+    amount,
+    currency,
+    askType,
+    { from: from.address },
+  );
+}
+
+async function addCurrency (mediaContract, from, tokenAddress) {
+  // addCurrency function to add admin approved token addresses
+  return mediaContract.connect(from).addCurrency(
+    tokenAddress, { from: from.address },
+  );
+}
+
 module.exports = {
   mintTokens,
   fetchMintEvent,
@@ -138,4 +158,6 @@ module.exports = {
   getBalanceNFT,
   cancelAuction,
   setAsk,
+  updateAsk,
+  addCurrency,
 };
