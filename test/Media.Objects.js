@@ -17,8 +17,8 @@ const mintObject = {
   auctionType: 1, // askType  AUCTION - 0 , FIXED - 1
   askAmount: convertToBigNumber(5),
   reserveAmount: convertToBigNumber(5),
-  askReserveAmount: 4,
-  askMaxAmount: 4,
+  askReserveAmount: convertToBigNumber(4),
+  askMaxAmount: convertToBigNumber(4),
   duration: parseInt(Date.now() + 86400),
 };
 
@@ -35,8 +35,8 @@ const mintObjectAuction = {
   auctionType: 0, // askType  AUCTION - 0 , FIXED - 1
   askAmount: convertToBigNumber(100),
   reserveAmount: convertToBigNumber(50),
-  askReserveAmount: 10,
-  askMaxAmount: 10,
+  askReserveAmount: convertToBigNumber(10),
+  askMaxAmount: convertToBigNumber(10),
   duration: parseInt(Date.now() + 86400),
 };
 

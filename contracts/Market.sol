@@ -205,7 +205,7 @@ contract Market is IMarket, Ownable {
         require(
             _bid._amount >=
                 _tokenAsks[_tokenID]._highestBid.add(
-                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage).div(100)
+                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage * EXPO).div(BASE)
                 ),
             'Market: Must send more than last bid by minBidIncrementPercentage amount'
         );
@@ -461,16 +461,21 @@ contract Market is IMarket, Ownable {
     }
 
     function updateAsk(uint256 _tokenID, Iutils.Ask calldata ask) public override onlyMediaCaller {
+        
+        Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
+
+        if(ask.askType == Iutils.AskTypes.AUCTION) {
+            require( _oldAsk._highestBid == ask._highestBid, "Market: cannot change highest bid");
+        }
         if (ask.askType == Iutils.AskTypes.FIXED) {
             require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
-        } else {
+            } else {
             require(ask._reserveAmount < ask._askAmount, 'Market reserve amount error');
         }
 
         require(this.isTokenApproved(ask._currency), 'Market: ask currency not approved by admin');
-        Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
         require(_oldAsk._sender == ask._sender, 'Market: sender should be token owner');
-        // TODO what will the duration
+        // TODO what will the duration, will it be previous or updated one
         require(_oldAsk._duration == ask._duration, 'Market: cannot change duration');
         require(_oldAsk._firstBidTime == ask._firstBidTime, 'Market: cannot change first bid time');
         require(_oldAsk._bidder == ask._bidder, "Market: cannot change bidder");

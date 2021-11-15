@@ -556,7 +556,7 @@ describe('marketContract', async function () {
       
       // console.log('Ask Details Before Bid');
       
-      // const getAskDetails = await this.media.getTokenAsks(1);
+      // let getAskDetails = await this.media.getTokenAsks(1);
       // for (let i = 0; i < getAskDetails.length; i++) {
       //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
       // }
@@ -615,6 +615,7 @@ describe('marketContract', async function () {
       // console.log('Ask Details After Bid');
 
       // getAskDetails = await this.media.getTokenAsks(1);
+      // console.log(getAskDetails);
       // for (let i = 0; i < getAskDetails.length; i++) {
       //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
       // }
@@ -637,6 +638,12 @@ describe('marketContract', async function () {
         this.mintParamsAuction[6],
 
       ]);
+      
+      // getAskDetails = await this.media.getTokenAsks(1);
+      // console.log(getAskDetails);
+      // for (let i = 0; i < getAskDetails.length; i++) {
+      //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      // }
 
       console.log('************* Balances after second Bid **************');
 
@@ -670,18 +677,18 @@ describe('marketContract', async function () {
       const blockNumAfter = await ethers.provider.getBlockNumber();
       const blockAfter = await ethers.provider.getBlock(blockNumAfter);
       const timestampAfter = blockAfter.timestamp;
-      let getAskDetails = await this.media.getTokenAsks(1);
+      // getAskDetails = await this.media.getTokenAsks(1);
     
-      expect(timestampAfter).to.greaterThan(parseInt(getAskDetails[6]));
-      expect(timestampBefore).to.greaterThan(parseInt(getAskDetails[6]));
+      // expect(timestampAfter).to.greaterThan(parseInt(getAskDetails[6]));
+      // expect(timestampBefore).to.greaterThan(parseInt(getAskDetails[6]));
 
-      console.log('********** Ask Details Before Auction End ************');
+      // console.log('********** Ask Details Before Auction End ************');
       
-      getAskDetails = await this.media.getTokenAsks(1);
-      console.log(getAskDetails);
-      for (let i = 0; i < getAskDetails.length; i++) {
-        console.log(convertFromBigNumber(getAskDetails[i].toString()));
-      }
+      // getAskDetails = await this.media.getTokenAsks(1);
+      // console.log(getAskDetails);
+      // for (let i = 0; i < getAskDetails.length; i++) {
+      //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      // }
 
       await endAuction(this.media, this.alice, _tokenCounter);
       
@@ -760,7 +767,7 @@ describe('marketContract', async function () {
         convertToBigNumber(50),
       );
     
-      // // place bid
+      // place bid
       await setBid(this.media, this.bob, _tokenCounter, [
         1, // quantity of the tokens being bid
         convertToBigNumber(50), // amount of ERC20 token being used to bid
@@ -819,7 +826,7 @@ describe('marketContract', async function () {
       );
 
       // eslint-disable-next-line max-len
-      // // place bid and owner will be first owner again which is alice, and also royalty will be sent to the original owner ALICE.
+      // place bid and owner will be first owner again which is alice, and also royalty will be sent to the original owner ALICE.
       await setBid(this.media, this.alice, _tokenCounter, [
         1, // quantity of the tokens being bid
         convertToBigNumber(5), // amount of ERC20 token being used to bid
@@ -882,7 +889,7 @@ describe('marketContract', async function () {
         convertToBigNumber(51),
       );
     
-      // // place bid
+      // place bid
       await setBid(this.media, this.bob, _tokenCounter, [
         1, // quantity of the tokens being bid
         convertToBigNumber(51), // amount of ERC20 token being used to bid
@@ -895,11 +902,11 @@ describe('marketContract', async function () {
 
       console.log('Ask Details Before Update');
       
-      let getAskDetails = await this.media.getTokenAsks(1);
-      console.log(getAskDetails);
-      for (let i = 0; i < getAskDetails.length; i++) {
-        console.log(convertFromBigNumber(getAskDetails[i].toString()));
-      }
+      const getAskDetails = await this.media.getTokenAsks(1);
+      // console.log(getAskDetails);
+      // for (let i = 0; i < getAskDetails.length; i++) {
+      //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      // }
 
       // update the auction sell of the NFT
       // 100 is the ask amount and 50 is reserve amount, which is greater then reserve amount
@@ -918,12 +925,12 @@ describe('marketContract', async function () {
       ]);
 
       // ask details after udpating
-      console.log(' Ask Details After updating');
-      getAskDetails = await this.media.getTokenAsks(1);
-      console.log(getAskDetails);
-      for (let i = 0; i < getAskDetails.length; i++) {
-        console.log(convertFromBigNumber(getAskDetails[i].toString()));
-      }
+      // console.log(' Ask Details After updating');
+      // getAskDetails = await this.media.getTokenAsks(1);
+      // console.log(getAskDetails);
+      // for (let i = 0; i < getAskDetails.length; i++) {
+      //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      // }
 
       // approving againg tokens before making another bid request for new ask
       approveTokens(
@@ -944,13 +951,13 @@ describe('marketContract', async function () {
 
       ]);
 
-      console.log('***************');
-      // ask details after udpating
-      console.log(' Ask Details After second bid');
-      getAskDetails = await this.media.getTokenAsks(1);
-      for (let i = 0; i < getAskDetails.length; i++) {
-        console.log(convertFromBigNumber(getAskDetails[i].toString()));
-      }
+      // console.log('***************');
+      // // ask details after udpating
+      // console.log(' Ask Details After second bid');
+      // getAskDetails = await this.media.getTokenAsks(1);
+      // for (let i = 0; i < getAskDetails.length; i++) {
+      //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      // }
 
       console.log('*************************************');
 
