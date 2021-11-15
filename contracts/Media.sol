@@ -190,15 +190,13 @@ contract Media is IMedia, Ownable {
         IMarket(_marketAddress).setAsk(_tokenID, ask);
     }
 
-    function updateAsk(uint256 _tokenID, uint256 _reserveAmount, uint256 _askAmount, uint256 _amount, address _currency, Iutils.AskTypes _askType ) public override {
+    function updateAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
         
         Iutils.Ask memory oldAsk =IMarket(_marketAddress).getTokenAsks(_tokenID);
-        require(IMarket(_marketAddress).isTokenApproved(_currency), 'Media: ask curreny not approved ');
+        require(IMarket(_marketAddress).isTokenApproved(ask._currency), 'Media: ask curreny not approved ');
         require(msg.sender == oldAsk._sender, 'MEDIA: sender needs to be msg.sender for update ask');
-        IMarket(_marketAddress).updateAsk(_tokenID, _reserveAmount,  _askAmount,  _amount, _currency, _askType);
-
+        IMarket(_marketAddress).updateAsk(_tokenID, ask);
     }
-
 
     function removeBid(uint256 _tokenID) external override whenTokenExist(_tokenID) {
         IMarket(_marketAddress).removeBid(_tokenID, msg.sender);

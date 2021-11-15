@@ -128,15 +128,11 @@ async function setAsk (mediaContract, from, tokenId, askParams) {
   );
 }
 
-async function updateAsk (mediaContract, from, tokenId, reserveAmount, askAmount, amount, currency, askType) {
+async function updateAsk (mediaContract, from, tokenId, updateParams) {
   // update ask to Media Contract
   return mediaContract.connect(from).updateAsk(
     tokenId,
-    reserveAmount,
-    askAmount,
-    amount,
-    currency,
-    askType,
+    updateParams,
     { from: from.address },
   );
 }

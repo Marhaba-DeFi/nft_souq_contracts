@@ -13,7 +13,7 @@ interface IMarket {
     event BidCreated(uint256 indexed tokenID, Iutils.Bid bid);
     event BidRemoved(uint256 indexed tokenID, Iutils.Bid bid);
     event AskCreated(uint256 indexed tokenID, Iutils.Ask ask);
-    event AskUpdated(uint256 indexed _tokenID, uint256 _reserveAmount, uint256 _askAmount, uint256  _amount, address _currency, Iutils.AskTypes _askType);
+    event AskUpdated(uint256 indexed _tokenID, Iutils.Ask ask);
     event CancelBid(uint256 tokenID, address bidder);
     event AcceptBid(uint256 tokenID, address owner, uint256 amount, address bidder, uint256 bidAmount);
     event Redeem(address userAddress, uint256 points);
@@ -52,7 +52,7 @@ interface IMarket {
 
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
     
-    function updateAsk(uint256 tokenId, uint256 reserveAmount, uint256 askAmount, uint256 amount, address currency, Iutils.AskTypes askType ) external;
+    function updateAsk(uint256 tokenId, Iutils.Ask calldata ask ) external;
 
     function endAuction(
         uint256 _tokenID,

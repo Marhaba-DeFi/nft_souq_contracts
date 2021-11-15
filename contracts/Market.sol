@@ -53,7 +53,7 @@ contract Market is IMarket, Ownable {
 
     mapping(address => bool) private approvedCurrency;
 
-    address[] public allApprovedCurrencies;
+    // address[] public allApprovedCurrencies;
 
     // The minimum percentage difference between the last bid amount and the current bid.
     uint8 public minBidIncrementPercentage = 5;
@@ -217,9 +217,9 @@ contract Market is IMarket, Ownable {
             // If it's not, then we should refund the last bidder
             delete _tokenBidders[_tokenID][lastBidder];
             token.safeTransfer(lastBidder, _tokenAsks[_tokenID]._highestBid);
-            _tokenAsks[_tokenID]._highestBid = _bid._amount;
-            _tokenAsks[_tokenID]._bidder = _bid._bidder;
         }
+        _tokenAsks[_tokenID]._highestBid = _bid._amount;
+        _tokenAsks[_tokenID]._bidder = _bid._bidder;
         _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
 
         // create new Bid
@@ -231,21 +231,6 @@ contract Market is IMarket, Ownable {
             _bid._recipient,
             _bid.askType
         );
-
-        Iutils.Ask memory _ask = Iutils.Ask(
-            _tokenAsks[_tokenID]._sender,
-            _tokenAsks[_tokenID]._reserveAmount,
-            _tokenAsks[_tokenID]._askAmount,
-            _tokenAsks[_tokenID]._amount,
-            _tokenAsks[_tokenID]._currency,
-            _tokenAsks[_tokenID].askType,
-            _tokenAsks[_tokenID]._duration,
-            _tokenAsks[_tokenID]._firstBidTime,
-            _bid._bidder,
-            _bid._amount
-        );
-
-        setAsk(_tokenID, _ask);
 
         emit BidCreated(_tokenID, _bid);
 
@@ -331,7 +316,6 @@ contract Market is IMarket, Ownable {
         require(!this.isTokenApproved(_tokenAddress), 'Market: Token Already Configured!');
 
         approvedCurrency[_tokenAddress] = true;
-        allApprovedCurrencies.push(_tokenAddress);
         return true;
     }
 
@@ -343,29 +327,8 @@ contract Market is IMarket, Ownable {
         require(_tokenAddress != address(0), 'Market: Invalid Token Address!');
         require(this.isTokenApproved(_tokenAddress), 'Market: Token not found!');
 
-        delete approvedCurrency[_tokenAddress];
-        _removeCurrency(_getIndex(_tokenAddress, allApprovedCurrencies));
+        approvedCurrency[_tokenAddress] = false;
         return true;
-    }
-
-    function _removeCurrency(uint index) internal {
-       for (uint256 i = index; i < allApprovedCurrencies.length.sub(1); i++) {
-            allApprovedCurrencies[i] = allApprovedCurrencies[i + 1];
-        }
-        allApprovedCurrencies.pop(); 
-    }
-
-    //get index of the token address from the approved currencies
-    function _getIndex(address _tokenAddress, address [] memory from)
-        internal
-        pure
-        returns (uint256 index)
-    {
-        for (uint256 i = 0; i < from.length; i++) {
-            if (from[i] == _tokenAddress) {
-                return i;
-            }
-        }
     }
 
      /** 
@@ -377,12 +340,11 @@ contract Market is IMarket, Ownable {
         override
         returns (bool)
     {
-        for (uint256 i = 0; i < allApprovedCurrencies.length; i++) {
-            if (allApprovedCurrencies[i] == _tokenAddress) {
+            if (approvedCurrency[_tokenAddress] == true) {
                 return true;
+                } else {
+                return false;
             }
-        }
-        return false;
     }
 
     /**
@@ -498,26 +460,31 @@ contract Market is IMarket, Ownable {
         return true;
     }
 
-    function updateAsk(uint256 _tokenID, uint256 _reserveAmount, uint256 _askAmount, uint256 _amount, address _currency, Iutils.AskTypes _askType) public override onlyMediaCaller {
-        if (_askType == Iutils.AskTypes.FIXED) {
-            require(_reserveAmount == _askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
+    function updateAsk(uint256 _tokenID, Iutils.Ask calldata ask) public override onlyMediaCaller {
+        if (ask.askType == Iutils.AskTypes.FIXED) {
+            require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
         } else {
-            require(_reserveAmount < _askAmount, 'Market reserve amount error');
-
+            require(ask._reserveAmount < ask._askAmount, 'Market reserve amount error');
         }
 
-        require(this.isTokenApproved(_currency), 'Market: ask currency not approved by admin');
+        require(this.isTokenApproved(ask._currency), 'Market: ask currency not approved by admin');
         Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
+        require(_oldAsk._sender == ask._sender, 'Market: sender should be token owner');
+        // TODO what will the duration
+        require(_oldAsk._duration == ask._duration, 'Market: cannot change duration');
+        require(_oldAsk._firstBidTime == ask._firstBidTime, 'Market: cannot change first bid time');
+        require(_oldAsk._bidder == ask._bidder, "Market: cannot change bidder");
+        require( _oldAsk._highestBid == ask._highestBid, "Market: cannot change highest bid");
 
         // this require should be use if we don't remove the highest bid for the ask Price.
-        require(_askAmount > _oldAsk._highestBid, "Market: Ask Amount Should be greater than highest bid");
+        require(ask._askAmount > _oldAsk._highestBid, "Market: Ask Amount Should be greater than highest bid");
         Iutils.Ask memory _updatedAsk = Iutils.Ask(
             _oldAsk._sender,
-            _reserveAmount,
-            _askAmount,
-            _amount,
-            _currency,
-            _askType,
+            ask._reserveAmount,
+            ask._askAmount,
+            ask._amount,
+            ask._currency,
+            ask.askType,
             _oldAsk._duration,
             _oldAsk._firstBidTime,
             _oldAsk._bidder,
@@ -525,7 +492,7 @@ contract Market is IMarket, Ownable {
         );
         
         _tokenAsks[_tokenID] = _updatedAsk;
-        emit AskUpdated(_tokenID, _reserveAmount,  _askAmount,  _amount,  _currency, _askType);
+        emit AskUpdated(_tokenID, _updatedAsk);
     }
 
     function getTokenAsks(uint256 _tokenId) external view override returns( Iutils.Ask memory) {

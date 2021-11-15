@@ -169,19 +169,6 @@ describe('marketContract', async function () {
         0,
       ];
 
-      this.updateParams = [
-        this.alice.address, // sender address who is setting ask
-        mintObject.reserveAmount, // _reserveAmount
-        mintObject.askAmount, // _askAmount
-        mintObjectAuction.totalSupply,
-        this.marhabaToken.address,
-        mintObject.auctionType, // fixed or auction
-        mintObjectAuction.duration,
-        0,
-        '0x0000000000000000000000000000000000000000',
-        0,
-      ];
-
       await this.marhabaToken.transfer(
         this.alice.address,
         convertToBigNumber(1000),
@@ -683,10 +670,18 @@ describe('marketContract', async function () {
       const blockNumAfter = await ethers.provider.getBlockNumber();
       const blockAfter = await ethers.provider.getBlock(blockNumAfter);
       const timestampAfter = blockAfter.timestamp;
-      const getAskDetails = await this.media.getTokenAsks(1);
+      let getAskDetails = await this.media.getTokenAsks(1);
     
       expect(timestampAfter).to.greaterThan(parseInt(getAskDetails[6]));
       expect(timestampBefore).to.greaterThan(parseInt(getAskDetails[6]));
+
+      console.log('********** Ask Details Before Auction End ************');
+      
+      getAskDetails = await this.media.getTokenAsks(1);
+      console.log(getAskDetails);
+      for (let i = 0; i < getAskDetails.length; i++) {
+        console.log(convertFromBigNumber(getAskDetails[i].toString()));
+      }
 
       await endAuction(this.media, this.alice, _tokenCounter);
       
@@ -909,7 +904,18 @@ describe('marketContract', async function () {
       // update the auction sell of the NFT
       // 100 is the ask amount and 50 is reserve amount, which is greater then reserve amount
       // eslint-disable-next-line max-len
-      await updateAsk(this.media, this.alice, _tokenCounter, convertToBigNumber(50), convertToBigNumber(100), this.askParams[3], this.askParams[4], this.mintParamsAuction[6]);
+      await updateAsk(this.media, this.alice, _tokenCounter, [
+        this.alice.address, // sender address who is setting ask
+        convertToBigNumber(50), // _reserveAmount
+        convertToBigNumber(100), // _askAmount
+        this.askParams[3], // amount || quantity
+        this.marhabaToken.address,
+        mintObjectAuction.auctionType, // fixed or auction
+        getAskDetails[6], // duration
+        getAskDetails[7], // first bid time
+        getAskDetails[8], // bidder
+        getAskDetails[9], // highest bid
+      ]);
 
       // ask details after udpating
       console.log(' Ask Details After updating');
@@ -946,11 +952,6 @@ describe('marketContract', async function () {
         console.log(convertFromBigNumber(getAskDetails[i].toString()));
       }
 
-      // get token bid details
-      const getBidDetails = await this.media.getTokenBid(1);
-      for (let i = 0; i < getBidDetails.length; i++) {
-        console.log(convertFromBigNumber(getBidDetails[i].toString()));
-      }
       console.log('*************************************');
 
       // increasing time so that auction can be ended
