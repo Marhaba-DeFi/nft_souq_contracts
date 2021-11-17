@@ -2,16 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import './interfaces/IMarket.sol';
-import './interfaces/Iutils.sol';
+import "./interfaces/IMarket.sol";
+import "./interfaces/Iutils.sol";
 
-import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Market is IMarket, Ownable {
     using SafeMath for uint256;
@@ -59,7 +58,7 @@ contract Market is IMarket, Ownable {
     uint8 public minBidIncrementPercentage = 5;
 
     modifier onlyMediaCaller() {
-        require(msg.sender == _mediaContract, 'Market: Unauthorized Access!');
+        require(msg.sender == _mediaContract, "Market: Unauthorized Access!");
         _;
     }
 
@@ -78,7 +77,8 @@ contract Market is IMarket, Ownable {
     }
 
     // tokenID => owner => bidder => Bid Struct
-    mapping(uint256 => mapping(address => mapping(address => NewBid))) private _newTokenBids;
+    mapping(uint256 => mapping(address => mapping(address => NewBid)))
+        private _newTokenBids;
 
     // tokenID => owner => all bidders
     mapping(uint256 => mapping(address => address[])) private newTokenBidders;
@@ -89,8 +89,14 @@ contract Market is IMarket, Ownable {
      * @param _mediaContractAddress Address of the Media Contract to set
      */
     function configureMedia(address _mediaContractAddress) external onlyOwner {
-        require(_mediaContractAddress != address(0), 'Market: Invalid Media Contract Address!');
-        require(_mediaContract == address(0), 'Market: Media Contract Alredy Configured!');
+        require(
+            _mediaContractAddress != address(0),
+            "Market: Invalid Media Contract Address!"
+        );
+        require(
+            _mediaContract == address(0),
+            "Market: Media Contract Alredy Configured!"
+        );
 
         _mediaContract = _mediaContractAddress;
     }
@@ -98,18 +104,21 @@ contract Market is IMarket, Ownable {
     /**
      * @dev See {IMarket}
      */
-    function setCollaborators(uint256 _tokenID, Collaborators calldata _collaborators)
-        external
-        override
-        onlyMediaCaller
-    {
+    function setCollaborators(
+        uint256 _tokenID,
+        Collaborators calldata _collaborators
+    ) external override onlyMediaCaller {
         tokenCollaborators[_tokenID] = _collaborators;
     }
 
     /**
      * @dev See {IMarket}
      */
-    function setRoyaltyPoints(uint256 _tokenID, uint8 _royaltyPoints) external override onlyMediaCaller {
+    function setRoyaltyPoints(uint256 _tokenID, uint8 _royaltyPoints)
+        external
+        override
+        onlyMediaCaller
+    {
         tokenRoyaltyPercentage[_tokenID] = _royaltyPoints;
     }
 
@@ -125,36 +134,58 @@ contract Market is IMarket, Ownable {
     ) external override onlyMediaCaller returns (bool) {
         require(_bid._amount != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._bidAmount != 0, "Market: You Can't Bid For 0 Tokens");
-        require(!(_bid._bidAmount < 0), "Market: You Can't Bid For Negative Tokens");
-        require(_bid._currency != address(0), 'Market: bid currency cannot be 0 address');
-        require(this.isTokenApproved(_bid._currency), 'Market: bid currency not approved by admin');
-        require(_bid._recipient != address(0), 'Market: bid recipient cannot be 0 address');
-        require(_tokenAsks[_tokenID]._currency != address(0), 'Market: Token is not open for Sale');
+        require(
+            !(_bid._bidAmount < 0),
+            "Market: You Can't Bid For Negative Tokens"
+        );
+        require(
+            _bid._currency != address(0),
+            "Market: bid currency cannot be 0 address"
+        );
+        require(
+            this.isTokenApproved(_bid._currency),
+            "Market: bid currency not approved by admin"
+        );
+        require(
+            _bid._recipient != address(0),
+            "Market: bid recipient cannot be 0 address"
+        );
+        require(
+            _tokenAsks[_tokenID]._currency != address(0),
+            "Market: Token is not open for Sale"
+        );
         require(
             _bid._amount >= _tokenAsks[_tokenID]._reserveAmount,
-            'Market: Bid Cannot be placed below the min Amount'
+            "Market: Bid Cannot be placed below the min Amount"
         );
-        require(_bid._currency == _tokenAsks[_tokenID]._currency, 'Market: Incorrect payment Method');
+        require(
+            _bid._currency == _tokenAsks[_tokenID]._currency,
+            "Market: Incorrect payment Method"
+        );
 
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
         // fetch existing bid, if there is any
         require(
             token.allowance(_bid._bidder, address(this)) >= _bid._amount,
-            'Market: Please Approve Tokens Before You Bid'
+            "Market: Please Approve Tokens Before You Bid"
         );
         Iutils.Bid storage existingBid = _tokenBidders[_tokenID][_bidder];
 
         if (_tokenAsks[_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
                 _bid._amount <= _tokenAsks[_tokenID]._askAmount,
-                'Market: You Cannot Pay more then Max Asked Amount '
+                "Market: You Cannot Pay more then Max Asked Amount "
             );
             // If there is an existing bid, refund it before continuing
             if (existingBid._amount > 0) {
                 removeBid(_tokenID, _bid._bidder);
             }
-            _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
+            _handleIncomingBid(
+                _bid._amount,
+                _tokenAsks[_tokenID]._currency,
+                _bid._bidder
+            );
 
             // Set New Bid for the Token
             _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
@@ -185,29 +216,37 @@ contract Market is IMarket, Ownable {
         }
     }
 
-    function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid) internal {
+    function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid)
+        internal
+    {
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
         // fetch existing bid, if there is any
         require(
             token.allowance(_bid._bidder, address(this)) >= _bid._amount,
-            'Market: Please Approve Tokens Before You Bid'
+            "Market: Please Approve Tokens Before You Bid"
         );
         // Manage if the Bid is of Auction Type
         address lastBidder = _tokenAsks[_tokenID]._bidder;
 
         require(
             _tokenAsks[_tokenID]._firstBidTime == 0 ||
-                block.timestamp < _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration),
-            'Market: Auction expired'
+                block.timestamp <
+                _tokenAsks[_tokenID]._firstBidTime.add(
+                    _tokenAsks[_tokenID]._duration
+                ),
+            "Market: Auction expired"
         );
 
         require(
             _bid._amount >=
                 _tokenAsks[_tokenID]._highestBid.add(
-                    _tokenAsks[_tokenID]._highestBid.mul(minBidIncrementPercentage * EXPO).div(BASE)
+                    _tokenAsks[_tokenID]
+                        ._highestBid
+                        .mul(minBidIncrementPercentage * EXPO)
+                        .div(BASE)
                 ),
-            'Market: Must send more than last bid by minBidIncrementPercentage amount'
+            "Market: Must send more than last bid by minBidIncrementPercentage amount"
         );
         if (_tokenAsks[_tokenID]._firstBidTime == 0) {
             // If this is the first valid bid, we should set the starting time now.
@@ -220,7 +259,11 @@ contract Market is IMarket, Ownable {
         }
         _tokenAsks[_tokenID]._highestBid = _bid._amount;
         _tokenAsks[_tokenID]._bidder = _bid._bidder;
-        _handleIncomingBid(_bid._amount, _tokenAsks[_tokenID]._currency, _bid._bidder);
+        _handleIncomingBid(
+            _bid._amount,
+            _tokenAsks[_tokenID]._currency,
+            _bid._bidder
+        );
 
         // create new Bid
         _tokenBidders[_tokenID][_bid._bidder] = Iutils.Bid(
@@ -239,12 +282,16 @@ contract Market is IMarket, Ownable {
         // at this point we know that the timestamp is less than start + duration (since the auction would be over, otherwise)
         // we want to know by how much the timestamp is less than start + duration
         // if the difference is less than the timeBuffer, increase the duration by the timeBuffer
-        uint256 auctionDuration = _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration);
+        uint256 auctionDuration = _tokenAsks[_tokenID]._firstBidTime.add(
+            _tokenAsks[_tokenID]._duration
+        );
         if (auctionDuration.sub(block.timestamp) < timeBuffer) {
             uint256 oldDuration = _tokenAsks[_tokenID]._duration;
             uint256 _firstBidTime = _tokenAsks[_tokenID]._firstBidTime;
             _tokenAsks[_tokenID]._duration = oldDuration.add(
-                timeBuffer.sub(_firstBidTime.add(oldDuration).sub(block.timestamp))
+                timeBuffer.sub(
+                    _firstBidTime.add(oldDuration).sub(block.timestamp)
+                )
             );
             extended = true;
         }
@@ -262,46 +309,132 @@ contract Market is IMarket, Ownable {
         uint256 beforeBalance = token.balanceOf(address(this));
         token.safeTransferFrom(_bidder, address(this), _amount);
         uint256 afterBalance = token.balanceOf(address(this));
-        require(beforeBalance.add(_amount) == afterBalance, 'Token transfer call did not transfer expected amount');
+        require(
+            beforeBalance.add(_amount) == afterBalance,
+            "Token transfer call did not transfer expected amount"
+        );
     }
 
     // /**
     //  * @notice Sets the ask on a particular media. If the ask cannot be evenly split into the media's
     //  * bid shares, this reverts.
     //  */
-    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override onlyMediaCaller {
-        if (ask.askType == Iutils.AskTypes.FIXED) {
-            require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask)
+        public
+        override
+        onlyMediaCaller
+    {
+        Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
+
+        if (_oldAsk._sender != address(0)) {
+            if (ask.askType == Iutils.AskTypes.AUCTION) {
+                require(
+                    _oldAsk._highestBid == ask._highestBid,
+                    "Market: cannot change highest bid"
+                );
+            }
+            if (ask.askType == Iutils.AskTypes.FIXED) {
+                require(
+                    ask._reserveAmount == ask._askAmount,
+                    "Amount observe and Asked Need to be same for Fixed Sale"
+                );
+            } else {
+                require(
+                    ask._reserveAmount < ask._askAmount,
+                    "Market reserve amount error"
+                );
+            }
+
+            require(
+                this.isTokenApproved(ask._currency),
+                "Market: ask currency not approved by admin"
+            );
+            require(
+                _oldAsk._sender == ask._sender,
+                "Market: sender should be token owner"
+            );
+            // TODO what will the duration, will it be previous or updated one
+            require(
+                _oldAsk._duration == ask._duration,
+                "Market: cannot change duration"
+            );
+            require(
+                _oldAsk._firstBidTime == ask._firstBidTime,
+                "Market: cannot change first bid time"
+            );
+            require(
+                _oldAsk._bidder == ask._bidder,
+                "Market: cannot change bidder"
+            );
+            require(
+                _oldAsk._highestBid == ask._highestBid,
+                "Market: cannot change highest bid"
+            );
+
+            // this require should be use if we don't remove the highest bid for the ask Price.
+            require(
+                ask._askAmount > _oldAsk._highestBid,
+                "Market: Ask Amount Should be greater than highest bid"
+            );
+            Iutils.Ask memory _updatedAsk = Iutils.Ask(
+                _oldAsk._sender,
+                ask._reserveAmount,
+                ask._askAmount,
+                ask._amount,
+                ask._currency,
+                ask.askType,
+                _oldAsk._duration,
+                _oldAsk._firstBidTime,
+                _oldAsk._bidder,
+                _oldAsk._highestBid
+            );
+            _tokenAsks[_tokenID] = _updatedAsk;
+            emit AskUpdated(_tokenID, _updatedAsk);
+        } else {
+            _tokenAsks[_tokenID] = ask;
+            emit AskUpdated(_tokenID, ask);
         }
-        //TODO reserve amount cannot be greater than ask amoutn
-        // require(ask._reserveAmount < ask._askAmount, 'Market reserve amount error');
-        require(this.isTokenApproved(ask._currency), 'Market: ask currency not approved by admin');
-        _tokenAsks[_tokenID] = ask;
-        emit AskCreated(_tokenID, ask);
     }
 
-    function removeBid(uint256 _tokenID, address _bidder) public override onlyMediaCaller {
+    function removeBid(uint256 _tokenID, address _bidder)
+        public
+        override
+        onlyMediaCaller
+    {
         Iutils.Bid storage bid = _tokenBidders[_tokenID][_bidder];
         uint256 bidAmount = bid._amount;
         address bidCurrency = bid._currency;
 
-        require(bid._bidder == _bidder, 'Market: Only bidder can remove the bid');
-        require(bid._amount > 0, 'Market: cannot remove bid amount of 0');
+        require(
+            bid._bidder == _bidder,
+            "Market: Only bidder can remove the bid"
+        );
+        require(bid._amount > 0, "Market: cannot remove bid amount of 0");
 
         IERC20 token = IERC20(bidCurrency);
         emit BidRemoved(_tokenID, bid);
         // line safeTransfer should be upper before delete??
         token.safeTransfer(bid._bidder, bidAmount);
         delete _tokenBidders[_tokenID][_bidder];
-
     }
 
     /**
      * @dev See {IMarket}
      */
-    function setAdminAddress(address _newAdminAddress) external override onlyMediaCaller returns (bool) {
-        require(_newAdminAddress != address(0), 'Market: Invalid Admin Address!');
-        require(_adminAddress == address(0), 'Market: Admin Already Configured!');
+    function setAdminAddress(address _newAdminAddress)
+        external
+        override
+        onlyMediaCaller
+        returns (bool)
+    {
+        require(
+            _newAdminAddress != address(0),
+            "Market: Invalid Admin Address!"
+        );
+        require(
+            _adminAddress == address(0),
+            "Market: Admin Already Configured!"
+        );
 
         _adminAddress = _newAdminAddress;
         return true;
@@ -310,10 +443,17 @@ contract Market is IMarket, Ownable {
     /**
      * @dev See {IMarket}
      */
-    function addCurrency(address _tokenAddress) external override onlyMediaCaller returns (bool) {
-        
-        require(_tokenAddress != address(0), 'Market: Invalid Token Address!');
-        require(!this.isTokenApproved(_tokenAddress), 'Market: Token Already Configured!');
+    function addCurrency(address _tokenAddress)
+        external
+        override
+        onlyMediaCaller
+        returns (bool)
+    {
+        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
+        require(
+            !this.isTokenApproved(_tokenAddress),
+            "Market: Token Already Configured!"
+        );
 
         approvedCurrency[_tokenAddress] = true;
         return true;
@@ -322,16 +462,23 @@ contract Market is IMarket, Ownable {
     /**
      * @dev See {IMarket}
      */
-    function removeCurrency(address _tokenAddress) external override onlyMediaCaller returns (bool) {
-        
-        require(_tokenAddress != address(0), 'Market: Invalid Token Address!');
-        require(this.isTokenApproved(_tokenAddress), 'Market: Token not found!');
+    function removeCurrency(address _tokenAddress)
+        external
+        override
+        onlyMediaCaller
+        returns (bool)
+    {
+        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
+        require(
+            this.isTokenApproved(_tokenAddress),
+            "Market: Token not found!"
+        );
 
         approvedCurrency[_tokenAddress] = false;
         return true;
     }
 
-     /** 
+    /** 
     @dev check function if Token Contract address is already added 
     @param _tokenAddress token address */
     function isTokenApproved(address _tokenAddress)
@@ -340,24 +487,35 @@ contract Market is IMarket, Ownable {
         override
         returns (bool)
     {
-            if (approvedCurrency[_tokenAddress] == true) {
-                return true;
-                } else {
-                return false;
-            }
+        if (approvedCurrency[_tokenAddress] == true) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * @dev See {IMarket}
      */
-    function getAdminAddress() external view override onlyMediaCaller returns (address) {
+    function getAdminAddress()
+        external
+        view
+        override
+        onlyMediaCaller
+        returns (address)
+    {
         return _adminAddress;
     }
 
     /**
      * @dev See {IMarket}
      */
-    function setCommissionPercentage(uint8 _commissionPercentage) external override onlyMediaCaller returns (bool) {
+    function setCommissionPercentage(uint8 _commissionPercentage)
+        external
+        override
+        onlyMediaCaller
+        returns (bool)
+    {
         _adminCommissionPercentage = _commissionPercentage;
         return true;
     }
@@ -365,7 +523,13 @@ contract Market is IMarket, Ownable {
     /**
      * @dev See {IMarket}
      */
-    function getCommissionPercentage() external view override onlyMediaCaller returns (uint8) {
+    function getCommissionPercentage()
+        external
+        view
+        override
+        onlyMediaCaller
+        returns (uint8)
+    {
         return _adminCommissionPercentage;
     }
 
@@ -374,13 +538,26 @@ contract Market is IMarket, Ownable {
         address _owner,
         address _creator
     ) external override onlyMediaCaller returns (bool) {
-        require(uint256(_tokenAsks[_tokenID]._firstBidTime) != 0, "Market.Auction hasn't begun");
         require(
-            block.timestamp >= _tokenAsks[_tokenID]._firstBidTime.add(_tokenAsks[_tokenID]._duration),
+            uint256(_tokenAsks[_tokenID]._firstBidTime) != 0,
+            "Market.Auction hasn't begun"
+        );
+        require(
+            block.timestamp >=
+                _tokenAsks[_tokenID]._firstBidTime.add(
+                    _tokenAsks[_tokenID]._duration
+                ),
             "Auction hasn't completed"
         );
         // address(0) for _bidder is only need when sale type is of type Auction
-        return divideMoney(_tokenID, _owner, address(0), _tokenAsks[_tokenID]._highestBid, _creator);
+        return
+            divideMoney(
+                _tokenID,
+                _owner,
+                address(0),
+                _tokenAsks[_tokenID]._highestBid,
+                _creator
+            );
     }
 
     /**
@@ -388,7 +565,10 @@ contract Market is IMarket, Ownable {
      * @dev Transfers the NFT back to the auction creator and emits an AuctionCanceled event
      */
     function cancelAuction(uint256 _tokenID) external override onlyMediaCaller {
-        require(uint256(_tokenAsks[_tokenID]._firstBidTime) == 0, "Can't cancel an auction once it's begun");
+        require(
+            uint256(_tokenAsks[_tokenID]._firstBidTime) == 0,
+            "Can't cancel an auction once it's begun"
+        );
         delete _tokenAsks[_tokenID];
     }
 
@@ -402,13 +582,18 @@ contract Market is IMarket, Ownable {
         uint256 _amountToDistribute,
         address _creator
     ) internal returns (bool) {
-        require(_amountToDistribute > 0, "Market: Amount To Divide Can't Be 0!");
+        require(
+            _amountToDistribute > 0,
+            "Market: Amount To Divide Can't Be 0!"
+        );
 
         Iutils.Ask memory _ask = _tokenAsks[_tokenID];
         IERC20 token = IERC20(_ask._currency);
 
         // first send admin cut
-        uint256 adminCommission = _amountToDistribute.mul(_adminCommissionPercentage * EXPO).div(BASE);
+        uint256 adminCommission = _amountToDistribute
+            .mul(_adminCommissionPercentage * EXPO)
+            .div(BASE);
         uint256 _amount = _amountToDistribute - adminCommission;
 
         token.transfer(_adminAddress, adminCommission);
@@ -425,14 +610,25 @@ contract Market is IMarket, Ownable {
         uint256 totalAmountTransferred = 0;
 
         if (tokenColab._receiveCollabShare == false) {
-            for (uint256 index = 0; index < tokenColab._collaborators.length; index++) {
+            for (
+                uint256 index = 0;
+                index < tokenColab._collaborators.length;
+                index++
+            ) {
                 // Individual Collaborator's share Amount
 
-                uint256 amountToTransfer = royaltyPoints.mul(tokenColab._percentages[index] * EXPO).div(BASE);
+                uint256 amountToTransfer = royaltyPoints
+                    .mul(tokenColab._percentages[index] * EXPO)
+                    .div(BASE);
                 // transfer Individual Collaborator's share Amount
-                token.transfer(tokenColab._collaborators[index], amountToTransfer);
+                token.transfer(
+                    tokenColab._collaborators[index],
+                    amountToTransfer
+                );
                 // Total Amount Transferred
-                totalAmountTransferred = totalAmountTransferred.add(amountToTransfer);
+                totalAmountTransferred = totalAmountTransferred.add(
+                    amountToTransfer
+                );
             }
             // after transfering to collabs, remaining would be sent to creator
             // update collaborators got the shares
@@ -440,12 +636,19 @@ contract Market is IMarket, Ownable {
         }
 
         token.transfer(_creator, royaltyPoints.sub(totalAmountTransferred));
-        
-        totalAmountTransferred = totalAmountTransferred.add(royaltyPoints.sub(totalAmountTransferred));
 
-        totalAmountTransferred = totalAmountTransferred.add(_amount.sub(royaltyPoints));
+        totalAmountTransferred = totalAmountTransferred.add(
+            royaltyPoints.sub(totalAmountTransferred)
+        );
+
+        totalAmountTransferred = totalAmountTransferred.add(
+            _amount.sub(royaltyPoints)
+        );
         // Check for Transfer amount error
-        require(totalAmountTransferred == _amount, 'Market: Amount Transfer Value Error!');
+        require(
+            totalAmountTransferred == _amount,
+            "Market: Amount Transfer Value Error!"
+        );
         delete _tokenBidders[_tokenID][_bidder];
         delete _tokenAsks[_tokenID];
 
@@ -455,34 +658,69 @@ contract Market is IMarket, Ownable {
     /**
      * @dev See {IMarket}
      */
-    function addAdminCommission(uint256 _amount) external override onlyMediaCaller returns (bool) {
+    function addAdminCommission(uint256 _amount)
+        external
+        override
+        onlyMediaCaller
+        returns (bool)
+    {
         _adminPoints = _adminPoints.add(_amount);
         return true;
     }
 
-    function updateAsk(uint256 _tokenID, Iutils.Ask calldata ask) public override onlyMediaCaller {
-        
+    function updateAsk(uint256 _tokenID, Iutils.Ask calldata ask)
+        public
+        override
+        onlyMediaCaller
+    {
         Iutils.Ask storage _oldAsk = _tokenAsks[_tokenID];
 
-        if(ask.askType == Iutils.AskTypes.AUCTION) {
-            require( _oldAsk._highestBid == ask._highestBid, "Market: cannot change highest bid");
+        if (ask.askType == Iutils.AskTypes.AUCTION) {
+            require(
+                _oldAsk._highestBid == ask._highestBid,
+                "Market: cannot change highest bid"
+            );
         }
         if (ask.askType == Iutils.AskTypes.FIXED) {
-            require(ask._reserveAmount == ask._askAmount, 'Amount observe and Asked Need to be same for Fixed Sale');
-            } else {
-            require(ask._reserveAmount < ask._askAmount, 'Market reserve amount error');
+            require(
+                ask._reserveAmount == ask._askAmount,
+                "Amount observe and Asked Need to be same for Fixed Sale"
+            );
+        } else {
+            require(
+                ask._reserveAmount < ask._askAmount,
+                "Market reserve amount error"
+            );
         }
 
-        require(this.isTokenApproved(ask._currency), 'Market: ask currency not approved by admin');
-        require(_oldAsk._sender == ask._sender, 'Market: sender should be token owner');
+        require(
+            this.isTokenApproved(ask._currency),
+            "Market: ask currency not approved by admin"
+        );
+        require(
+            _oldAsk._sender == ask._sender,
+            "Market: sender should be token owner"
+        );
         // TODO what will the duration, will it be previous or updated one
-        require(_oldAsk._duration == ask._duration, 'Market: cannot change duration');
-        require(_oldAsk._firstBidTime == ask._firstBidTime, 'Market: cannot change first bid time');
+        require(
+            _oldAsk._duration == ask._duration,
+            "Market: cannot change duration"
+        );
+        require(
+            _oldAsk._firstBidTime == ask._firstBidTime,
+            "Market: cannot change first bid time"
+        );
         require(_oldAsk._bidder == ask._bidder, "Market: cannot change bidder");
-        require( _oldAsk._highestBid == ask._highestBid, "Market: cannot change highest bid");
+        require(
+            _oldAsk._highestBid == ask._highestBid,
+            "Market: cannot change highest bid"
+        );
 
         // this require should be use if we don't remove the highest bid for the ask Price.
-        require(ask._askAmount > _oldAsk._highestBid, "Market: Ask Amount Should be greater than highest bid");
+        require(
+            ask._askAmount > _oldAsk._highestBid,
+            "Market: Ask Amount Should be greater than highest bid"
+        );
         Iutils.Ask memory _updatedAsk = Iutils.Ask(
             _oldAsk._sender,
             ask._reserveAmount,
@@ -495,16 +733,26 @@ contract Market is IMarket, Ownable {
             _oldAsk._bidder,
             _oldAsk._highestBid
         );
-        
+
         _tokenAsks[_tokenID] = _updatedAsk;
         emit AskUpdated(_tokenID, _updatedAsk);
     }
 
-    function getTokenAsks(uint256 _tokenId) external view override returns( Iutils.Ask memory) {
+    function getTokenAsks(uint256 _tokenId)
+        external
+        view
+        override
+        returns (Iutils.Ask memory)
+    {
         return _tokenAsks[_tokenId];
     }
 
-    function getTokenBid(uint256 _tokenId) external view override returns( Iutils.Bid memory) {
+    function getTokenBid(uint256 _tokenId)
+        external
+        view
+        override
+        returns (Iutils.Bid memory)
+    {
         address bidder = _tokenAsks[_tokenId]._bidder;
         return _tokenBidders[_tokenId][bidder];
     }
