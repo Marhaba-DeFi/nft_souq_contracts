@@ -294,6 +294,7 @@ contract Market is IMarket, Ownable {
                 )
             );
             extended = true;
+            emit AuctionExtended(_tokenID, _tokenAsks[_tokenID]._duration);
         }
     }
 
@@ -329,19 +330,17 @@ contract Market is IMarket, Ownable {
         if (_oldAsk._sender != address(0)) {
             if (ask.askType == Iutils.AskTypes.AUCTION) {
                 require(
-                    _oldAsk._highestBid == ask._highestBid,
-                    "Market: cannot change highest bid"
+                    _oldAsk._firstBidTime == 0,
+                    "Market: Auction Started, Nothing can be modified"
                 );
-            }
-            if (ask.askType == Iutils.AskTypes.FIXED) {
-                require(
-                    ask._reserveAmount == ask._askAmount,
-                    "Amount observe and Asked Need to be same for Fixed Sale"
-                );
-            } else {
                 require(
                     ask._reserveAmount < ask._askAmount,
                     "Market reserve amount error"
+                );
+            } else {
+                require(
+                    ask._reserveAmount == ask._askAmount,
+                    "Amount observe and Asked Need to be same for Fixed Sale"
                 );
             }
 
@@ -352,11 +351,6 @@ contract Market is IMarket, Ownable {
             require(
                 _oldAsk._sender == ask._sender,
                 "Market: sender should be token owner"
-            );
-            // TODO what will the duration, will it be previous or updated one
-            require(
-                _oldAsk._duration == ask._duration,
-                "Market: cannot change duration"
             );
             require(
                 _oldAsk._firstBidTime == ask._firstBidTime,
@@ -371,11 +365,6 @@ contract Market is IMarket, Ownable {
                 "Market: cannot change highest bid"
             );
 
-            // this require should be use if we don't remove the highest bid for the ask Price.
-            require(
-                ask._askAmount > _oldAsk._highestBid,
-                "Market: Ask Amount Should be greater than highest bid"
-            );
             Iutils.Ask memory _updatedAsk = Iutils.Ask(
                 _oldAsk._sender,
                 ask._reserveAmount,
@@ -383,7 +372,7 @@ contract Market is IMarket, Ownable {
                 ask._amount,
                 ask._currency,
                 ask.askType,
-                _oldAsk._duration,
+                ask._duration,
                 _oldAsk._firstBidTime,
                 _oldAsk._bidder,
                 _oldAsk._highestBid
@@ -560,6 +549,29 @@ contract Market is IMarket, Ownable {
             );
     }
 
+    function acceptBid(
+        uint256 _tokenID,
+        address _owner,
+        address _creator
+    ) external override onlyMediaCaller returns (bool) {
+        require(
+            uint256(_tokenAsks[_tokenID]._firstBidTime) != 0,
+            "Market.Auction hasn't begun"
+        );
+        require(uint256(_tokenAsks[_tokenID]._highestBid) != 0, "No Bid Found");
+        // address(0) for _bidder is only need when sale type is of type Auction
+        address newOwner = _tokenAsks[_tokenID]._bidder;
+        divideMoney(
+            _tokenID,
+            _owner,
+            address(0),
+            _tokenAsks[_tokenID]._highestBid,
+            _creator
+        );
+        emit BidAccepted(_tokenID, newOwner);
+        return true;
+    }
+
     /**
      * @notice Cancel an auction.
      * @dev Transfers the NFT back to the auction creator and emits an AuctionCanceled event
@@ -570,6 +582,7 @@ contract Market is IMarket, Ownable {
             "Can't cancel an auction once it's begun"
         );
         delete _tokenAsks[_tokenID];
+        emit AuctionCancelled(_tokenID);
     }
 
     /**
