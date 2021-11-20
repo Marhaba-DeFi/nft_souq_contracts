@@ -148,7 +148,7 @@ contract Media is IMedia, Ownable {
             data.totalSupply,
             data.currencyAsked,
             data.askType,
-            0,
+            data._duation,
             0,
             address(0),
             0
