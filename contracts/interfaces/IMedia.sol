@@ -64,8 +64,6 @@ interface IMedia {
      */
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
-    function updateAsk(uint256 _tokenID, Iutils.Ask calldata ask) external;
-
     function endAuction(uint256 _tokenID) external returns (bool);
 
     function acceptBid(uint256 _tokenID) external returns (bool);

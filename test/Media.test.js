@@ -19,8 +19,7 @@ const {
   endAuction,
   getBalanceNFT,
   cancelAuction,
-  setAsk,
-  updateAsk,
+  setAsk
 } = require('./Media.helper');
 // `describe` is a Mocha function that allows you to organize your tests. It's
 // not actually needed, but having your tests organized makes debugging them
@@ -911,7 +910,7 @@ describe('marketContract', async function () {
       // update the auction sell of the NFT
       // 100 is the ask amount and 50 is reserve amount, which is greater then reserve amount
       // eslint-disable-next-line max-len
-      await updateAsk(this.media, this.alice, _tokenCounter, [
+      await setAsk(this.media, this.alice, _tokenCounter, [
         this.alice.address, // sender address who is setting ask
         convertToBigNumber(50), // _reserveAmount
         convertToBigNumber(100), // _askAmount

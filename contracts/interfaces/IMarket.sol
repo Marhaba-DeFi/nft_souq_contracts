@@ -64,8 +64,6 @@ interface IMarket {
 
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
-    function updateAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
-
     function endAuction(
         uint256 _tokenID,
         address _owner,

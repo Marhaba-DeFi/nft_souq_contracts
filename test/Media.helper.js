@@ -128,14 +128,6 @@ async function setAsk (mediaContract, from, tokenId, askParams) {
   );
 }
 
-async function updateAsk (mediaContract, from, tokenId, updateParams) {
-  // update ask to Media Contract
-  return mediaContract.connect(from).updateAsk(
-    tokenId,
-    updateParams,
-    { from: from.address },
-  );
-}
 
 async function addCurrency (mediaContract, from, tokenAddress) {
   // addCurrency function to add admin approved token addresses
@@ -154,6 +146,5 @@ module.exports = {
   getBalanceNFT,
   cancelAuction,
   setAsk,
-  updateAsk,
   addCurrency,
 };

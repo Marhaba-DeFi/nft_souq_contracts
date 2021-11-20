@@ -5,12 +5,10 @@ pragma solidity ^0.8.0;
 import "./ERC1155Factory.sol";
 import "./interfaces/IMedia.sol";
 import "./interfaces/IMarket.sol";
-import "./interfaces/Iutils.sol";
 import "./ERC721Factory.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Media is IMedia, Ownable {
+contract Media is IMedia {
     using SafeMath for uint256;
 
     address private _ERC1155Address;
@@ -67,10 +65,6 @@ contract Media is IMedia, Ownable {
         require(
             data.collaborators.length == data.percentages.length,
             "Media: Collaborators Info is not correct"
-        );
-        require(
-            IMarket(_marketAddress).isTokenApproved(data.currencyAsked),
-            "Media: ask curreny not approved "
         );
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
@@ -201,10 +195,6 @@ contract Media is IMedia, Ownable {
         returns (bool)
     {
         address _owner = tokenIDToToken[_tokenID]._currentOwner;
-        require(
-            IMarket(_marketAddress).isTokenApproved(bid._currency),
-            "Media: ask curreny not approved "
-        );
         require(msg.sender == bid._bidder, "Media: Bidder must be msg sender");
         require(bid._bidder != address(0), "Media: bidder cannot be 0 address");
         require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
@@ -217,7 +207,7 @@ contract Media is IMedia, Ownable {
                 "Media: The Owner Does Not Have That Much Tokens!"
             );
         } else {
-            require(bid._bidAmount == 1, "Media: Only 1 Token Is Available"); //_bidAmount is the amount of tokens
+            require(bid._bidAmount == 1, "Media: Only 1 Token Is Available");
             require(
                 nftToOwners[_tokenID] == _owner,
                 "Media: Invalid Owner Provided!"
@@ -231,9 +221,8 @@ contract Media is IMedia, Ownable {
             _owner,
             nftToCreators[_tokenID]
         );
-        if (tokenSold) {
+        if (tokenSold)
             _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
-        }
         return true;
     }
 
@@ -242,32 +231,10 @@ contract Media is IMedia, Ownable {
      */
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
         require(
-            IMarket(_marketAddress).isTokenApproved(ask._currency),
-            "Media: ask curreny not approved "
-        );
-        require(
             msg.sender == ask._sender,
             "MEDIA: sender in ask tuple needs to be msg.sender"
         );
         IMarket(_marketAddress).setAsk(_tokenID, ask);
-    }
-
-    function updateAsk(uint256 _tokenID, Iutils.Ask memory ask)
-        public
-        override
-    {
-        Iutils.Ask memory oldAsk = IMarket(_marketAddress).getTokenAsks(
-            _tokenID
-        );
-        require(
-            IMarket(_marketAddress).isTokenApproved(ask._currency),
-            "Media: ask curreny not approved "
-        );
-        require(
-            msg.sender == oldAsk._sender,
-            "MEDIA: sender needs to be msg.sender for update ask"
-        );
-        IMarket(_marketAddress).updateAsk(_tokenID, ask);
     }
 
     function removeBid(uint256 _tokenID)
@@ -291,7 +258,8 @@ contract Media is IMedia, Ownable {
             _ask.askType == Iutils.AskTypes.AUCTION,
             "Media: Invalid Ask Type"
         );
-        address _owner = tokenIDToToken[_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
+        //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
+        address _owner = tokenIDToToken[_tokenID]._currentOwner;
         address _creator = nftToCreators[_tokenID];
         IMarket(_marketAddress).endAuction(_tokenID, _owner, _creator);
 
