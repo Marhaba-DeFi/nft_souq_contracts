@@ -354,4 +354,12 @@ contract Media is IMedia {
         tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
     }
+
+    function getTokenAsks(uint256 _tokenId)
+        external
+        view
+        returns (Iutils.Ask memory)
+    {
+        return IMarket(_marketAddress).getTokenAsks(_tokenId);
+    }
 }

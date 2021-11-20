@@ -1,10 +1,10 @@
 // const hre = require('hardhat');
 const ethers = require('ethers');
 const privateKeys = [
-  '0x5f4445ba69d36a98174d0d4584b2e663ae35dd570dfdca63639fda511ad76b5c',
-  '0x1deb83a0b24016f1d0de84963a3c60ceff6a7c08dcebefc5e40ac92247848b65',
-  '0xedff6515810c1d72ca2c7ad9ae1af24605781cc7e5336a560bcb0a66685ce241',
-  '0x0c6c17ad938e3a9fd1a76c822fbb00427845116253c30ea1d84ab731393cfbaa',
+  '4a0493f32ce8ecd8c391283a16dc4df388fd9f6aeab2d34ecb5f79f26e696585',
+  'ffbbd18e6a0c414d6e08759a023a759c20ef68c29003439e901e8f1b25d5c6a7',
+  '9a3b9f8817042cb53831e014eb24453e4f2cfd60bec4412990fa0b88f437cd31',
+  '7829cb373c8d0a3ed53842271567206710dae69f3064d28d89304d0ff5a1bff9',
 ];
 
 function generatedWallets (provider) {

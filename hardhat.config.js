@@ -38,16 +38,16 @@ module.exports = {
       accounts: [process.env.PRIVATE_KEY],
     },
     kovan: {
-      url: 'https://kovan.infura.io/v3/a4273886253a4c01b2e41cbfeb190ccd',
+      url: 'https://kovan.infura.io/v3/efa4b4ab6b5e41f6ac9818107e359ac6',
       accounts: [process.env.PRIVATE_KEY],
     },
     rinkeby: {
-      url: 'https://rinkeby.infura.io/v3/a4273886253a4c01b2e41cbfeb190ccd',
+      url: 'https://rinkeby.infura.io/v3/efa4b4ab6b5e41f6ac9818107e359ac6',
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 100000000000,
     },
     mainnet: {
-      url: 'https://mainnet.infura.io/v3/a4273886253a4c01b2e41cbfeb190ccd',
+      url: 'https://mainnet.infura.io/v3/efa4b4ab6b5e41f6ac9818107e359ac6',
       accounts: [process.env.PRIVATE_KEY],
       gasPrice: 24000000000,
     },

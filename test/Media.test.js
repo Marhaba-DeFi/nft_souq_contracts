@@ -3,9 +3,9 @@ const { expect } = require('chai');
 const fs = require('fs');
 const hre = require('hardhat');
 const ethers = hre.ethers;
-const { convertToBigNumber } = require('../utils/util');
+const { convertToBigNumber, convertFromBigNumber } = require('../utils/util');
 const { generatedWallets } = require('../utils/wallets');
-const { mintObject } = require('./Media.Objects');
+const { mintObject, mintObjectAuction } = require('./Media.Objects');
 const { JsonRpcProvider } = require('@ethersproject/providers');
 const path = require('path');
 
@@ -130,6 +130,20 @@ describe('Media Contract', async function () {
         mintObject.duration, // Auction End Time
       ];
 
+      this.mintParamsAuction = [
+        mintObjectAuction.ipfsHash, // IPFS hash
+        mintObjectAuction.title, // title
+        mintObjectAuction.totalSupply, // totalSupply
+        mintObjectAuction.royaltyPoints, // royaltyPoints
+        mintObjectAuction.collabsAddresses, // collaborators
+        mintObjectAuction.collabsPercentages, // percentages
+        mintObjectAuction.auctionType, // askType  AUCTION - 0 , FIXED - 1
+        mintObjectAuction.askAmount, // _askAmount
+        mintObjectAuction.reserveAmount, // _reserveAmount
+        this.marhabaToken.address, // currencyAsked
+        mintObjectAuction.duration, // Auction End Time
+      ];
+
       await this.marhabaToken.transfer(
         this.alice.address,
         convertToBigNumber(1000),
@@ -166,6 +180,7 @@ describe('Media Contract', async function () {
       const tokenCounter = await fetchMintEvent(tx);
       expect(tokenCounter.toString()).to.equals('1');
     });
+    
     it('Buy ERC721 NFT without collabs', async function () {
       const tx = await mintTokens(
         this.media,
@@ -208,6 +223,7 @@ describe('Media Contract', async function () {
         1999.9,
       );
     });
+
     it('Buy ERC721 NFT with collabs', async function () {
       this.mintParamsTuples[4] = ['0x42eb768f2244c8811c63729a21a3569731535f06']; // collabs addresses
       this.mintParamsTuples[5] = [10]; // collabs percenrages
@@ -310,6 +326,7 @@ describe('Media Contract', async function () {
         1999.94,
       );
     });
+
     it('Should Fail Again Buy, Sold 1155 NFT without collabs', async function () {
       this.mintParamsTuples[7] = convertToBigNumber(3); // ask Amount
       this.mintParamsTuples[8] = convertToBigNumber(3); // reserve Amount
@@ -370,6 +387,7 @@ describe('Media Contract', async function () {
         ]),
       ).to.be.revertedWith('Token is not open for Sale');
     });
+
     it('Should Pass Again Buy, Sold 1155 NFT without collabs', async function () {
       this.mintParamsTuples[4] = ['0x5CB88D82E01C6C6FeB89fA5021706b449ad0b303'];
       this.mintParamsTuples[5] = [10];
@@ -476,6 +494,61 @@ describe('Media Contract', async function () {
           parseFloat(balances.bob) +
           parseFloat(balances.admin),
       ).to.equals(1999.9852999999998);
+    });
+
+    it('Mint Token and sell it by Auction', async function () {
+      let mintTx = await this.media
+        .connect(this.alice)
+        .mintToken(this.mintParamsAuction);
+      mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
+      const event = mintTx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
+      const [_tokenCounter] = event.args;
+      expect(_tokenCounter.toString()).to.equals('1');
+
+      // approve tokens before making request
+      approveTokens(
+        this.marhabaToken,
+        this.bob,
+        this.market.address,
+        convertToBigNumber(10),
+      );
+
+      const getAskDetails = await this.media.getTokenAsks(1);
+      console.log(convertFromBigNumber(getAskDetails[3].toString()));
+      console.log(getAskDetails);
+
+      // // place bid
+      await setBid(this.media, this.bob, _tokenCounter, [
+        1, // quantity of the tokens being bid
+        convertToBigNumber(10), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[6],
+
+      ]);
+      // fetch balances
+      const balances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'collabs 1', address: this.mintParamsAuction[4][0] },
+        { name: 'collabs 2', address: this.mintParamsAuction[4][1] },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      console.log(balances);
+
+      // expect(_tokenCounter.toString()).to.equals('1');
+      // expect(balances.alice).to.equals('1004.8755');
+      // expect(balances.bob).to.equals('950.0');
+      // expect(balances.collabs).to.equals('0.0245');
+      // expect(balances.admin).to.equals('0.1');
+      // expect(
+      //   parseFloat(balances.alice) +
+      //     parseFloat(balances.collabs) +
+      //     parseFloat(balances.admin),
+      // ).to.equals(1050);
     });
   });
 });
