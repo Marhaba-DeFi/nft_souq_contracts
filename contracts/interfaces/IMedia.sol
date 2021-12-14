@@ -42,14 +42,22 @@ interface IMedia {
 
     event TokenCounter(uint256 _tokenCounter);
 
-    event Transfer(uint256 _tokenID, address _owner, address _recipient, uint256 _amount);
+    event Transfer(
+        uint256 _tokenID,
+        address _owner,
+        address _recipient,
+        uint256 _amount
+    );
 
     /**
      * @notice This method is used to Mint a new Token
      *
      * @return uint256 Token Id of the Minted Token
      */
-    function mintToken(MediaData calldata data) external payable returns (uint256);
+    function mintToken(MediaData calldata data)
+        external
+        payable
+        returns (uint256);
 
     /**
      * @notice Set the ask on a piece of media
@@ -57,6 +65,8 @@ interface IMedia {
     function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
     function endAuction(uint256 _tokenID) external returns (bool);
+
+    function acceptBid(uint256 _tokenID) external returns (bool);
 
     function cancelAuction(uint256 _tokenID) external returns (bool);
 
@@ -67,7 +77,10 @@ interface IMedia {
      *
      * @return Token Structure of the Token
      */
-    function getToken(uint256 _tokenID) external view returns (MediaInfo memory);
+    function getToken(uint256 _tokenID)
+        external
+        view
+        returns (MediaInfo memory);
 
     /**
      * @notice This method is used to bid for the Token with ID _tokenID
@@ -76,7 +89,10 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function setBid(uint256 _tokenID, Iutils.Bid calldata bid) external payable returns (bool);
+    function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
+        external
+        payable
+        returns (bool);
 
     function removeBid(uint256 tokenId) external;
 

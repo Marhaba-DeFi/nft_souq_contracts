@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import './ERC1155.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract ERC1155Factory is ERC1155 {
+contract ERC1155Factory is ERC1155, Ownable {
     address private _mediaContract;
 
     // tokenId => Owner
@@ -16,17 +17,28 @@ contract ERC1155Factory is ERC1155 {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(string memory name_, string memory symbol_) ERC1155(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_)
+        ERC1155(name_, symbol_)
+    {}
 
     modifier onlyMediaCaller() {
-        require(msg.sender == _mediaContract, 'ERC1155Factory: Unauthorized Access!');
+        require(
+            msg.sender == _mediaContract,
+            'ERC1155Factory: Unauthorized Access!'
+        );
         _;
     }
 
-    function configureMedia(address _mediaContractAddress) external {
+    function configureMedia(address _mediaContractAddress) external onlyOwner {
         // TODO: Only Owner Modifier
-        require(_mediaContractAddress != address(0), 'ERC1155Factory: Invalid Media Contract Address!');
-        require(_mediaContract == address(0), 'ERC1155Factory: Media Contract Alredy Configured!');
+        require(
+            _mediaContractAddress != address(0),
+            'ERC1155Factory: Invalid Media Contract Address!'
+        );
+        require(
+            _mediaContract == address(0),
+            'ERC1155Factory: Media Contract Alredy Configured!'
+        );
 
         _mediaContract = _mediaContractAddress;
     }

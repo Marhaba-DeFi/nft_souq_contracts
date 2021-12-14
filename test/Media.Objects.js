@@ -17,8 +17,8 @@ const mintObject = {
   auctionType: 1, // askType  AUCTION - 0 , FIXED - 1
   askAmount: convertToBigNumber(5),
   reserveAmount: convertToBigNumber(5),
-  askReserveAmount: 4,
-  askMaxAmount: 4,
+  askReserveAmount: convertToBigNumber(4),
+  askMaxAmount: convertToBigNumber(4),
   duration: parseInt(Date.now() + 86400),
 };
 
@@ -33,10 +33,10 @@ const mintObjectAuction = {
   collabsAddresses: ['0x3306ea6DfbB7a24eF7AB2E3e1E8C6A1afAfC3E42', '0xC3cd11dA4d47B17EDe50313F3CF6e91cD67EE960'],
   collabsPercentages: [2, 3],
   auctionType: 0, // askType  AUCTION - 0 , FIXED - 1
-  askAmount: convertToBigNumber(50),
+  askAmount: convertToBigNumber(100),
   reserveAmount: convertToBigNumber(50),
-  askReserveAmount: 10,
-  askMaxAmount: 10,
+  askReserveAmount: convertToBigNumber(10),
+  askMaxAmount: convertToBigNumber(10),
   duration: parseInt(Date.now() + 86400),
 };
 

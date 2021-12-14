@@ -10,11 +10,21 @@ interface IMarket {
         bool _receiveCollabShare;
     }
 
+    event BidAccepted(uint256 indexed tokenID, address owner);
+    event AuctionCancelled(uint256 indexed tokenID);
+    event AuctionExtended(uint256 indexed tokenID, uint256 duration);
     event BidCreated(uint256 indexed tokenID, Iutils.Bid bid);
     event BidRemoved(uint256 indexed tokenID, Iutils.Bid bid);
     event AskCreated(uint256 indexed tokenID, Iutils.Ask ask);
+    event AskUpdated(uint256 indexed _tokenID, Iutils.Ask ask);
     event CancelBid(uint256 tokenID, address bidder);
-    event AcceptBid(uint256 tokenID, address owner, uint256 amount, address bidder, uint256 bidAmount);
+    event AcceptBid(
+        uint256 tokenID,
+        address owner,
+        uint256 amount,
+        address bidder,
+        uint256 bidAmount
+    );
     event Redeem(address userAddress, uint256 points);
 
     /**
@@ -22,7 +32,10 @@ interface IMarket {
      * @param _tokenID TokenID of the Token to Set Collaborators
      * @param _collaborators Struct of Collaborators to set
      */
-    function setCollaborators(uint256 _tokenID, Collaborators calldata _collaborators) external;
+    function setCollaborators(
+        uint256 _tokenID,
+        Collaborators calldata _collaborators
+    ) external;
 
     /**
      * @notice tHis method is used to set Royalty Points for the token
@@ -57,6 +70,12 @@ interface IMarket {
         address _creator
     ) external returns (bool);
 
+    function acceptBid(
+        uint256 _tokenID,
+        address _owner,
+        address _creator
+    ) external returns (bool);
+
     function cancelAuction(uint256 _tokenID) external;
 
     /**
@@ -77,7 +96,9 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function setCommissionPercentage(uint8 _commissionPercentage) external returns (bool);
+    function setCommissionPercentage(uint8 _commissionPercentage)
+        external
+        returns (bool);
 
     /**
      * @notice This Method is used to set Admin's Address
@@ -111,6 +132,22 @@ interface IMarket {
      */
     function addAdminCommission(uint256 _amount) external returns (bool);
 
-    function getTokenAsks(uint256 _tokenId) external view returns( Iutils.Ask memory);
-    
+    function addCurrency(address _tokenAddress) external returns (bool);
+
+    function removeCurrency(address _tokenAddress) external returns (bool);
+
+    function isTokenApproved(address _tokenAddress)
+        external
+        view
+        returns (bool);
+
+    function getTokenAsks(uint256 _tokenId)
+        external
+        view
+        returns (Iutils.Ask memory);
+
+    function getTokenBid(uint256 _tokenId)
+        external
+        view
+        returns (Iutils.Bid memory);
 }

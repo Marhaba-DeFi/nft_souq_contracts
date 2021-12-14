@@ -3,19 +3,29 @@
 pragma solidity ^0.8.0;
 
 import './ERC721.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-contract ERC721Factory is ERC721 {
+contract ERC721Factory is ERC721, Ownable {
     address private _mediaContract;
 
     modifier onlyMediaCaller() {
-        require(msg.sender == _mediaContract, 'ERC721Factory: Unauthorized Access!');
+        require(
+            msg.sender == _mediaContract,
+            'ERC721Factory: Unauthorized Access!'
+        );
         _;
     }
 
-    function configureMedia(address _mediaContractAddress) external {
+    function configureMedia(address _mediaContractAddress) external onlyOwner {
         // TODO: Only Owner Modifier
-        require(_mediaContractAddress != address(0), 'ERC1155Factory: Invalid Media Contract Address!');
-        require(_mediaContract == address(0), 'ERC1155Factory: Media Contract Alredy Configured!');
+        require(
+            _mediaContractAddress != address(0),
+            'ERC1155Factory: Invalid Media Contract Address!'
+        );
+        require(
+            _mediaContract == address(0),
+            'ERC1155Factory: Media Contract Alredy Configured!'
+        );
 
         _mediaContract = _mediaContractAddress;
     }
@@ -26,7 +36,9 @@ contract ERC721Factory is ERC721 {
     // tokenID => Creator
     mapping(uint256 => address) nftToCreators;
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_)
+        ERC721(name_, symbol_)
+    {}
 
     /* 
     @notice This function is used fot minting 
@@ -47,7 +59,10 @@ contract ERC721Factory is ERC721 {
     @dev Called the ERC721'_transfer' function to transfer 
      tokens from 'msg.sender'
     */
-    function transfer(address _recipient, uint256 _tokenID) public onlyMediaCaller {
+    function transfer(address _recipient, uint256 _tokenID)
+        public
+        onlyMediaCaller
+    {
         require(_tokenID > 0, 'ERC721Factory: Token Id should be non-zero');
         transferFrom(msg.sender, _recipient, _tokenID); // ERC721 transferFrom function called
         nftToOwners[_tokenID] = _recipient;

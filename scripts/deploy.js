@@ -12,6 +12,8 @@ async function main () {
   const erc721Name = 'NFT SOUQ';
   const erc721Symbol = 'NFTSOUQ';
   const adminAddress = '0x4281d6888D7a3A6736B0F596823810ffBd7D4808';
+  const mrhbAddress = '0x45202955b5a2770A4dc526B6FB3634dDB275c8Df';
+  const wbnbAddress = '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd';
   const adminCommissionPercentage = '1';
   let erc721 = await hre.ethers.getContractFactory('ERC721Factory');
   erc721 = await erc721.deploy(erc721Name, erc721Symbol);
@@ -52,6 +54,10 @@ async function main () {
   console.log('configured admin address');
   await media.setCommissionPercentage(adminCommissionPercentage);
   console.log('configured Commission Percentage address');
+  await media.addCurrency(mrhbAddress);
+  console.log('Currency 1 added');
+  await media.addCurrency(wbnbAddress);
+  console.log('Currency 2 added');
 }
 
 // We recommend this pattern to be able to use async/await everywhere
