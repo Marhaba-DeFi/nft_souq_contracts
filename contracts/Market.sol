@@ -21,13 +21,8 @@ contract Market is IMarket, Ownable {
     address private _mediaContract;
     address private _adminAddress;
 
-    // To store commission amount of admin
-    uint256 private _adminPoints;
-    // To storre commission percentage for each mint
+    // To store commission percentage for each mint
     uint8 private _adminCommissionPercentage;
-
-    // tokenID => (bidderAddress => BidAmount)
-    mapping(uint256 => mapping(address => uint256)) private tokenBids;
 
     // Mapping from token to mapping from bidder to bid
     mapping(uint256 => mapping(address => Iutils.Bid)) private _tokenBidders;
@@ -35,20 +30,11 @@ contract Market is IMarket, Ownable {
     // Mapping from token to the current ask for the token
     mapping(uint256 => Iutils.Ask) private _tokenAsks;
 
-    // userAddress => its Redeem points
-    mapping(address => uint256) private userRedeemPoints;
-
-    // tokenID => List of Transactions
-    mapping(uint256 => string[]) private tokenTransactionHistory;
-
     // tokenID => creator's Royalty Percentage
     mapping(uint256 => uint8) private tokenRoyaltyPercentage;
 
     // tokenID => { collaboratorsAddresses[] , percentages[] }
     mapping(uint256 => Collaborators) private tokenCollaborators;
-
-    // tokenID => all Bidders
-    mapping(uint256 => address[]) private tokenBidders;
 
     mapping(address => bool) private approvedCurrency;
 
@@ -62,9 +48,9 @@ contract Market is IMarket, Ownable {
         _;
     }
 
-    uint256 constant EXPO = 1e18;
+    uint256 constant private EXPO = 1e18;
 
-    uint256 constant BASE = 100 * EXPO;
+    uint256 constant private BASE = 100 * EXPO;
 
     // The minimum amount of time left in an auction after a new bid is created
     uint256 public timeBuffer = 15 * 60; // extend 15 minutes after every bid made in last 15 minutes
@@ -75,13 +61,6 @@ contract Market is IMarket, Ownable {
         uint256 _amount;
         uint256 _bidAmount;
     }
-
-    // tokenID => owner => bidder => Bid Struct
-    mapping(uint256 => mapping(address => mapping(address => NewBid)))
-        private _newTokenBids;
-
-    // tokenID => owner => all bidders
-    mapping(uint256 => mapping(address => address[])) private newTokenBidders;
 
     /**
      * @notice This method is used to Set Media Contract's Address
@@ -95,10 +74,11 @@ contract Market is IMarket, Ownable {
         );
         require(
             _mediaContract == address(0),
-            'Market: Media Contract Alredy Configured!'
+            'Market: Media Contract Already Configured!'
         );
 
         _mediaContract = _mediaContractAddress;
+        emit MediaUpdated(_mediaContractAddress);
     }
 
     /**
@@ -120,6 +100,7 @@ contract Market is IMarket, Ownable {
         onlyMediaCaller
     {
         tokenRoyaltyPercentage[_tokenID] = _royaltyPoints;
+        emit RoyaltyUpdated(_tokenID, _royaltyPoints);
     }
 
     /**
@@ -221,11 +202,6 @@ contract Market is IMarket, Ownable {
     {
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
-        // fetch existing bid, if there is any
-        require(
-            token.allowance(_bid._bidder, address(this)) >= _bid._amount,
-            'Market: Please Approve Tokens Before You Bid'
-        );
         // Manage if the Bid is of Auction Type
         address lastBidder = _tokenAsks[_tokenID]._bidder;
 
@@ -285,7 +261,7 @@ contract Market is IMarket, Ownable {
     ) internal {
         // We must check the balance that was actually transferred to the auction,
         // as some tokens impose a transfer fee and would not actually transfer the
-        // full amount to the market, resulting in potentally locked funds
+        // full amount to the market, resulting in potentially locked funds
         IERC20 token = IERC20(_currency);
         uint256 beforeBalance = token.balanceOf(address(this));
         token.safeTransferFrom(_bidder, address(this), _amount);
@@ -406,6 +382,7 @@ contract Market is IMarket, Ownable {
         );
 
         _adminAddress = _newAdminAddress;
+        emit AdminUpdated(_adminAddress);
         return true;
     }
 
@@ -486,6 +463,7 @@ contract Market is IMarket, Ownable {
         returns (bool)
     {
         _adminCommissionPercentage = _commissionPercentage;
+        emit CommissionUpdated(_adminCommissionPercentage);
         return true;
     }
 
@@ -507,16 +485,21 @@ contract Market is IMarket, Ownable {
         address _owner,
         address _creator
     ) external override onlyMediaCaller returns (bool) {
+        
+        require(
+            _tokenAsks[_tokenID].askType ==  Iutils.AskTypes.AUCTION,
+            "Market: Token Not Added For sale"
+        );
         require(
             uint256(_tokenAsks[_tokenID]._firstBidTime) != 0,
-            "Market.Auction hasn't begun"
+            "Market: Auction hasn't begun"
         );
         require(
             block.timestamp >=
                 _tokenAsks[_tokenID]._firstBidTime.add(
                     _tokenAsks[_tokenID]._duration
                 ),
-            "Auction hasn't completed"
+            "Market: Auction hasn't completed"
         );
         address newOwner = _tokenAsks[_tokenID]._bidder;
         // address(0) for _bidder is only need when sale type is of type Auction
@@ -593,31 +576,31 @@ contract Market is IMarket, Ownable {
 
         token.transfer(_adminAddress, adminCommission);
 
-        // fetch owners added royality points
+        // fetch owners added royalty points
         uint256 collabPercentage = tokenRoyaltyPercentage[_tokenID];
         uint256 royaltyPoints = _amount.mul(collabPercentage * EXPO).div(BASE);
 
         // royaltyPoints represents amount going to divide among Collaborators
         token.transfer(_owner, _amount.sub(royaltyPoints));
 
-        // Collaboratoes will only receive share when creator have set some royalty and sale is occuring for the first time
-        Collaborators storage tokenColab = tokenCollaborators[_tokenID];
+        // Collaborators will only receive share when creator have set some royalty and sale is occurring for the first time
+        Collaborators storage tokenCollab = tokenCollaborators[_tokenID];
         uint256 totalAmountTransferred = 0;
 
-        if (tokenColab._receiveCollabShare == false) {
+        if (tokenCollab._receiveCollabShare == false) {
             for (
                 uint256 index = 0;
-                index < tokenColab._collaborators.length;
+                index < tokenCollab._collaborators.length;
                 index++
             ) {
                 // Individual Collaborator's share Amount
 
                 uint256 amountToTransfer = royaltyPoints
-                    .mul(tokenColab._percentages[index] * EXPO)
+                    .mul(tokenCollab._percentages[index] * EXPO)
                     .div(BASE);
                 // transfer Individual Collaborator's share Amount
                 token.transfer(
-                    tokenColab._collaborators[index],
+                    tokenCollab._collaborators[index],
                     amountToTransfer
                 );
                 // Total Amount Transferred
@@ -625,20 +608,15 @@ contract Market is IMarket, Ownable {
                     amountToTransfer
                 );
             }
-            // after transfering to collabs, remaining would be sent to creator
+            // after transferring to collabs, remaining would be sent to creator
             // update collaborators got the shares
-            tokenColab._receiveCollabShare = true;
+            tokenCollab._receiveCollabShare = true;
         }
 
         token.transfer(_creator, royaltyPoints.sub(totalAmountTransferred));
 
-        totalAmountTransferred = totalAmountTransferred.add(
-            royaltyPoints.sub(totalAmountTransferred)
-        );
+        totalAmountTransferred = royaltyPoints;
 
-        totalAmountTransferred = totalAmountTransferred.add(
-            _amount.sub(royaltyPoints)
-        );
         // Check for Transfer amount error
         require(
             totalAmountTransferred == _amount,
@@ -647,19 +625,6 @@ contract Market is IMarket, Ownable {
         delete _tokenBidders[_tokenID][_bidder];
         delete _tokenAsks[_tokenID];
 
-        return true;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function addAdminCommission(uint256 _amount)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        _adminPoints = _adminPoints.add(_amount);
         return true;
     }
 

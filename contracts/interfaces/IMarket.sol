@@ -9,7 +9,6 @@ interface IMarket {
         uint8[] _percentages;
         bool _receiveCollabShare;
     }
-
     event BidAccepted(uint256 indexed tokenID, address owner);
     event AuctionCancelled(uint256 indexed tokenID);
     event AuctionExtended(uint256 indexed tokenID, uint256 duration);
@@ -25,6 +24,10 @@ interface IMarket {
         address bidder,
         uint256 bidAmount
     );
+    event AdminUpdated(address newAdminAddress);
+    event CommissionUpdated(uint8 commissionPercentage);
+    event RoyaltyUpdated(uint256 indexed _tokenID, uint8 _royaltyPoints);
+    event MediaUpdated(address mediaContractAddress);
     event Redeem(address userAddress, uint256 points);
 
     /**
@@ -122,15 +125,6 @@ interface IMarket {
      * @return address Admin's Address
      */
     function getAdminAddress() external view returns (address);
-
-    /**
-     * @notice This method is used to give admin Commission while Minting new token
-     *
-     * @param _amount Commission Amount
-     *
-     * @return bool Transaction status
-     */
-    function addAdminCommission(uint256 _amount) external returns (bool);
 
     function addCurrency(address _tokenAddress) external returns (bool);
 

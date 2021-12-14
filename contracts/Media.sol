@@ -21,13 +21,13 @@ contract Media is IMedia {
     mapping(bytes32 => uint256) private _tokenHashToTokenID;
 
     // tokenID => Owner
-    mapping(uint256 => address) public nftToOwners;
+    mapping(uint256 => address) private nftToOwners;
 
     // tokenID => Creator
-    mapping(uint256 => address) nftToCreators;
+    mapping(uint256 => address) private nftToCreators;
 
     // tokenID => Token
-    mapping(uint256 => MediaInfo) tokenIDToToken;
+    mapping(uint256 => MediaInfo) private tokenIDToToken;
 
     modifier whenTokenExist(uint256 _tokenID) {
         require(
@@ -58,7 +58,6 @@ contract Media is IMedia {
 
     function mintToken(MediaData memory data)
         external
-        payable
         override
         returns (uint256)
     {
@@ -68,7 +67,7 @@ contract Media is IMedia {
         );
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
-        // verify sum of collaborators percentages needs to be less then or equals to 100
+        // verify sum of collaborators percentages needs to be less then or equals to 10
         uint256 sumOfCollabRoyalty = 0;
         for (uint256 index = 0; index < data.collaborators.length; index++) {
             sumOfCollabRoyalty = sumOfCollabRoyalty.add(
@@ -189,7 +188,6 @@ contract Media is IMedia {
 
     function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
-        payable
         override
         whenTokenExist(_tokenID)
         returns (bool)

@@ -56,7 +56,6 @@ interface IMedia {
      */
     function mintToken(MediaData calldata data)
         external
-        payable
         returns (uint256);
 
     /**
@@ -91,7 +90,6 @@ interface IMedia {
      */
     function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
-        payable
         returns (bool);
 
     function removeBid(uint256 tokenId) external;
