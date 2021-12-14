@@ -276,26 +276,6 @@ contract Market is IMarket, Ownable {
         );
 
         emit BidCreated(_tokenID, _bid);
-
-        bool extended = false;
-
-        // at this point we know that the timestamp is less than start + duration (since the auction would be over, otherwise)
-        // we want to know by how much the timestamp is less than start + duration
-        // if the difference is less than the timeBuffer, increase the duration by the timeBuffer
-        uint256 auctionDuration = _tokenAsks[_tokenID]._firstBidTime.add(
-            _tokenAsks[_tokenID]._duration
-        );
-        if (auctionDuration.sub(block.timestamp) < timeBuffer) {
-            uint256 oldDuration = _tokenAsks[_tokenID]._duration;
-            uint256 _firstBidTime = _tokenAsks[_tokenID]._firstBidTime;
-            _tokenAsks[_tokenID]._duration = oldDuration.add(
-                timeBuffer.sub(
-                    _firstBidTime.add(oldDuration).sub(block.timestamp)
-                )
-            );
-            extended = true;
-            emit AuctionExtended(_tokenID, _tokenAsks[_tokenID]._duration);
-        }
     }
 
     function _handleIncomingBid(
