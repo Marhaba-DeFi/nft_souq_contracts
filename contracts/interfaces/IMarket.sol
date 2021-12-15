@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
-import './Iutils.sol';
+import "./Iutils.sol";
 
 interface IMarket {
     struct Collaborators {
@@ -26,6 +26,7 @@ interface IMarket {
     );
     event AdminUpdated(address newAdminAddress);
     event CommissionUpdated(uint8 commissionPercentage);
+    event BidIncrementPercentageUpdated(uint8 bidIncrementPercentage);
     event RoyaltyUpdated(uint256 indexed _tokenID, uint8 _royaltyPoints);
     event MediaUpdated(address mediaContractAddress);
     event Redeem(address userAddress, uint256 points);
@@ -100,6 +101,10 @@ interface IMarket {
      * @return bool Transaction status
      */
     function setCommissionPercentage(uint8 _commissionPercentage)
+        external
+        returns (bool);
+
+    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
         external
         returns (bool);
 

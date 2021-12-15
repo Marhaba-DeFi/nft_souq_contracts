@@ -19,7 +19,7 @@ const mintObject = {
   reserveAmount: convertToBigNumber(5),
   askReserveAmount: convertToBigNumber(4),
   askMaxAmount: convertToBigNumber(4),
-  duration: parseInt(Date.now() + 86400),
+  duration: parseInt(0),
 };
 
 const mintObjectAuction = {

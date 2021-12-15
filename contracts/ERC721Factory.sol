@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import './ERC721.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "./ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERC721Factory is ERC721, Ownable {
     address private _mediaContract;
@@ -11,7 +11,7 @@ contract ERC721Factory is ERC721, Ownable {
     modifier onlyMediaCaller() {
         require(
             msg.sender == _mediaContract,
-            'ERC721Factory: Unauthorized Access!'
+            "ERC721Factory: Unauthorized Access!"
         );
         _;
     }
@@ -20,11 +20,11 @@ contract ERC721Factory is ERC721, Ownable {
         // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
-            'ERC1155Factory: Invalid Media Contract Address!'
+            "ERC1155Factory: Invalid Media Contract Address!"
         );
         require(
             _mediaContract == address(0),
-            'ERC1155Factory: Media Contract Alredy Configured!'
+            "ERC1155Factory: Media Contract Alredy Configured!"
         );
 
         _mediaContract = _mediaContractAddress;
@@ -63,7 +63,7 @@ contract ERC721Factory is ERC721, Ownable {
         public
         onlyMediaCaller
     {
-        require(_tokenID > 0, 'ERC721Factory: Token Id should be non-zero');
+        require(_tokenID > 0, "ERC721Factory: Token Id should be non-zero");
         transferFrom(msg.sender, _recipient, _tokenID); // ERC721 transferFrom function called
         nftToOwners[_tokenID] = _recipient;
     }
@@ -80,10 +80,10 @@ contract ERC721Factory is ERC721, Ownable {
         address _recipient,
         uint256 _tokenID
     ) public override onlyMediaCaller {
-        require(_tokenID > 0, 'ERC721Factory: Token Id should be non-zero');
+        require(_tokenID > 0, "ERC721Factory: Token Id should be non-zero");
         require(
             _isApprovedOrOwner(_msgSender(), _tokenID),
-            'ERC721Factory: transfer caller is neither owner nor approved'
+            "ERC721Factory: transfer caller is neither owner nor approved"
         );
 
         safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called

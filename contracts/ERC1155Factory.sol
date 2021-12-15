@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import './ERC1155.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "./ERC1155.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERC1155Factory is ERC1155, Ownable {
     address private _mediaContract;
@@ -24,7 +24,7 @@ contract ERC1155Factory is ERC1155, Ownable {
     modifier onlyMediaCaller() {
         require(
             msg.sender == _mediaContract,
-            'ERC1155Factory: Unauthorized Access!'
+            "ERC1155Factory: Unauthorized Access!"
         );
         _;
     }
@@ -33,11 +33,11 @@ contract ERC1155Factory is ERC1155, Ownable {
         // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
-            'ERC1155Factory: Invalid Media Contract Address!'
+            "ERC1155Factory: Invalid Media Contract Address!"
         );
         require(
             _mediaContract == address(0),
-            'ERC1155Factory: Media Contract Alredy Configured!'
+            "ERC1155Factory: Media Contract Alredy Configured!"
         );
 
         _mediaContract = _mediaContractAddress;
@@ -50,7 +50,7 @@ contract ERC1155Factory is ERC1155, Ownable {
     ) external onlyMediaCaller {
         nftToOwners[_tokenID] = _owner;
         nftToCreators[_tokenID] = _owner;
-        _mint(_owner, _tokenID, _totalSupply, '');
+        _mint(_owner, _tokenID, _totalSupply, "");
         setApprovalForAll(_mediaContract, true);
     }
 
@@ -71,14 +71,14 @@ contract ERC1155Factory is ERC1155, Ownable {
         uint256 _tokenID,
         uint256 _amount
     ) external onlyMediaCaller returns (bool) {
-        require(_to != address(0x0), 'ERC1155Factory: _to must be non-zero.');
+        require(_to != address(0x0), "ERC1155Factory: _to must be non-zero.");
 
         // require(
         //     _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
         //     'ERC1155Factory: Need operator approval for 3rd party transfers.'
         // );
 
-        safeTransferFrom(_from, _to, _tokenID, _amount, '');
+        safeTransferFrom(_from, _to, _tokenID, _amount, "");
         setApprovalForAll(_mediaContract, true);
         return true;
     }

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import {IMarket} from './IMarket.sol';
-import './Iutils.sol';
+import {IMarket} from "./IMarket.sol";
+import "./Iutils.sol";
 
 interface IMedia {
     struct MediaInfo {
@@ -54,9 +54,7 @@ interface IMedia {
      *
      * @return uint256 Token Id of the Minted Token
      */
-    function mintToken(MediaData calldata data)
-        external
-        returns (uint256);
+    function mintToken(MediaData calldata data) external returns (uint256);
 
     /**
      * @notice Set the ask on a piece of media

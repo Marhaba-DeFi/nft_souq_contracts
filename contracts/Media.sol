@@ -2,15 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import './ERC1155Factory.sol';
-import './interfaces/IMedia.sol';
-import './interfaces/IMarket.sol';
-import './ERC721Factory.sol';
-import {SafeMath} from '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import "./ERC1155Factory.sol";
+import "./interfaces/IMedia.sol";
+import "./interfaces/IMarket.sol";
+import "./ERC721Factory.sol";
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract Media is IMedia {
-    using SafeMath for uint256;
-
     address private _ERC1155Address;
     address private _marketAddress;
     address private _ERC721Address;
@@ -47,9 +45,9 @@ contract Media is IMedia {
         address _ERC721,
         address _market
     ) {
-        require(_ERC1155 != address(0), 'Media: Invalid Address!');
-        require(_ERC721 != address(0), 'Media: Invalid Address!');
-        require(_market != address(0), 'Media: Invalid Address!');
+        require(_ERC1155 != address(0), "Media: Invalid Address!");
+        require(_ERC721 != address(0), "Media: Invalid Address!");
+        require(_market != address(0), "Media: Invalid Address!");
 
         _ERC1155Address = _ERC1155;
         _ERC721Address = _ERC721;
@@ -63,20 +61,18 @@ contract Media is IMedia {
     {
         require(
             data.collaborators.length == data.percentages.length,
-            'Media: Collaborators Info is not correct'
+            "Media: Collaborators Info is not correct"
         );
         bool _isFungible = data.totalSupply > 1 ? true : false;
 
         // verify sum of collaborators percentages needs to be less then or equals to 10
         uint256 sumOfCollabRoyalty = 0;
         for (uint256 index = 0; index < data.collaborators.length; index++) {
-            sumOfCollabRoyalty = sumOfCollabRoyalty.add(
-                data.percentages[index]
-            );
+            sumOfCollabRoyalty = sumOfCollabRoyalty + (data.percentages[index]);
         }
         require(
             sumOfCollabRoyalty <= 10,
-            'Media: Sum of Collaborators Percentages can be maximum 10'
+            "Media: Sum of Collaborators Percentages can be maximum 10"
         );
 
         // Calculate hash of the Token
@@ -87,7 +83,7 @@ contract Media is IMedia {
         // Check if Token with same data exists
         require(
             _tokenHashToTokenID[tokenHash] == 0,
-            'Media: Token With Same Data Already Exist!'
+            "Media: Token With Same Data Already Exist!"
         );
 
         _tokenCounter++;
@@ -173,7 +169,7 @@ contract Media is IMedia {
      * @return Token The Token
      */
     function getToken(uint256 _tokenID)
-        public
+        external
         view
         override
         whenTokenExist(_tokenID)
@@ -193,8 +189,8 @@ contract Media is IMedia {
         returns (bool)
     {
         address _owner = tokenIDToToken[_tokenID]._currentOwner;
-        require(msg.sender == bid._bidder, 'Media: Bidder must be msg sender');
-        require(bid._bidder != address(0), 'Media: bidder cannot be 0 address');
+        require(msg.sender == bid._bidder, "Media: Bidder must be msg sender");
+        require(bid._bidder != address(0), "Media: bidder cannot be 0 address");
         require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
 
         MediaInfo memory token = tokenIDToToken[_tokenID];
@@ -202,13 +198,13 @@ contract Media is IMedia {
             require(
                 ERC1155Factory(_ERC1155Address).balanceOf(_owner, _tokenID) >=
                     bid._bidAmount,
-                'Media: The Owner Does Not Have That Much Tokens!'
+                "Media: The Owner Does Not Have That Much Tokens!"
             );
         } else {
-            require(bid._bidAmount == 1, 'Media: Only 1 Token Is Available');
+            require(bid._bidAmount == 1, "Media: Only 1 Token Is Available");
             require(
                 nftToOwners[_tokenID] == _owner,
-                'Media: Invalid Owner Provided!'
+                "Media: Invalid Owner Provided!"
             );
         }
 
@@ -227,10 +223,10 @@ contract Media is IMedia {
     /**
      * @notice see IMedia
      */
-    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) public override {
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
         require(
             msg.sender == ask._sender,
-            'MEDIA: sender in ask tuple needs to be msg.sender'
+            "MEDIA: sender in ask tuple needs to be msg.sender"
         );
         IMarket(_marketAddress).setAsk(_tokenID, ask);
     }
@@ -254,7 +250,7 @@ contract Media is IMedia {
         Iutils.Bid memory _bid = IMarket(_marketAddress).getTokenBid(_tokenID);
         require(
             _ask.askType == Iutils.AskTypes.AUCTION,
-            'Media: Invalid Ask Type'
+            "Media: Invalid Ask Type"
         );
         //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         address _owner = tokenIDToToken[_tokenID]._currentOwner;
@@ -277,10 +273,10 @@ contract Media is IMedia {
         Iutils.Bid memory _bid = IMarket(_marketAddress).getTokenBid(_tokenID);
         require(
             _ask.askType == Iutils.AskTypes.AUCTION,
-            'Media: Invalid Ask Type'
+            "Media: Invalid Ask Type"
         );
         address _owner = tokenIDToToken[_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
-        require(msg.sender == _owner, 'Media: Only Token Owner Can accept Bid');
+        require(msg.sender == _owner, "Media: Only Token Owner Can accept Bid");
         address _creator = nftToCreators[_tokenID];
         IMarket(_marketAddress).acceptBid(_tokenID, _owner, _creator);
 
@@ -292,7 +288,7 @@ contract Media is IMedia {
     function cancelAuction(uint256 _tokenID) external override returns (bool) {
         require(
             tokenIDToToken[_tokenID]._currentOwner == msg.sender,
-            'Can only be called by auction creator or curator'
+            "Can only be called by auction creator or curator"
         );
         IMarket(_marketAddress).cancelAuction(_tokenID);
         return true;
@@ -306,7 +302,7 @@ contract Media is IMedia {
     function addCurrency(address _tokenAddress) external returns (bool) {
         require(
             msg.sender == IMarket(_marketAddress).getAdminAddress(),
-            'Media: Only Admin Can add new tokens!'
+            "Media: Only Admin Can add new tokens!"
         );
         return IMarket(_marketAddress).addCurrency(_tokenAddress);
     }
@@ -314,7 +310,7 @@ contract Media is IMedia {
     function removeCurrency(address _tokenAddress) external returns (bool) {
         require(
             msg.sender == IMarket(_marketAddress).getAdminAddress(),
-            'Media: Only Admin Can add new tokens!'
+            "Media: Only Admin Can add new tokens!"
         );
         return IMarket(_marketAddress).removeCurrency(_tokenAddress);
     }
@@ -327,22 +323,44 @@ contract Media is IMedia {
         external
         returns (bool)
     {
-        // TODO uncomment before moving to livenet
-        // require(
-        //     msg.sender == IMarket(_marketAddress).getAdminAddress(),
-        //     'Media: Only Admin Can Set Commission Percentage!'
-        // );
+        require(
+            msg.sender == IMarket(_marketAddress).getAdminAddress(),
+            "Media: Only Admin Can Set Commission Percentage!"
+        );
         require(
             _newCommissionPercentage > 0,
-            'Media: Invalid Commission Percentage'
+            "Media: Invalid Commission Percentage"
         );
         require(
             _newCommissionPercentage <= 100,
-            'Media: Commission Percentage Must Be Less Than 100!'
+            "Media: Commission Percentage Must Be Less Than 100!"
         );
 
         IMarket(_marketAddress).setCommissionPercentage(
             _newCommissionPercentage
+        );
+        return true;
+    }
+
+    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+        external
+        returns (bool)
+    {
+        require(
+            msg.sender == IMarket(_marketAddress).getAdminAddress(),
+            "Media: Only Admin Can Set Minimum Bid Increment Percentage!"
+        );
+        require(
+            _minBidIncrementPercentage > 0,
+            "Media: Invalid bid Increment Percentage"
+        );
+        require(
+            _minBidIncrementPercentage <= 50,
+            "Media: bid Increment Percentage Must Be Less Than 50!"
+        );
+
+        IMarket(_marketAddress).setMinimumBidIncrementPercentage(
+            _minBidIncrementPercentage
         );
         return true;
     }
@@ -367,7 +385,7 @@ contract Media is IMedia {
         } else {
             require(
                 nftToOwners[_tokenID] == msg.sender,
-                'Media: Only Owner Can Transfer!'
+                "Media: Only Owner Can Transfer!"
             );
         }
 
