@@ -6,9 +6,9 @@ import "./ERC1155Factory.sol";
 import "./interfaces/IMedia.sol";
 import "./interfaces/IMarket.sol";
 import "./ERC721Factory.sol";
-import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Media is IMedia {
+contract Media is IMedia, Ownable {
     address private _ERC1155Address;
     address private _marketAddress;
     address private _ERC721Address;
@@ -137,7 +137,7 @@ contract Media is IMedia {
             data.totalSupply,
             data.currencyAsked,
             data.askType,
-            data._duation,
+            data._duration,
             0,
             address(0),
             0
@@ -294,7 +294,7 @@ contract Media is IMedia {
         return true;
     }
 
-    function setAdminAddress(address _adminAddress) external returns (bool) {
+    function setAdminAddress(address _adminAddress) external onlyOwner returns (bool) {
         IMarket(_marketAddress).setAdminAddress(_adminAddress);
         return true;
     }

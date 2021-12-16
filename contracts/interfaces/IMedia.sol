@@ -26,7 +26,7 @@ interface IMedia {
         uint256 _askAmount;
         uint256 _reserveAmount;
         address currencyAsked;
-        uint256 _duation;
+        uint256 _duration;
     }
 
     event MintToken(
