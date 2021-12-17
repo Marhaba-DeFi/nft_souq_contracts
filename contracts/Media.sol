@@ -178,7 +178,7 @@ contract Media is IMedia, Ownable {
         return tokenIDToToken[_tokenID];
     }
 
-    function getTotalNumberOfNFT() external view returns (uint256) {
+    function getTotalNumberOfTokens() external view returns (uint256) {
         return _tokenCounter;
     }
 
