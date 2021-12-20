@@ -247,6 +247,9 @@ contract Market is IMarket, Ownable {
 
         emit BidCreated(_tokenID, _bid);
 
+        // if the bid amount is >= askAmount accept the bid and close the auction
+        // Note: askAmount is the maximum amount seller wanted to accept against its NFT
+
         if ( _bid._amount >= _tokenAsks[_tokenID]._askAmount ){
 
         address newOwner = _tokenAsks[_tokenID]._bidder;
