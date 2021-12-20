@@ -43,5 +43,7 @@ interface Iutils {
         address _bidder;
         // The current highest bid amount
         uint256 _highestBid;
+        // created time
+        uint256 _createdAt;
     }
 }

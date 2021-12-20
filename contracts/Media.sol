@@ -140,7 +140,8 @@ contract Media is IMedia, Ownable {
             data._duration,
             0,
             address(0),
-            0
+            0,
+            block.timestamp
         );
         IMarket(_marketAddress).setAsk(_tokenCounter, _ask);
 

@@ -326,12 +326,14 @@ contract Market is IMarket, Ownable {
                 ask._duration,
                 _oldAsk._firstBidTime,
                 _oldAsk._bidder,
-                _oldAsk._highestBid
+                _oldAsk._highestBid,
+                block.timestamp
             );
             _tokenAsks[_tokenID] = _updatedAsk;
             emit AskUpdated(_tokenID, _updatedAsk);
         } else {
             _tokenAsks[_tokenID] = ask;
+            _tokenAsks[_tokenID]._createdAt = block.timestamp;
             emit AskUpdated(_tokenID, ask);
         }
     }
@@ -500,8 +502,8 @@ contract Market is IMarket, Ownable {
         );
         require(
             block.timestamp >=
-                _tokenAsks[_tokenID]._firstBidTime +
-                    _tokenAsks[_tokenID]._duration,
+                (_tokenAsks[_tokenID]._firstBidTime - _tokenAsks[_tokenID]._createdAt)
+                    + _tokenAsks[_tokenID]._duration,
             "Market: Auction hasn't completed"
         );
         address newOwner = _tokenAsks[_tokenID]._bidder;
