@@ -11,9 +11,9 @@ const network = hre.hardhatArguments.network;
 async function main () {
   const erc721Name = 'NFT SOUQ';
   const erc721Symbol = 'NFTSOUQ';
-  const adminAddress = '0x4281d6888D7a3A6736B0F596823810ffBd7D4808';
-  const mrhbAddress = '0x45202955b5a2770A4dc526B6FB3634dDB275c8Df';
-  const wbnbAddress = '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd';
+  const adminAddress = '0xcc4cE8E5F95ADd7A39f7DF3Ad08946738629463B';
+  const mrhbAddress = '0xd10332818d6a9b4b84bf5d87dbf9d80012fdf913';
+  const wbnbAddress = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
   const adminCommissionPercentage = '1';
   let erc721 = await hre.ethers.getContractFactory('ERC721Factory');
   erc721 = await erc721.deploy(erc721Name, erc721Symbol);

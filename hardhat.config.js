@@ -31,6 +31,13 @@ module.exports = {
       saveDeployments: true,
       tags: ['test', 'local'],
     },
+    bscMainnet: {
+      url: 'https://apis-sj.ankr.com/bde66c1254a54cd6b3a3a629f14bc70f/8f3dd4631ef832efadf6d81c4cc21311/binance/full/main',
+      chainId: 56,
+      gasPrice: 20000000000,
+      blockGasLimit: 10000000,
+      accounts: [process.env.PRIVATE_KEY],
+    },
     bscTestnet: {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
