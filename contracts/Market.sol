@@ -190,14 +190,13 @@ contract Market is IMarket, Ownable {
             }
             return true;
         } else {
-            _handleAuction(_tokenID, _bid);
-            return false;
+            return _handleAuction(_tokenID, _bid, _owner, _creator);
         }
     }
 
-    function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid)
+    function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid, address _owner, address _creator)
         internal
-    {
+    returns (bool){
         IERC20 token = IERC20(_tokenAsks[_tokenID]._currency);
 
         // Manage if the Bid is of Auction Type
@@ -247,6 +246,25 @@ contract Market is IMarket, Ownable {
         );
 
         emit BidCreated(_tokenID, _bid);
+
+        // if the bid amount is >= askAmount accept the bid and close the auction
+        // Note: askAmount is the maximum amount seller wanted to accept against its NFT
+
+        if ( _bid._amount >= _tokenAsks[_tokenID]._askAmount ){
+
+        address newOwner = _tokenAsks[_tokenID]._bidder;
+
+        divideMoney(
+            _tokenID,
+            _owner,
+            address(0),
+            _tokenAsks[_tokenID]._highestBid,
+            _creator
+        );
+        emit BidAccepted(_tokenID, newOwner);
+        return true;
+        }
+        return false;
     }
 
     function _handleIncomingBid(
