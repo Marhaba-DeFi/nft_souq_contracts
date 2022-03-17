@@ -10,51 +10,42 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+import "../../libraries/LibDiamond.sol";
+import "./LibERC721Storage.sol";
+
 contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     using Address for address;
     using Strings for uint256;
 
-    // Token name
-    string private _name;
-
-    // Token symbol
-    string private _symbol;
-
-    // Mapping from token ID to owner address
-    mapping(uint256 => address) private _owners;
-
-    // Mapping owner address to token count
-    mapping(address => uint256) private _balances;
-
-    // Mapping from token ID to approved address
-    mapping(uint256 => address) private _tokenApprovals;
-
-    // Mapping from owner to operator approvals
-    mapping(address => mapping(address => bool)) private _operatorApprovals;
+    
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
+    function init(
+    string memory name_,
+    string memory symbol_
+  ) external override {
+    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+    LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
 
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165, IERC165)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IERC721).interfaceId ||
-            interfaceId == type(IERC721Metadata).interfaceId ||
-            super.supportsInterface(interfaceId);
-    }
+    require(
+      bytes(es._name).length == 0 &&
+      bytes(es._symbol).length == 0,
+      "ALREADY_INITIALIZED"
+    );
+
+    require(
+      bytes(name_).length != 0 &&
+      bytes(symbol_).length != 0,
+      "INVALID_PARAMS"
+    );
+
+    require(msg.sender == ds.contractOwner, "Must own the contract.");
+
+    es._name = name_;
+    es._symbol = symbol_;
+  }
 
     /**
      * @dev See {IERC721-balanceOf}.
