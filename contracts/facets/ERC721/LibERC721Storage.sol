@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library LibERC721Storage {
   bytes32 constant ERC_721_STORAGE_POSITION = keccak256(
-    "diamond.standard.erc721.storage"
+    "diamond.standard.ERC721.storage"
   );
 
   struct ERC721Storage {

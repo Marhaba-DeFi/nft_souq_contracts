@@ -2,15 +2,17 @@
 
 pragma solidity ^0.8.0;
 
-import "./ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "../ERC721/ERC721Facet.sol";
+import "./LibERC721FactoryStorage.sol";
 
-contract ERC721Factory is ERC721, Ownable {
-    address private _mediaContract;
+contract ERC721FactoryFacet is ERC721Facet, Ownable {
 
     modifier onlyMediaCaller() {
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
         require(
-            msg.sender == _mediaContract,
+            msg.sender == es._mediaContract,
             "ERC721Factory: Unauthorized Access!"
         );
         _;
@@ -22,23 +24,16 @@ contract ERC721Factory is ERC721, Ownable {
             _mediaContractAddress != address(0),
             "ERC1155Factory: Invalid Media Contract Address!"
         );
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+        
         require(
-            _mediaContract == address(0),
+            es._mediaContract == address(0),
             "ERC1155Factory: Media Contract Alredy Configured!"
         );
 
-        _mediaContract = _mediaContractAddress;
+        es._mediaContract = _mediaContractAddress;
     }
-
-    // tokenId => Owner
-    mapping(uint256 => address) nftToOwners;
-
-    // tokenID => Creator
-    mapping(uint256 => address) nftToCreators;
-
-    constructor(string memory name_, string memory symbol_)
-        ERC721(name_, symbol_)
-    {}
 
     /* 
     @notice This function is used fot minting 
@@ -47,10 +42,12 @@ contract ERC721Factory is ERC721, Ownable {
      the respective NFT details.
     */
     function mint(uint256 _tokenID, address _creator) external onlyMediaCaller {
-        nftToOwners[_tokenID] = _creator;
-        nftToCreators[_tokenID] = _creator;
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+        es.nftToOwners[_tokenID] = _creator;
+        es.nftToCreators[_tokenID] = _creator;
         _safeMint(_creator, _tokenID);
-        _approve(_mediaContract, _tokenID);
+        _approve(es._mediaContract, _tokenID);
     }
 
     /*
@@ -65,7 +62,9 @@ contract ERC721Factory is ERC721, Ownable {
     {
         require(_tokenID > 0, "ERC721Factory: Token Id should be non-zero");
         transferFrom(msg.sender, _recipient, _tokenID); // ERC721 transferFrom function called
-        nftToOwners[_tokenID] = _recipient;
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        
+        es.nftToOwners[_tokenID] = _recipient;
     }
 
     /*
@@ -87,7 +86,9 @@ contract ERC721Factory is ERC721, Ownable {
         );
 
         safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called
-        _approve(_mediaContract, _tokenID);
-        nftToOwners[_tokenID] = _recipient;
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+        _approve(es._mediaContract, _tokenID);
+        es.nftToOwners[_tokenID] = _recipient;
     }
 }
