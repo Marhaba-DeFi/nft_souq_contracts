@@ -35,14 +35,14 @@ contract Media is IMedia, Ownable {
     ) external {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        
+
         require(
             ms._ERC1155Address != address(0) &&
             ms._ERC721Address != address(0) &&
             ms._marketAddress != address(0),
             "ALREADY_INITIALIZED"
         );
-        
+
         require(_ERC1155 != address(0), "Media: Invalid Address!");
         require(_ERC721 != address(0), "Media: Invalid Address!");
         require(_market != address(0), "Media: Invalid Address!");
