@@ -2,28 +2,17 @@
 
 pragma solidity ^0.8.0;
 
-import "./ERC1155.sol";
+import "../ERC1155/ERC1155Facet.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ERC1155Factory is ERC1155, Ownable {
-    address private _mediaContract;
+import "./LibERC1155FactoryStorage.sol";
 
-    // tokenId => Owner
-    mapping(uint256 => address) nftToOwners;
-
-    // tokenID => Creator
-    mapping(uint256 => address) nftToCreators;
-
-    /**
-     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
-     */
-    constructor(string memory name_, string memory symbol_)
-        ERC1155(name_, symbol_)
-    {}
+contract ERC1155Factory is ERC1155Facet, Ownable {
 
     modifier onlyMediaCaller() {
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         require(
-            msg.sender == _mediaContract,
+            msg.sender == es._mediaContract,
             "ERC1155Factory: Unauthorized Access!"
         );
         _;
@@ -35,12 +24,15 @@ contract ERC1155Factory is ERC1155, Ownable {
             _mediaContractAddress != address(0),
             "ERC1155Factory: Invalid Media Contract Address!"
         );
+        
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+        
         require(
-            _mediaContract == address(0),
+            es._mediaContract == address(0),
             "ERC1155Factory: Media Contract Alredy Configured!"
         );
 
-        _mediaContract = _mediaContractAddress;
+        es._mediaContract = _mediaContractAddress;
     }
 
     function mint(
@@ -48,10 +40,11 @@ contract ERC1155Factory is ERC1155, Ownable {
         address _owner,
         uint256 _totalSupply
     ) external onlyMediaCaller {
-        nftToOwners[_tokenID] = _owner;
-        nftToCreators[_tokenID] = _owner;
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+        es.nftToOwners[_tokenID] = _owner;
+        es.nftToCreators[_tokenID] = _owner;
         _mint(_owner, _tokenID, _totalSupply, "");
-        setApprovalForAll(_mediaContract, true);
+        setApprovalForAll(es._mediaContract, true);
     }
 
     /**
@@ -77,9 +70,10 @@ contract ERC1155Factory is ERC1155, Ownable {
         //     _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
         //     'ERC1155Factory: Need operator approval for 3rd party transfers.'
         // );
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
 
         safeTransferFrom(_from, _to, _tokenID, _amount, "");
-        setApprovalForAll(_mediaContract, true);
+        setApprovalForAll(es._mediaContract, true);
         return true;
     }
 }

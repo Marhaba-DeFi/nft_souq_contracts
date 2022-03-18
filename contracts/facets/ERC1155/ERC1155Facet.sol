@@ -2,45 +2,65 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+// import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+// import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-/**
- * @dev Implementation of the basic standard multi-token.
- * See https://eips.ethereum.org/EIPS/eip-1155
- * Originally based on code by Enjin: https://github.com/enjin/erc-1155
- *
- * _Available since v3.1._
- */
-contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
+import "../../libraries/LibDiamond.sol";
+import "./LibERC1155Storage.sol";
+
+contract ERC1155Facet is Context {
     using Address for address;
 
-    // Token name
-    string private _name;
-
-    // Token symbol
-    string private _symbol;
-
-    // Mapping from token ID to account balances
-    mapping(uint256 => mapping(address => uint256)) internal _balances;
-
-    // Mapping from account to operator approvals
-    mapping(address => mapping(address => bool)) internal _operatorApprovals;
-
-    // Used as the URI for all token types by relying on ID substitution, e.g. https://token-cdn-domain/{id}.json
-    string private _uri;
+    /**
+     * @dev Emitted when `value` tokens of token type `id` are transferred from `from` to `to` by `operator`.
+     */
+    event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
 
     /**
-     * @dev See {_setURI}.
+     * @dev Equivalent to multiple {TransferSingle} events, where `operator`, `from` and `to` are the same for all
+     * transfers.
      */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
+    event TransferBatch(
+        address indexed operator,
+        address indexed from,
+        address indexed to,
+        uint256[] ids,
+        uint256[] values
+    );
+
+    /**
+     * @dev Emitted when `account` grants or revokes permission to `operator` to transfer their tokens, according to
+     * `approved`.
+     */
+    event ApprovalForAll(address indexed account, address indexed operator, bool approved);
+
+    function init(
+    string memory name_,
+    string memory symbol_
+  ) external {
+    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+    LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
+    require(
+      bytes(es._name).length == 0 &&
+      bytes(es._symbol).length == 0,
+      "ALREADY_INITIALIZED"
+    );
+
+    require(
+      bytes(name_).length != 0 &&
+      bytes(symbol_).length != 0,
+      "INVALID_PARAMS"
+    );
+
+    require(msg.sender == ds.contractOwner, "Must own the contract.");
+
+    es._name = name_;
+    es._symbol = symbol_;
+  }
 
     /**
      * @dev See {IERC1155MetadataURI-uri}.
@@ -52,8 +72,10 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
      * Clients calling this function must replace the `\{id\}` substring with the
      * actual token type ID.
      */
-    function uri(uint256) public view virtual override returns (string memory) {
-        return _uri;
+    function uri(uint256) public view virtual  returns (string memory) {
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
+        return es._uri;
     }
 
     /**
@@ -67,14 +89,16 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         public
         view
         virtual
-        override
+        
         returns (uint256)
     {
         require(
             account != address(0),
             "ERC1155: balance query for the zero address"
         );
-        return _balances[id][account];
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+        
+        return es._balances[id][account];
     }
 
     /**
@@ -88,7 +112,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         public
         view
         virtual
-        override
+        
         returns (uint256[] memory)
     {
         require(
@@ -111,11 +135,11 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
     function setApprovalForAll(address operator, bool approved)
         public
         virtual
-        override
+        
     {
         // require(_msgSender() != operator, 'ERC1155: setting approval status for self');
-
-        _operatorApprovals[_msgSender()][operator] = approved;
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+        es._operatorApprovals[_msgSender()][operator] = approved;
         emit ApprovalForAll(_msgSender(), operator, approved);
     }
 
@@ -126,10 +150,11 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         public
         view
         virtual
-        override
+        
         returns (bool)
     {
-        return _operatorApprovals[account][operator];
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+        return es._operatorApprovals[account][operator];
     }
 
     /**
@@ -141,7 +166,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) public virtual override {
+    ) public virtual  {
         // require(
         //     from == _msgSender() || isApprovedForAll(from, _msgSender()),
         //     'ERC1155: caller is not owner nor approved'
@@ -158,7 +183,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public virtual override {
+    ) public virtual  {
         require(
             from == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: transfer caller is not owner nor approved"
@@ -197,16 +222,17 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
             _asSingletonArray(amount),
             data
         );
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
 
-        uint256 fromBalance = _balances[id][from];
+        uint256 fromBalance = es._balances[id][from];
         require(
             fromBalance >= amount,
             "ERC1155: insufficient balance for transfer"
         );
         unchecked {
-            _balances[id][from] = fromBalance - amount;
+            es._balances[id][from] = fromBalance - amount;
         }
-        _balances[id][to] += amount;
+        es._balances[id][to] += amount;
 
         emit TransferSingle(operator, from, to, id, amount);
 
@@ -240,19 +266,21 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
 
         _beforeTokenTransfer(operator, from, to, ids, amounts, data);
 
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
         for (uint256 i = 0; i < ids.length; ++i) {
             uint256 id = ids[i];
             uint256 amount = amounts[i];
 
-            uint256 fromBalance = _balances[id][from];
+            uint256 fromBalance = es._balances[id][from];
             require(
                 fromBalance >= amount,
                 "ERC1155: insufficient balance for transfer"
             );
             unchecked {
-                _balances[id][from] = fromBalance - amount;
+                es._balances[id][from] = fromBalance - amount;
             }
-            _balances[id][to] += amount;
+            es._balances[id][to] += amount;
         }
 
         emit TransferBatch(operator, from, to, ids, amounts);
@@ -287,7 +315,8 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
      * this function emits no events.
      */
     function _setURI(string memory newuri) internal virtual {
-        _uri = newuri;
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+        es._uri = newuri;
     }
 
     /**
@@ -320,7 +349,9 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
             data
         );
 
-        _balances[id][account] += amount;
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
+        es._balances[id][account] += amount;
         emit TransferSingle(operator, address(0), account, id, amount);
 
         _doSafeTransferAcceptanceCheck(
@@ -359,7 +390,8 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         _beforeTokenTransfer(operator, address(0), to, ids, amounts, data);
 
         for (uint256 i = 0; i < ids.length; i++) {
-            _balances[ids[i]][to] += amounts[i];
+            LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+            es._balances[ids[i]][to] += amounts[i];
         }
 
         emit TransferBatch(operator, address(0), to, ids, amounts);
@@ -400,13 +432,15 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
             ""
         );
 
-        uint256 accountBalance = _balances[id][account];
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
+        uint256 accountBalance = es._balances[id][account];
         require(
             accountBalance >= amount,
             "ERC1155: burn amount exceeds balance"
         );
         unchecked {
-            _balances[id][account] = accountBalance - amount;
+            es._balances[id][account] = accountBalance - amount;
         }
 
         emit TransferSingle(operator, account, address(0), id, amount);
@@ -434,17 +468,19 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
 
         _beforeTokenTransfer(operator, account, address(0), ids, amounts, "");
 
+        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
+
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
             uint256 amount = amounts[i];
 
-            uint256 accountBalance = _balances[id][account];
+            uint256 accountBalance = es._balances[id][account];
             require(
                 accountBalance >= amount,
                 "ERC1155: burn amount exceeds balance"
             );
             unchecked {
-                _balances[id][account] = accountBalance - amount;
+                es._balances[id][account] = accountBalance - amount;
             }
         }
 
