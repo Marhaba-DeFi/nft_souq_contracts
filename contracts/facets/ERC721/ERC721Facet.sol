@@ -9,10 +9,13 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+import "../../libraries/LibAppStorage.sol";
 import "../../libraries/LibDiamond.sol";
 import "./LibERC721Storage.sol";
 
 contract ERC721Facet is Context {
+    AppStorage internal s;
+    
     using Address for address;
     using Strings for uint256;
 
@@ -31,7 +34,7 @@ contract ERC721Facet is Context {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    function init(
+    function erc721Init(
     string memory name_,
     string memory symbol_
   ) external {
@@ -155,7 +158,7 @@ contract ERC721Facet is Context {
         require(to != owner, "ERC721: approval to current owner");
 
         require(
-            _msgSender() == owner || isApprovedForAll(owner, _msgSender()),
+            _msgSender() == owner || s._operatorApprovals[owner][_msgSender()],
             "ERC721: approve caller is not owner nor approved for all"
         );
 
@@ -180,37 +183,6 @@ contract ERC721Facet is Context {
         LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
 
         return es._tokenApprovals[tokenId];
-    }
-
-    /**
-     * @dev See {IERC721-setApprovalForAll}.
-     */
-    function setApprovalForAll(address operator, bool approved)
-        public
-        virtual
-    
-    {
-        require(operator != _msgSender(), "ERC721: approve to caller");
-
-        LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
-
-        es._operatorApprovals[_msgSender()][operator] = approved;
-        emit ApprovalForAll(_msgSender(), operator, approved);
-    }
-
-    /**
-     * @dev See {IERC721-isApprovedForAll}.
-     */
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-    
-        returns (bool)
-    {
-        LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
-
-        return es._operatorApprovals[owner][operator];
     }
 
     /**
@@ -324,7 +296,7 @@ contract ERC721Facet is Context {
 
         return (spender == owner ||
             getApproved(tokenId) == spender ||
-            isApprovedForAll(owner, spender));
+            s._operatorApprovals[owner][_msgSender()]);
     }
 
     /**

@@ -7,32 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./LibERC1155FactoryStorage.sol";
 
-contract ERC1155Factory is ERC1155Facet, Ownable {
-
+contract ERC1155FactoryFacet is ERC1155Facet {
     modifier onlyMediaCaller() {
-        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         require(
-            msg.sender == es._mediaContract,
+            msg.sender == s._mediaContract,
             "ERC1155Factory: Unauthorized Access!"
         );
         _;
-    }
-
-    function configureMedia(address _mediaContractAddress) external onlyOwner {
-        // TODO: Only Owner Modifier
-        require(
-            _mediaContractAddress != address(0),
-            "ERC1155Factory: Invalid Media Contract Address!"
-        );
-        
-        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
-        
-        require(
-            es._mediaContract == address(0),
-            "ERC1155Factory: Media Contract Alredy Configured!"
-        );
-
-        es._mediaContract = _mediaContractAddress;
     }
 
     function mint(
@@ -44,7 +25,7 @@ contract ERC1155Factory is ERC1155Facet, Ownable {
         es.nftToOwners[_tokenID] = _owner;
         es.nftToCreators[_tokenID] = _owner;
         _mint(_owner, _tokenID, _totalSupply, "");
-        setApprovalForAll(es._mediaContract, true);
+        setApprovalForAll(s._mediaContract, true);
     }
 
     /**
@@ -70,10 +51,9 @@ contract ERC1155Factory is ERC1155Facet, Ownable {
         //     _from == _msgSender() || _operatorApprovals[_from][_msgSender()] == true,
         //     'ERC1155Factory: Need operator approval for 3rd party transfers.'
         // );
-        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
 
         safeTransferFrom(_from, _to, _tokenID, _amount, "");
-        setApprovalForAll(es._mediaContract, true);
+        setApprovalForAll(s._mediaContract, true);
         return true;
     }
 }

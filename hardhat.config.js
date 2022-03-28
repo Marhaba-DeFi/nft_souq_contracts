@@ -56,7 +56,7 @@ module.exports = {
       accounts: {
         mnemonic:
           'cupboard tennis easy year sunset puppy silent soul athlete good flight resemble',
-        path: 'm/44\'/60\'/0\'/0',
+        path: "m/44'/60'/0'/0",
         initialIndex: 0,
         count: 20,
       },
@@ -77,7 +77,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: '0.8.0',
+        version: '0.8.1',
         settings: {
           optimizer: {
             enabled: true,

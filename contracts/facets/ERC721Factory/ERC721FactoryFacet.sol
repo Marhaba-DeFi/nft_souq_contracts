@@ -3,36 +3,17 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../ERC721/ERC721Facet.sol";
 import "./LibERC721FactoryStorage.sol";
 
-contract ERC721FactoryFacet is ERC721Facet, Ownable {
-
+contract ERC721FactoryFacet is ERC721Facet {
     modifier onlyMediaCaller() {
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-
         require(
-            msg.sender == es._mediaContract,
+            msg.sender == s._mediaContract,
             "ERC721Factory: Unauthorized Access!"
         );
         _;
-    }
-
-    function configureMedia(address _mediaContractAddress) external onlyOwner {
-        // TODO: Only Owner Modifier
-        require(
-            _mediaContractAddress != address(0),
-            "ERC1155Factory: Invalid Media Contract Address!"
-        );
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-
-        
-        require(
-            es._mediaContract == address(0),
-            "ERC1155Factory: Media Contract Alredy Configured!"
-        );
-
-        es._mediaContract = _mediaContractAddress;
     }
 
     /* 
@@ -47,7 +28,7 @@ contract ERC721FactoryFacet is ERC721Facet, Ownable {
         es.nftToOwners[_tokenID] = _creator;
         es.nftToCreators[_tokenID] = _creator;
         _safeMint(_creator, _tokenID);
-        _approve(es._mediaContract, _tokenID);
+        _approve(s._mediaContract, _tokenID);
     }
 
     /*
@@ -88,7 +69,7 @@ contract ERC721FactoryFacet is ERC721Facet, Ownable {
         safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-        _approve(es._mediaContract, _tokenID);
+        _approve(s._mediaContract, _tokenID);
         es.nftToOwners[_tokenID] = _recipient;
     }
 }

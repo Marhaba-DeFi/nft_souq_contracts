@@ -8,10 +8,13 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
+import "../../libraries/LibAppStorage.sol";
 import "../../libraries/LibDiamond.sol";
 import "./LibERC1155Storage.sol";
 
 contract ERC1155Facet is Context {
+    AppStorage internal s;
+    
     using Address for address;
 
     /**
@@ -138,24 +141,10 @@ contract ERC1155Facet is Context {
         
     {
         // require(_msgSender() != operator, 'ERC1155: setting approval status for self');
-        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
-        es._operatorApprovals[_msgSender()][operator] = approved;
+        s._operatorApprovals[_msgSender()][operator] = approved;
         emit ApprovalForAll(_msgSender(), operator, approved);
     }
 
-    /**
-     * @dev See {IERC1155-isApprovedForAll}.
-     */
-    function isApprovedForAll(address account, address operator)
-        public
-        view
-        virtual
-        
-        returns (bool)
-    {
-        LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
-        return es._operatorApprovals[account][operator];
-    }
 
     /**
      * @dev See {IERC1155-safeTransferFrom}.
@@ -167,10 +156,6 @@ contract ERC1155Facet is Context {
         uint256 amount,
         bytes memory data
     ) public virtual  {
-        // require(
-        //     from == _msgSender() || isApprovedForAll(from, _msgSender()),
-        //     'ERC1155: caller is not owner nor approved'
-        // );
         _safeTransferFrom(from, to, id, amount, data);
     }
 
@@ -185,7 +170,7 @@ contract ERC1155Facet is Context {
         bytes memory data
     ) public virtual  {
         require(
-            from == _msgSender() || isApprovedForAll(from, _msgSender()),
+            from == _msgSender() || s._operatorApprovals[from][_msgSender()],
             "ERC1155: transfer caller is not owner nor approved"
         );
         _safeBatchTransferFrom(from, to, ids, amounts, data);

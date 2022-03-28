@@ -14,7 +14,6 @@ library LibMarketStorage {
   struct MarketStorage {
     Counters.Counter _auctionIdTracker;
 
-    address _mediaContract;
     address _adminAddress;
 
     // To store commission percentage for each mint

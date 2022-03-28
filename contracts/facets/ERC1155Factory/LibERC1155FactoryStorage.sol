@@ -7,7 +7,6 @@ library LibERC1155FactoryStorage {
   );
 
   struct ERC1155FactoryStorage {
-    address _mediaContract;
     // tokenId => Owner
     mapping(uint256 => address) nftToOwners;
     // tokenID => Creator

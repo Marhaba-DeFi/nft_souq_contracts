@@ -56,16 +56,9 @@ interface IMedia {
      */
     function mintToken(MediaData calldata data) external returns (uint256);
 
-    /**
-     * @notice Set the ask on a piece of media
-     */
-    function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
-
     function endAuction(uint256 _tokenID) external returns (bool);
 
     function acceptBid(uint256 _tokenID) external returns (bool);
-
-    function cancelAuction(uint256 _tokenID) external returns (bool);
 
     /**
      * @notice This method is used to get details of the Token with ID _tokenID

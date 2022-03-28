@@ -44,7 +44,7 @@
         ],
         "space-before-function-paren": [
             "error",
-            "always"
+            "never"
         ],
         "no-use-before-define": 0,
         "eqeqeq": [

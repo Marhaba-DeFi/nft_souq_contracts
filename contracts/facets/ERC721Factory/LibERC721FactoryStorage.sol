@@ -7,7 +7,6 @@ library LibERC721FactoryStorage {
   );
 
   struct ERC721FactoryStorage {
-    address _mediaContract;
     mapping(uint256 => address) nftToOwners;
     mapping(uint256 => address) nftToCreators;
   }

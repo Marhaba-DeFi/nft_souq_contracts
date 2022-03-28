@@ -12,9 +12,12 @@ import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../libraries/LibDiamond.sol";
+import "../../libraries/LibAppStorage.sol";
 import "./LibMarketStorage.sol";
 
-contract Market is IMarket, Ownable {
+contract MarketFacet is IMarket {
+    AppStorage internal s;
+    
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
@@ -42,7 +45,7 @@ contract Market is IMarket, Ownable {
     modifier onlyMediaCaller() {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
-        require(msg.sender == ms._mediaContract, "Market: Unauthorized Access!");
+        require(msg.sender == s._mediaContract, "Market: Unauthorized Access!");
         _;
     }
 
@@ -51,20 +54,19 @@ contract Market is IMarket, Ownable {
      *
      * @param _mediaContractAddress Address of the Media Contract to set
      */
-    function configureMedia(address _mediaContractAddress) external onlyOwner {
+    function configureMedia(address _mediaContractAddress) external {
+        LibDiamond.enforceIsContractOwner();
         require(
             _mediaContractAddress != address(0),
             "Market: Invalid Media Contract Address!"
         );
-
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         
         require(
-            ms._mediaContract == address(0),
+            s._mediaContract == address(0),
             "Market: Media Contract Already Configured!"
         );
 
-        ms._mediaContract = _mediaContractAddress;
+        s._mediaContract = _mediaContractAddress;
         emit MediaUpdated(_mediaContractAddress);
     }
 
@@ -663,10 +665,17 @@ contract Market is IMarket, Ownable {
             totalAmountTransferred == _amount,
             "Market: Amount Transfer Value Error!"
         );
-        delete ms._tokenBidders[_tokenID][_bidder];
-        delete ms._tokenAsks[_tokenID];
+
+        deleteBidderAndAsks(_tokenID, _bidder);
 
         return true;
+    }
+
+    function deleteBidderAndAsks(uint256 _tokenID, address _bidder) internal {
+        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+
+        delete ms._tokenBidders[_tokenID][_bidder];
+        delete ms._tokenAsks[_tokenID];
     }
 
     function getTokenAsks(uint256 _tokenId)
@@ -688,5 +697,18 @@ contract Market is IMarket, Ownable {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         address bidder = ms._tokenAsks[_tokenId]._bidder;
         return ms._tokenBidders[_tokenId][bidder];
+    }
+
+    /**
+     * @dev See {IERC721-isApprovedForAll}.
+     */
+    function isApprovedForAll(address owner, address operator)
+        public
+        view
+        virtual
+    
+        returns (bool)
+    {
+        return s._operatorApprovals[owner][operator];
     }
 }

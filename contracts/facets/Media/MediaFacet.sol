@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../../libraries/LibDiamond.sol";
 import "./LibMediaStorage.sol";
 
-contract Media is IMedia, Ownable {
+contract MediaFacet is IMedia {
     
     modifier whenTokenExist(uint256 _tokenID) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
@@ -28,7 +28,7 @@ contract Media is IMedia, Ownable {
     //     _;
     // }
 
-    function init(
+    function mediaInit(
         address _ERC1155,
         address _ERC721,
         address _market
@@ -60,6 +60,7 @@ contract Media is IMedia, Ownable {
         override
         returns (uint256)
     {
+
         require(
             data.collaborators.length == data.percentages.length,
             "Media: Collaborators Info is not correct"
@@ -96,7 +97,7 @@ contract Media is IMedia, Ownable {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            ERC1155Factory(ms._ERC1155Address).mint(
+            ERC1155FactoryFacet(ms._ERC1155Address).mint(
                 ms._tokenCounter,
                 msg.sender,
                 data.totalSupply
@@ -149,6 +150,14 @@ contract Media is IMedia, Ownable {
         IMarket(ms._marketAddress).setAsk(ms._tokenCounter, _ask);
 
         // fire events
+        emitMintEvents(_isFungible, data);
+
+        return ms._tokenCounter;
+    }
+
+    function emitMintEvents(bool _isFungible, MediaData memory data) internal {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
         emit MintToken(
             ms._tokenCounter,
             _isFungible,
@@ -161,8 +170,6 @@ contract Media is IMedia, Ownable {
         );
 
         emit TokenCounter(ms._tokenCounter);
-
-        return ms._tokenCounter;
     }
 
     /**
@@ -203,7 +210,7 @@ contract Media is IMedia, Ownable {
         MediaInfo memory token = ms.tokenIDToToken[_tokenID];
         if (token._isFungible) {
             require(
-                ERC1155Factory(ms._ERC1155Address).balanceOf(_owner, _tokenID) >=
+                ERC1155FactoryFacet(ms._ERC1155Address).balanceOf(_owner, _tokenID) >=
                     bid._bidAmount,
                 "Media: The Owner Does Not Have That Much Tokens!"
             );
@@ -215,6 +222,14 @@ contract Media is IMedia, Ownable {
             );
         }
 
+        ifSoldTransfer(_tokenID, bid, _owner);
+
+        return true;
+    }
+
+    function ifSoldTransfer(uint256 _tokenID, Iutils.Bid calldata bid, address _owner) internal {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
         bool tokenSold = IMarket(ms._marketAddress).setBid(
             _tokenID,
             msg.sender,
@@ -224,19 +239,6 @@ contract Media is IMedia, Ownable {
         );
         if (tokenSold)
             _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
-        return true;
-    }
-
-    /**
-     * @notice see IMedia
-     */
-    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
-        require(
-            msg.sender == ask._sender,
-            "MEDIA: sender in ask tuple needs to be msg.sender"
-        );
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        IMarket(ms._marketAddress).setAsk(_tokenID, ask);
     }
 
     function removeBid(uint256 _tokenID)
@@ -296,91 +298,9 @@ contract Media is IMedia, Ownable {
         return true;
     }
 
-    function cancelAuction(uint256 _tokenID) external override returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(
-            ms.tokenIDToToken[_tokenID]._currentOwner == msg.sender,
-            "Can only be called by auction creator or curator"
-        );
-        IMarket(ms._marketAddress).cancelAuction(_tokenID);
-        return true;
-    }
-
-    function setAdminAddress(address _adminAddress) external onlyOwner returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        IMarket(ms._marketAddress).setAdminAddress(_adminAddress);
-        return true;
-    }
-
-    function addCurrency(address _tokenAddress) external returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(
-            msg.sender == IMarket(ms._marketAddress).getAdminAddress(),
-            "Media: Only Admin Can add new tokens!"
-        );
-        return IMarket(ms._marketAddress).addCurrency(_tokenAddress);
-    }
-
-    function removeCurrency(address _tokenAddress) external returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(
-            msg.sender == IMarket(ms._marketAddress).getAdminAddress(),
-            "Media: Only Admin Can add new tokens!"
-        );
-        return IMarket(ms._marketAddress).removeCurrency(_tokenAddress);
-    }
-
     function getAdminCommissionPercentage() external view returns (uint256) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         return IMarket(ms._marketAddress).getCommissionPercentage();
-    }
-
-    function setCommissionPercentage(uint8 _newCommissionPercentage)
-        external
-        returns (bool)
-    {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(
-            msg.sender == IMarket(ms._marketAddress).getAdminAddress(),
-            "Media: Only Admin Can Set Commission Percentage!"
-        );
-        require(
-            _newCommissionPercentage > 0,
-            "Media: Invalid Commission Percentage"
-        );
-        require(
-            _newCommissionPercentage <= 100,
-            "Media: Commission Percentage Must Be Less Than 100!"
-        );
-
-        IMarket(ms._marketAddress).setCommissionPercentage(
-            _newCommissionPercentage
-        );
-        return true;
-    }
-
-    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
-        external
-        returns (bool)
-    {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(
-            msg.sender == IMarket(ms._marketAddress).getAdminAddress(),
-            "Media: Only Admin Can Set Minimum Bid Increment Percentage!"
-        );
-        require(
-            _minBidIncrementPercentage > 0,
-            "Media: Invalid bid Increment Percentage"
-        );
-        require(
-            _minBidIncrementPercentage <= 50,
-            "Media: bid Increment Percentage Must Be Less Than 50!"
-        );
-
-        IMarket(ms._marketAddress).setMinimumBidIncrementPercentage(
-            _minBidIncrementPercentage
-        );
-        return true;
     }
 
     /**
@@ -395,7 +315,7 @@ contract Media is IMedia, Ownable {
         MediaInfo memory mediainfo = ms.tokenIDToToken[_tokenID];
         if (mediainfo._isFungible) {
             require(
-                ERC1155Factory(ms._ERC1155Address).balanceOf(
+                ERC1155FactoryFacet(ms._ERC1155Address).balanceOf(
                     msg.sender,
                     _tokenID
                 ) >= _amount,
@@ -420,7 +340,7 @@ contract Media is IMedia, Ownable {
     ) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         if (ms.tokenIDToToken[_tokenID]._isFungible) {
-            ERC1155Factory(ms._ERC1155Address).transferFrom(
+            ERC1155FactoryFacet(ms._ERC1155Address).transferFrom(
                 _owner,
                 _recipient,
                 _tokenID,
@@ -436,23 +356,5 @@ contract Media is IMedia, Ownable {
         }
         ms.tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
-    }
-
-    function getTokenAsks(uint256 _tokenId)
-        external
-        view
-        returns (Iutils.Ask memory)
-    {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        return IMarket(ms._marketAddress).getTokenAsks(_tokenId);
-    }
-
-    function getTokenBid(uint256 _tokenId)
-        external
-        view
-        returns (Iutils.Bid memory)
-    {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        return IMarket(ms._marketAddress).getTokenBid(_tokenId);
     }
 }
