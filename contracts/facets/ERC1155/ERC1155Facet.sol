@@ -40,7 +40,7 @@ contract ERC1155Facet is Context {
      */
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
 
-    function init(
+    function erc1155Init(
     string memory name_,
     string memory symbol_
   ) external {

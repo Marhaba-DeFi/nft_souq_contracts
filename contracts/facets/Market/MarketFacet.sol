@@ -21,16 +21,16 @@ contract MarketFacet is IMarket {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
-    function init(
+    function marketInit(
     ) external {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         require(
-            ms.EXPO != 0 &&
-            ms.BASE != 0 &&
-            ms.timeBuffer != 0 &&
-            ms.minBidIncrementPercentage != 0,
+            ms.EXPO == 0 &&
+            ms.BASE == 0 &&
+            ms.timeBuffer == 0 &&
+            ms.minBidIncrementPercentage == 0,
             "ALREADY_INITIALIZED"
         );
 
@@ -44,7 +44,6 @@ contract MarketFacet is IMarket {
     
     modifier onlyMediaCaller() {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
         require(msg.sender == s._mediaContract, "Market: Unauthorized Access!");
         _;
     }
@@ -287,7 +286,7 @@ contract MarketFacet is IMarket {
     //  * @notice Sets the ask on a particular media. If the ask cannot be evenly split into the media's
     //  * bid shares, this reverts.
     //  */
-    function setAsk(uint256 _tokenID, Iutils.Ask memory ask)
+    function _setAsk(uint256 _tokenID, Iutils.Ask memory ask)
         public
         override
         onlyMediaCaller
@@ -381,7 +380,7 @@ contract MarketFacet is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setAdminAddress(address _newAdminAddress)
+    function _setAdminAddress(address _newAdminAddress)
         external
         override
         onlyMediaCaller
@@ -407,7 +406,7 @@ contract MarketFacet is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function addCurrency(address _tokenAddress)
+    function _addCurrency(address _tokenAddress)
         external
         override
         onlyMediaCaller
@@ -428,7 +427,7 @@ contract MarketFacet is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function removeCurrency(address _tokenAddress)
+    function _removeCurrency(address _tokenAddress)
         external
         override
         onlyMediaCaller
@@ -480,7 +479,7 @@ contract MarketFacet is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setCommissionPercentage(uint8 _commissionPercentage)
+    function _setCommissionPercentage(uint8 _commissionPercentage)
         external
         override
         onlyMediaCaller
@@ -495,7 +494,7 @@ contract MarketFacet is IMarket {
     /**
      * @dev See {IMarket}
      */
-    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+    function _setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
         external
         override
         onlyMediaCaller
@@ -578,7 +577,7 @@ contract MarketFacet is IMarket {
      * @notice Cancel an auction.
      * @dev Transfers the NFT back to the auction creator and emits an AuctionCanceled event
      */
-    function cancelAuction(uint256 _tokenID) external override onlyMediaCaller {
+    function _cancelAuction(uint256 _tokenID) external override onlyMediaCaller {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         require(
             uint256(ms._tokenAsks[_tokenID]._firstBidTime) == 0,
@@ -678,7 +677,7 @@ contract MarketFacet is IMarket {
         delete ms._tokenAsks[_tokenID];
     }
 
-    function getTokenAsks(uint256 _tokenId)
+    function _getTokenAsks(uint256 _tokenId)
         external
         view
         override
@@ -688,7 +687,7 @@ contract MarketFacet is IMarket {
         return ms._tokenAsks[_tokenId];
     }
 
-    function getTokenBid(uint256 _tokenId)
+    function _getTokenBid(uint256 _tokenId)
         external
         view
         override

@@ -32,12 +32,14 @@ async function main() {
     'MediaFacet',
   ];
 
+  const facetsAdresses = [];
   const cut = [];
 
   for (const facetName of facetNames) {
     const Facet = await hre.ethers.getContractFactory(facetName);
     const facet = await Facet.deploy();
     await facet.deployed();
+    facetsAdresses.push(facet.address);
     console.log(`${facetName} deployed: ${facet.address}`);
     cut.push({
       facetAddress: facet.address,
@@ -52,61 +54,61 @@ async function main() {
   );
   await diamondCutFacet.diamondCut(cut, hre.ethers.constants.AddressZero, '0x');
 
-  // initialize contracts
+  // initialize erc721Factory & erc1155Factory contracts
   const erc721FactoryFacet = await hre.ethers.getContractAt(
     'ERC721FactoryFacet',
     souqNFTDiamond.address,
   );
   await erc721FactoryFacet.erc721Init(erc721Name, erc721Symbol);
-  const name = await erc721FactoryFacet.name();
-  const symbol = await erc721FactoryFacet.symbol();
-  console.log('name: ', name);
-  console.log('symbol: ', symbol);
+  console.log('erc721FactoryFacet initialized');
 
-  // let erc721 = await hre.ethers.getContractFactory('ERC721Factory');
-  // erc721 = await erc721.deploy(erc721Name, erc721Symbol);
-  // await erc721.deployed();
-  // console.log('erc721 Token deployed at:', erc721.address);
+  const erc1155FactoryFacet = await hre.ethers.getContractAt(
+    'ERC1155FactoryFacet',
+    souqNFTDiamond.address,
+  );
+  const erc1155Name = 'NFT SOUQ';
+  const erc1155Symbol = 'NFTSOUQ';
+  await erc1155FactoryFacet.erc1155Init(erc1155Name, erc1155Symbol);
+  console.log('erc1155FactoryFacet initialized');
 
-  // // const erc1155Uri = '';
-  // const erc1155Name = 'NFT SOUQ';
-  // const erc1155Symbol = 'NFTSOUQ';
-  // let erc1155 = await hre.ethers.getContractFactory('ERC1155Factory');
-  // // erc1155 = await erc1155.deploy(erc1155Uri)
-  // erc1155 = await erc1155.deploy(erc1155Name, erc1155Symbol);
-  // await erc1155.deployed();
-  // console.log('erc1155 Token deployed at:', erc1155.address);
-  // let market = await hre.ethers.getContractFactory('Market');
-  // market = await market.deploy();
-  // await market.deployed();
-  // console.log('Market deployed at:', market.address);
-  // let media = await hre.ethers.getContractFactory('Media');
-  // media = await media.deploy(erc1155.address, erc721.address, market.address);
-  // await media.deployed();
-  // console.log('media deployed at:', media.address);
+  const marketFacet = await hre.ethers.getContractAt(
+    'MarketFacet',
+    souqNFTDiamond.address,
+  );
+  await marketFacet.marketInit();
+  console.log('marketFacet initialized');
 
-  // updateContractAddresses(
-  //   {
-  //     ERC721: erc721.address,
-  //     ERC1155: erc1155.address,
-  //     MARKET: market.address,
-  //     MEDIA: media.address,
-  //   },
-  //   network,
-  // );
-  // await market.configureMedia(media.address);
-  // console.log('Configure Media address In market');
-  // await erc1155.configureMedia(media.address);
-  // await erc721.configureMedia(media.address);
-  // console.log('Media Added In ERC');
-  // await media.setAdminAddress(adminAddress);
-  // console.log('configured admin address');
-  // await media.setCommissionPercentage(adminCommissionPercentage);
-  // console.log('configured Commission Percentage address');
-  // await media.addCurrency(mrhbAddress);
-  // console.log('Currency 1 added');
-  // await media.addCurrency(wbnbAddress);
-  // console.log('Currency 2 added');
+  const mediaFacet = await hre.ethers.getContractAt(
+    'MediaFacet',
+    souqNFTDiamond.address,
+  );
+  mediaFacet.mediaInit(souqNFTDiamond.address);
+  console.log('mediaFacet initialized');
+
+  updateContractAddresses(
+    {
+      DIAMOND: souqNFTDiamond.address,
+      ERC721: facetsAdresses[0],
+      ERC1155: facetsAdresses[1],
+      MARKET: facetsAdresses[2],
+      MEDIA: facetsAdresses[3],
+    },
+    network,
+  );
+
+  await marketFacet.configureMedia(mediaFacet.address);
+  console.log('Configure Media address In market');
+
+  await mediaFacet.setAdminAddress(signer.address);
+  console.log('configured admin address');
+
+  await mediaFacet.setCommissionPercentage(adminCommissionPercentage);
+  console.log('configured Commission Percentage address');
+
+  await mediaFacet.addCurrency(mrhbAddress);
+  console.log('Currency 1 added');
+  await mediaFacet.addCurrency(wbnbAddress);
+  console.log('Currency 2 added');
 }
 
 // We recommend this pattern to be able to use async/await everywhere

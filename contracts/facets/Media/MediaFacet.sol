@@ -23,36 +23,33 @@ contract MediaFacet is IMedia {
         _;
     }
 
+    modifier onlyOwner() {
+        LibDiamond.enforceIsContractOwner();
+        _;
+    }
+
     // modifier onlyApprovedOrOwner(address spender, uint256 _tokenID) {
     //     require(_isApprovedOrOwner(spender, _tokenID), 'Media: Only approved or owner');
     //     _;
     // }
 
     function mediaInit(
-        address _ERC1155,
-        address _ERC721,
-        address _market
+        address _diamondAddress
     ) external {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         require(
-            ms._ERC1155Address != address(0) &&
-            ms._ERC721Address != address(0) &&
-            ms._marketAddress != address(0),
+            ms.diamondAddress == address(0),
             "ALREADY_INITIALIZED"
         );
 
-        require(_ERC1155 != address(0), "Media: Invalid Address!");
-        require(_ERC721 != address(0), "Media: Invalid Address!");
-        require(_market != address(0), "Media: Invalid Address!");
+        require(_diamondAddress != address(0), "Media: Invalid Address!");
 
         require(msg.sender == ds.contractOwner, "Must own the contract.");
 
 
-        ms._ERC1155Address = _ERC1155;
-        ms._ERC721Address = _ERC721;
-        ms._marketAddress = _market;
+        ms.diamondAddress = _diamondAddress;
     }
 
     function mintToken(MediaData memory data)
@@ -97,13 +94,13 @@ contract MediaFacet is IMedia {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            ERC1155FactoryFacet(ms._ERC1155Address).mint(
+            ERC1155FactoryFacet(ms.diamondAddress).mint(
                 ms._tokenCounter,
                 msg.sender,
                 data.totalSupply
             );
         } else {
-            ERC721FactoryFacet(ms._ERC721Address).mint(ms._tokenCounter, msg.sender);
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
             ms.nftToOwners[ms._tokenCounter] = msg.sender;
         }
 
@@ -127,8 +124,8 @@ contract MediaFacet is IMedia {
             sumOfCollabRoyalty == 0 ? true : false
         );
         // route to market contract
-        IMarket(ms._marketAddress).setCollaborators(ms._tokenCounter, newTokenColab);
-        IMarket(ms._marketAddress).setRoyaltyPoints(
+        IMarket(ms.diamondAddress).setCollaborators(ms._tokenCounter, newTokenColab);
+        IMarket(ms.diamondAddress).setRoyaltyPoints(
             ms._tokenCounter,
             data.royaltyPoints
         );
@@ -147,7 +144,7 @@ contract MediaFacet is IMedia {
             0,
             block.timestamp
         );
-        IMarket(ms._marketAddress).setAsk(ms._tokenCounter, _ask);
+        IMarket(ms.diamondAddress)._setAsk(ms._tokenCounter, _ask);
 
         // fire events
         emitMintEvents(_isFungible, data);
@@ -210,7 +207,7 @@ contract MediaFacet is IMedia {
         MediaInfo memory token = ms.tokenIDToToken[_tokenID];
         if (token._isFungible) {
             require(
-                ERC1155FactoryFacet(ms._ERC1155Address).balanceOf(_owner, _tokenID) >=
+                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(_owner, _tokenID) >=
                     bid._bidAmount,
                 "Media: The Owner Does Not Have That Much Tokens!"
             );
@@ -227,10 +224,23 @@ contract MediaFacet is IMedia {
         return true;
     }
 
+    /**
+     * @notice see IMedia
+     */
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
+        require(
+            msg.sender == ask._sender,
+            "MEDIA: sender in ask tuple needs to be msg.sender"
+        );
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        IMarket(ms.diamondAddress)._setAsk(_tokenID, ask);
+    }
+
     function ifSoldTransfer(uint256 _tokenID, Iutils.Bid calldata bid, address _owner) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
-        bool tokenSold = IMarket(ms._marketAddress).setBid(
+        bool tokenSold = IMarket(ms.diamondAddress).setBid(
             _tokenID,
             msg.sender,
             bid,
@@ -247,7 +257,7 @@ contract MediaFacet is IMedia {
         whenTokenExist(_tokenID)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        IMarket(ms._marketAddress).removeBid(_tokenID, msg.sender);
+        IMarket(ms.diamondAddress).removeBid(_tokenID, msg.sender);
     }
 
     function endAuction(uint256 _tokenID)
@@ -258,8 +268,8 @@ contract MediaFacet is IMedia {
     {
         // TODO this is done now below, check either token is of type auction or not
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        Iutils.Ask memory _ask = IMarket(ms._marketAddress).getTokenAsks(_tokenID);
-        Iutils.Bid memory _bid = IMarket(ms._marketAddress).getTokenBid(_tokenID);
+        Iutils.Ask memory _ask = IMarket(ms.diamondAddress)._getTokenAsks(_tokenID);
+        Iutils.Bid memory _bid = IMarket(ms.diamondAddress)._getTokenBid(_tokenID);
         require(
             _ask.askType == Iutils.AskTypes.AUCTION,
             "Media: Invalid Ask Type"
@@ -267,7 +277,7 @@ contract MediaFacet is IMedia {
         //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         address _owner = ms.tokenIDToToken[_tokenID]._currentOwner;
         address _creator = ms.nftToCreators[_tokenID];
-        IMarket(ms._marketAddress).endAuction(_tokenID, _owner, _creator);
+        IMarket(ms.diamondAddress).endAuction(_tokenID, _owner, _creator);
 
         _transfer(_tokenID, _owner, _bid._recipient, _bid._bidAmount);
 
@@ -282,8 +292,8 @@ contract MediaFacet is IMedia {
     {
         // TODO this is done now below, check either token is of type auction or not
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        Iutils.Ask memory _ask = IMarket(ms._marketAddress).getTokenAsks(_tokenID);
-        Iutils.Bid memory _bid = IMarket(ms._marketAddress).getTokenBid(_tokenID);
+        Iutils.Ask memory _ask = IMarket(ms.diamondAddress)._getTokenAsks(_tokenID);
+        Iutils.Bid memory _bid = IMarket(ms.diamondAddress)._getTokenBid(_tokenID);
         require(
             _ask.askType == Iutils.AskTypes.AUCTION,
             "Media: Invalid Ask Type"
@@ -291,16 +301,104 @@ contract MediaFacet is IMedia {
         address _owner = ms.tokenIDToToken[_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         require(msg.sender == _owner, "Media: Only Token Owner Can accept Bid");
         address _creator = ms.nftToCreators[_tokenID];
-        IMarket(ms._marketAddress).acceptBid(_tokenID, _owner, _creator);
+        IMarket(ms.diamondAddress).acceptBid(_tokenID, _owner, _creator);
 
         _transfer(_tokenID, _owner, _bid._recipient, _bid._bidAmount);
 
         return true;
     }
 
+    function cancelAuction(uint256 _tokenID) external override returns (bool) {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+        require(
+            ms.tokenIDToToken[_tokenID]._currentOwner == msg.sender,
+            "Can only be called by auction creator or curator"
+        );
+        IMarket(ms.diamondAddress)._cancelAuction(_tokenID);
+        return true;
+    }
+
+    function setAdminAddress(address _adminAddress) external onlyOwner returns (bool) {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        IMarket(ms.diamondAddress)._setAdminAddress(_adminAddress);
+        return true;
+    }
+
+    function addCurrency(address _tokenAddress) external returns (bool) {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+        require(
+            msg.sender == IMarket(ms.diamondAddress).getAdminAddress(),
+            "Media: Only Admin Can add new tokens!"
+        );
+        return IMarket(ms.diamondAddress)._addCurrency(_tokenAddress);
+    }
+
+    function removeCurrency(address _tokenAddress) external returns (bool) {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+        require(
+            msg.sender == IMarket(ms.diamondAddress).getAdminAddress(),
+            "Media: Only Admin Can add new tokens!"
+        );
+        return IMarket(ms.diamondAddress)._removeCurrency(_tokenAddress);
+    }
+
     function getAdminCommissionPercentage() external view returns (uint256) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        return IMarket(ms._marketAddress).getCommissionPercentage();
+        return IMarket(ms.diamondAddress).getCommissionPercentage();
+    }
+
+    function setCommissionPercentage(uint8 _newCommissionPercentage)
+        external
+        returns (bool)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        require(
+            msg.sender == IMarket(ms.diamondAddress).getAdminAddress(),
+            "Media: Only Admin Can Set Commission Percentage!"
+        );
+        require(
+            _newCommissionPercentage > 0,
+            "Media: Invalid Commission Percentage"
+        );
+        require(
+            _newCommissionPercentage <= 100,
+            "Media: Commission Percentage Must Be Less Than 100!"
+        );
+
+        IMarket(ms.diamondAddress)._setCommissionPercentage(
+            _newCommissionPercentage
+        );
+        return true;
+    }
+
+    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+        external
+        returns (bool)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        require(
+            msg.sender == IMarket(ms.diamondAddress).getAdminAddress(),
+            "Media: Only Admin Can Set Minimum Bid Increment Percentage!"
+        );
+        require(
+            _minBidIncrementPercentage > 0,
+            "Media: Invalid bid Increment Percentage"
+        );
+        require(
+            _minBidIncrementPercentage <= 50,
+            "Media: bid Increment Percentage Must Be Less Than 50!"
+        );
+
+        IMarket(ms.diamondAddress)._setMinimumBidIncrementPercentage(
+            _minBidIncrementPercentage
+        );
+        return true;
     }
 
     /**
@@ -315,7 +413,7 @@ contract MediaFacet is IMedia {
         MediaInfo memory mediainfo = ms.tokenIDToToken[_tokenID];
         if (mediainfo._isFungible) {
             require(
-                ERC1155FactoryFacet(ms._ERC1155Address).balanceOf(
+                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(
                     msg.sender,
                     _tokenID
                 ) >= _amount,
@@ -333,21 +431,22 @@ contract MediaFacet is IMedia {
     }
 
     function _transfer(
-        uint256 _tokenID,
+        uint256 _tokenID, 
         address _owner,
         address _recipient,
         uint256 _amount
     ) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
         if (ms.tokenIDToToken[_tokenID]._isFungible) {
-            ERC1155FactoryFacet(ms._ERC1155Address).transferFrom(
+            ERC1155FactoryFacet(ms.diamondAddress).transferFrom(
                 _owner,
                 _recipient,
                 _tokenID,
                 _amount
             );
         } else {
-            ERC721FactoryFacet(ms._ERC721Address).transferFrom(
+            ERC721FactoryFacet(ms.diamondAddress).transferFrom(
                 _owner,
                 _recipient,
                 _tokenID
@@ -356,5 +455,25 @@ contract MediaFacet is IMedia {
         }
         ms.tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
+    }
+
+    function getTokenAsks(uint256 _tokenId)
+        external
+        view
+        returns (Iutils.Ask memory)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        return IMarket(ms.diamondAddress)._getTokenAsks(_tokenId);
+    }
+
+    function getTokenBid(uint256 _tokenId)
+        external
+        view
+        returns (Iutils.Bid memory)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        return IMarket(ms.diamondAddress)._getTokenBid(_tokenId);
     }
 }

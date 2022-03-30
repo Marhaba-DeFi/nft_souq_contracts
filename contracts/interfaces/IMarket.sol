@@ -66,7 +66,7 @@ interface IMarket {
 
     function removeBid(uint256 tokenId, address bidder) external;
 
-    function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
+    function _setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
     function endAuction(
         uint256 _tokenID,
@@ -80,7 +80,7 @@ interface IMarket {
         address _creator
     ) external returns (bool);
 
-    function cancelAuction(uint256 _tokenID) external;
+    function _cancelAuction(uint256 _tokenID) external;
 
     /**
      * @notice This method is used to Divide the selling amount among Owner, Creator and Collaborators
@@ -100,11 +100,11 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function setCommissionPercentage(uint8 _commissionPercentage)
+    function _setCommissionPercentage(uint8 _commissionPercentage)
         external
         returns (bool);
 
-    function setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+    function _setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
         external
         returns (bool);
 
@@ -115,7 +115,7 @@ interface IMarket {
      *
      * @return bool Transaction status
      */
-    function setAdminAddress(address _newAdminAddress) external returns (bool);
+    function _setAdminAddress(address _newAdminAddress) external returns (bool);
 
     /**
      * @notice This method is used to get Admin's Commission Percentage
@@ -131,21 +131,21 @@ interface IMarket {
      */
     function getAdminAddress() external view returns (address);
 
-    function addCurrency(address _tokenAddress) external returns (bool);
+    function _addCurrency(address _tokenAddress) external returns (bool);
 
-    function removeCurrency(address _tokenAddress) external returns (bool);
+    function _removeCurrency(address _tokenAddress) external returns (bool);
 
     function isTokenApproved(address _tokenAddress)
         external
         view
         returns (bool);
 
-    function getTokenAsks(uint256 _tokenId)
+    function _getTokenAsks(uint256 _tokenId)
         external
         view
         returns (Iutils.Ask memory);
 
-    function getTokenBid(uint256 _tokenId)
+    function _getTokenBid(uint256 _tokenId)
         external
         view
         returns (Iutils.Bid memory);

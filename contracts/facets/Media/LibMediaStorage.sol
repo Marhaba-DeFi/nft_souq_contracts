@@ -9,10 +9,8 @@ library LibMediaStorage {
   );
 
   struct MediaStorage {
-    address _ERC1155Address;
-    address _marketAddress;
-    address _ERC721Address;
-
+    address diamondAddress;
+    
     uint256 _tokenCounter;
 
     // TokenHash => tokenID
