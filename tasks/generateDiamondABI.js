@@ -1,4 +1,4 @@
-import { task } from 'hardhat/config';
+const { task } = require('hardhat/config');
 const fs = require('fs');
 
 const basePath = '/contracts/facets/';
@@ -7,12 +7,11 @@ const libraryBasePath = '/contracts/libraries/';
 task(
   'diamondABI',
   'Generates ABI file for diamond, includes all ABIs of facets',
-).setAction(async () => {
-  let files = fs.readdirSync('.' + basePath);
+).setAction(async() => {
+  let files = ['ERC721Factory', 'ERC1155Factory', 'Market', 'Media'];
   const abi = [];
   for (const file of files) {
-    const jsonFile = file.replace('sol', 'json');
-    let json = fs.readFileSync(`./artifacts/${basePath}${file}/${jsonFile}`);
+    let json = fs.readFileSync(`./artifacts${basePath}${file}/${file}Facet.sol/${file}Facet.json`);
     json = JSON.parse(json);
     abi.push(...json.abi);
   }
@@ -20,16 +19,7 @@ task(
   for (const file of files) {
     const jsonFile = file.replace('sol', 'json');
     let json = fs.readFileSync(
-      `./artifacts/${libraryBasePath}${file}/${jsonFile}`,
-    );
-    json = JSON.parse(json);
-    abi.push(...json.abi);
-  }
-  files = fs.readdirSync('.' + sharedLibraryBasePath);
-  for (const file of files) {
-    const jsonFile = file.replace('sol', 'json');
-    let json = fs.readFileSync(
-      `./artifacts/${sharedLibraryBasePath}${file}/${jsonFile}`,
+      `./artifacts${libraryBasePath}${file}/${jsonFile}`,
     );
     json = JSON.parse(json);
     abi.push(...json.abi);

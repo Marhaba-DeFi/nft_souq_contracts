@@ -87,11 +87,11 @@ async function main() {
 
   updateContractAddresses(
     {
-      DIAMOND: souqNFTDiamond.address,
-      ERC721: facetsAdresses[0],
-      ERC1155: facetsAdresses[1],
-      MARKET: facetsAdresses[2],
-      MEDIA: facetsAdresses[3],
+      souqNFTDiamond: souqNFTDiamond.address,
+      erc721FactoryFacet: facetsAdresses[0],
+      erc1155FactoryFacet: facetsAdresses[1],
+      marketFacet: facetsAdresses[2],
+      mediaFacet: facetsAdresses[3],
     },
     network,
   );

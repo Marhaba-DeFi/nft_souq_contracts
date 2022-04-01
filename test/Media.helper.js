@@ -7,7 +7,7 @@ const { convertFromBigNumber } = require('../utils/util');
  * @param {*} params
  * @returns tx
  */
-async function mintTokens (mediaContract, user, params) {
+async function mintTokens(mediaContract, user, params) {
   // mint tokens and return the tx
   const tx = await mediaContract.connect(user).mintToken(params);
   return tx;
@@ -17,7 +17,7 @@ async function mintTokens (mediaContract, user, params) {
  * @param {*} tx
  * @returns _tokenCounter
  */
-async function fetchMintEvent (tx) {
+async function fetchMintEvent(tx) {
   // wait for tx to confirm fetch the events, check either its relevent and return results
   tx = await tx.wait(); // 0ms, as tx is already confirmed
   const event = tx.events.find((event) => event.event === 'TokenCounter');
@@ -32,7 +32,7 @@ async function fetchMintEvent (tx) {
  * @param {*} to
  * @param {*} amount
  */
-async function approveTokens (contract, from, to, amount) {
+async function approveTokens(contract, from, to, amount) {
   await contract.connect(from).approve(to, amount);
 }
 /**
@@ -42,7 +42,7 @@ async function approveTokens (contract, from, to, amount) {
  * @param {*} tokenId
  * @param {*} bidParams
  */
-async function setBid (mediaContract, from, tokenId, bidParams) {
+async function setBid(mediaContract, from, tokenId, bidParams) {
   // send bid to Media Contract
   return mediaContract.connect(from).setBid(
     tokenId, // _tokenCounter.toString(),
@@ -56,7 +56,7 @@ async function setBid (mediaContract, from, tokenId, bidParams) {
  * @param {*} users
  * @returns
  */
-async function getBalance (contract, users) {
+async function getBalance(contract, users) {
   // fetch balances for an multiple addresses
   const balances = {};
   for (let index = 0; index < users.length; index++) {
@@ -75,14 +75,12 @@ async function getBalance (contract, users) {
  * @param {*} users
  * @returns
  */
-async function getBalanceNFT (contract, users) {
+async function getBalanceNFT(contract, users) {
   // fetch balances for an multiple addresses
   const balances = {};
   for (let index = 0; index < users.length; index++) {
     const address = users[index].address;
-    balances[users[index].name] = parseInt(
-      await contract.balanceOf(address),
-    );
+    balances[users[index].name] = parseInt(await contract.balanceOf(address));
   }
   console.log('NFT Balances ', balances);
   return balances;
@@ -93,7 +91,7 @@ async function getBalanceNFT (contract, users) {
  * @param {*} tokenId
  * @returns
  */
-async function endAuction (mediaContract, from, tokenId) {
+async function endAuction(mediaContract, from, tokenId) {
   // send bid to Media Contract
   return mediaContract.connect(from).endAuction(
     tokenId, // _tokenCounter.toString(),
@@ -106,7 +104,7 @@ async function endAuction (mediaContract, from, tokenId) {
  * @param {*} tokenId
  * @returns
  */
-async function cancelAuction (mediaContract, from, tokenId) {
+async function cancelAuction(mediaContract, from, tokenId) {
   // send bid to Media Contract
   return mediaContract.connect(from).cancelAuction(
     tokenId, // _tokenCounter.toString(),
@@ -119,7 +117,7 @@ async function cancelAuction (mediaContract, from, tokenId) {
  * @param {*} tokenId
  * @returns
  */
-async function setAsk (mediaContract, from, tokenId, askParams) {
+async function setAsk(mediaContract, from, tokenId, askParams) {
   // send bid to Media Contract
   return mediaContract.connect(from).setAsk(
     tokenId, // _tokenCounter.toString(),
@@ -128,11 +126,11 @@ async function setAsk (mediaContract, from, tokenId, askParams) {
   );
 }
 
-async function addCurrency (mediaContract, from, tokenAddress) {
+async function addCurrency(mediaContract, from, tokenAddress) {
   // addCurrency function to add admin approved token addresses
-  return mediaContract.connect(from).addCurrency(
-    tokenAddress, { from: from.address },
-  );
+  return mediaContract
+    .connect(from)
+    .addCurrency(tokenAddress, { from: from.address });
 }
 
 module.exports = {

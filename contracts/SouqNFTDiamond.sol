@@ -8,7 +8,7 @@ import {OwnershipFacet} from "./facets/OwnershipFacet.sol";
 
 contract SouqNFTDiamond {    
 
-    constructor(address _contractOwner) payable {        
+    constructor(address _contractOwner) payable {   
         LibDiamond.setContractOwner(_contractOwner);
         // initialize diamond with cut, loupe and ownership facets
         LibDiamond.addDiamondFunctions(address(new DiamondCutFacet()), address(new DiamondLoupeFacet()), address(new OwnershipFacet()));    

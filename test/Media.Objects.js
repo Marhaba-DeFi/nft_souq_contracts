@@ -30,7 +30,10 @@ const mintObjectAuction = {
   title: 'Metaverse NFT',
   totalSupply: 1,
   royaltyPoints: 5,
-  collabsAddresses: ['0x3306ea6DfbB7a24eF7AB2E3e1E8C6A1afAfC3E42', '0xC3cd11dA4d47B17EDe50313F3CF6e91cD67EE960'],
+  collabsAddresses: [
+    '0x3306ea6DfbB7a24eF7AB2E3e1E8C6A1afAfC3E42',
+    '0xC3cd11dA4d47B17EDe50313F3CF6e91cD67EE960',
+  ],
   collabsPercentages: [2, 3],
   auctionType: 0, // askType  AUCTION - 0 , FIXED - 1
   askAmount: convertToBigNumber(100),
@@ -68,13 +71,14 @@ const mintArrayAuction = [
   mintObjectAuction.duration, // Auction End Time
 ];
 
-async function getProvider () {
+async function getProvider() {
   console.log(process.env.PROVIDER_URL);
   return new JsonRpcProvider(process.env.PROVIDER_URL);
 }
-async function getWalletsMappings (network) {
+async function getWalletsMappings(network) {
   const provider = await getProvider();
-  const signer = network === 'test' ? await ethers.getSigners() : generatedWallets(provider);
+  const signer =
+    network === 'test' ? await ethers.getSigners() : generatedWallets(provider);
   return {
     deployer: signer[0],
     admin: signer[1],

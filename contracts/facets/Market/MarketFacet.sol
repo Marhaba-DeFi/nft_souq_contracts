@@ -138,7 +138,6 @@ contract MarketFacet is IMarket {
         );
 
         IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
-
         // fetch existing bid, if there is any
         require(
             token.allowance(_bid._bidder, address(this)) >= _bid._amount,

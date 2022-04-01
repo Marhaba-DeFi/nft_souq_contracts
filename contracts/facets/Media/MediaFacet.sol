@@ -114,6 +114,7 @@ contract MediaFacet is IMedia {
             data.title,
             _isFungible
         );
+
         // Hold token info
         ms.tokenIDToToken[ms._tokenCounter] = newToken;
 
@@ -123,6 +124,7 @@ contract MediaFacet is IMedia {
             data.percentages,
             sumOfCollabRoyalty == 0 ? true : false
         );
+
         // route to market contract
         IMarket(ms.diamondAddress).setCollaborators(ms._tokenCounter, newTokenColab);
         IMarket(ms.diamondAddress).setRoyaltyPoints(
@@ -341,7 +343,7 @@ contract MediaFacet is IMedia {
 
         require(
             msg.sender == IMarket(ms.diamondAddress).getAdminAddress(),
-            "Media: Only Admin Can add new tokens!"
+            "Media: Only Admin Can remove tokens!"
         );
         return IMarket(ms.diamondAddress)._removeCurrency(_tokenAddress);
     }
