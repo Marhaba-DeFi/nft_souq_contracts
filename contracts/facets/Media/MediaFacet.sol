@@ -132,7 +132,7 @@ contract MediaFacet is IMedia {
             data.royaltyPoints
         );
 
-        // Put token on sale asa token got minted
+        // Put token on sale as a token got minted
         Iutils.Ask memory _ask = Iutils.Ask(
             msg.sender,
             data._reserveAmount,
@@ -226,19 +226,6 @@ contract MediaFacet is IMedia {
         return true;
     }
 
-    /**
-     * @notice see IMedia
-     */
-    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
-        require(
-            msg.sender == ask._sender,
-            "MEDIA: sender in ask tuple needs to be msg.sender"
-        );
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        
-        IMarket(ms.diamondAddress)._setAsk(_tokenID, ask);
-    }
-
     function ifSoldTransfer(uint256 _tokenID, Iutils.Bid calldata bid, address _owner) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
@@ -252,6 +239,20 @@ contract MediaFacet is IMedia {
         if (tokenSold)
             _transfer(_tokenID, _owner, bid._recipient, bid._bidAmount);
     }
+
+    /**
+     * @notice see IMedia
+     */
+    function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
+        require(
+            msg.sender == ask._sender,
+            "MEDIA: sender in ask tuple needs to be msg.sender"
+        );
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        IMarket(ms.diamondAddress)._setAsk(_tokenID, ask);
+    }
+
 
     function removeBid(uint256 _tokenID)
         external

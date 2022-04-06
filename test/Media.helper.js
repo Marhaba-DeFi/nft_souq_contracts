@@ -80,7 +80,11 @@ async function getBalanceNFT(contract, users) {
   const balances = {};
   for (let index = 0; index < users.length; index++) {
     const address = users[index].address;
-    balances[users[index].name] = parseInt(await contract.balanceOf(address));
+    if (users[index].id) {
+      balances[users[index].name] = parseInt(await contract.balanceOf(address, users[index].id));
+    } else {
+      balances[users[index].name] = parseInt(await contract.balanceOf(address));
+    }
   }
   console.log('NFT Balances ', balances);
   return balances;

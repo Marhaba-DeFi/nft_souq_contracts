@@ -179,6 +179,8 @@ contract MarketFacet is IMarket {
                 _bid._currency == ms._tokenAsks[_tokenID]._currency &&
                 _bid._amount >= ms._tokenAsks[_tokenID]._askAmount
             ) {
+                ms._tokenAsks[_tokenID]._amount -= _bid._bidAmount;
+
                 // Finalize Exchange
                 divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
             }
@@ -249,6 +251,8 @@ contract MarketFacet is IMarket {
         if ( _bid._amount >= ms._tokenAsks[_tokenID]._askAmount ){
 
         address newOwner = ms._tokenAsks[_tokenID]._bidder;
+
+        ms._tokenAsks[_tokenID]._amount -= _bid._bidAmount;
 
         divideMoney(
             _tokenID,
@@ -673,7 +677,9 @@ contract MarketFacet is IMarket {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         delete ms._tokenBidders[_tokenID][_bidder];
-        delete ms._tokenAsks[_tokenID];
+        if (ms._tokenAsks[_tokenID]._amount == 0) {
+            delete ms._tokenAsks[_tokenID];
+        }
     }
 
     function _getTokenAsks(uint256 _tokenId)
