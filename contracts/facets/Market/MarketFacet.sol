@@ -102,17 +102,14 @@ contract MarketFacet is IMarket {
         Iutils.Bid calldata _bid,
         address _owner,
         address _creator
-    ) external override onlyMediaCaller returns (bool) {
+    ) external payable override onlyMediaCaller returns (bool) {
         require(_bid._amount != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._bidAmount != 0, "Market: You Can't Bid For 0 Tokens");
         require(
             !(_bid._bidAmount < 0),
             "Market: You Can't Bid For Negative Tokens"
         );
-        require(
-            _bid._currency != address(0),
-            "Market: bid currency cannot be 0 address"
-        );
+
         require(
             this.isTokenApproved(_bid._currency),
             "Market: bid currency not approved by admin"
@@ -125,9 +122,10 @@ contract MarketFacet is IMarket {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         
         require(
-            ms._tokenAsks[_tokenID]._currency != address(0),
+            ms._tokenAsks[_tokenID]._sender != address(0),
             "Market: Token is not open for Sale"
         );
+
         require(
             _bid._amount >= ms._tokenAsks[_tokenID]._reserveAmount,
             "Market: Bid Cannot be placed below the min Amount"
@@ -137,12 +135,8 @@ contract MarketFacet is IMarket {
             "Market: Incorrect payment Method"
         );
 
-        IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
-        // fetch existing bid, if there is any
-        require(
-            token.allowance(_bid._bidder, address(this)) >= _bid._amount,
-            "Market: Please Approve Tokens Before You Bid"
-        );
+        _handleIncomingTransfer(_tokenID, _bid);
+
         Iutils.Bid storage existingBid = ms._tokenBidders[_tokenID][_bidder];
 
         if (ms._tokenAsks[_tokenID].askType == Iutils.AskTypes.FIXED) {
@@ -175,7 +169,6 @@ contract MarketFacet is IMarket {
             // // If a bid meets the criteria for an ask, automatically accept the bid.
             // // If no ask is set or the bid does not meet the requirements, ignore.
             if (
-                ms._tokenAsks[_tokenID]._currency != address(0) &&
                 _bid._currency == ms._tokenAsks[_tokenID]._currency &&
                 _bid._amount >= ms._tokenAsks[_tokenID]._askAmount
             ) {
@@ -221,7 +214,13 @@ contract MarketFacet is IMarket {
         } else if (lastBidder != address(0)) {
             // If it's not, then we should refund the last bidder
             delete ms._tokenBidders[_tokenID][lastBidder];
-            token.safeTransfer(lastBidder, ms._tokenAsks[_tokenID]._highestBid);
+            if (ms._tokenAsks[_tokenID]._currency == address(0)) {
+                (bool success, ) = lastBidder.call{value: ms._tokenAsks[_tokenID]._highestBid}("");
+                
+                require(success, "error when refunding last bidder");
+            } else {
+                token.safeTransfer(lastBidder, ms._tokenAsks[_tokenID]._highestBid);
+            }
         }
         ms._tokenAsks[_tokenID]._highestBid = _bid._amount;
         ms._tokenAsks[_tokenID]._bidder = _bid._bidder;
@@ -271,14 +270,33 @@ contract MarketFacet is IMarket {
         // We must check the balance that was actually transferred to the auction,
         // as some tokens impose a transfer fee and would not actually transfer the
         // full amount to the market, resulting in potentially locked funds
-        IERC20 token = IERC20(_currency);
-        uint256 beforeBalance = token.balanceOf(address(this));
-        token.safeTransferFrom(_bidder, address(this), _amount);
-        uint256 afterBalance = token.balanceOf(address(this));
-        require(
-            beforeBalance + _amount == afterBalance,
-            "Token transfer call did not transfer expected amount"
-        );
+        if (_currency == address(0)) {
+            require(msg.value >= _amount, "Market: msg value less than expected amount");
+        } else {
+            IERC20 token = IERC20(_currency);
+            uint256 beforeBalance = token.balanceOf(address(this));
+            token.safeTransferFrom(_bidder, address(this), _amount);
+            uint256 afterBalance = token.balanceOf(address(this));
+            require(
+                beforeBalance + _amount == afterBalance,
+                "Token transfer call did not transfer expected amount"
+            );
+        }
+    }
+
+    function _handleIncomingTransfer(uint256 _tokenID, Iutils.Bid calldata _bid) internal {
+        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+
+        if (_bid._currency == address(0)) {
+            require(msg.value >= _bid._amount, "Market: msg value less than expected amount");
+        } else {
+            IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
+            // fetch existing bid, if there is any
+            require(
+                token.allowance(_bid._bidder, address(this)) >= _bid._amount,
+                "Market: Please Approve Tokens Before You Bid"
+            );
+        }
     }
 
     // /**
@@ -369,10 +387,20 @@ contract MarketFacet is IMarket {
         );
         require(bid._amount > 0, "Market: cannot remove bid amount of 0");
 
-        IERC20 token = IERC20(bidCurrency);
         emit BidRemoved(_tokenID, bid);
         // line safeTransfer should be upper before delete??
-        token.safeTransfer(bid._bidder, bidAmount);
+
+        if (bidCurrency == address(0)) {
+            require(address(this).balance >= bidAmount, "Market: insufficient balance");
+
+            (bool success, ) = bid._bidder.call{value: bidAmount}("");
+
+            require(success, "error when return the bid amount");
+        } else {
+            IERC20 token = IERC20(bidCurrency);
+            token.safeTransfer(bid._bidder, bidAmount);
+        }
+
         delete ms._tokenBidders[_tokenID][_bidder];
     }
 
@@ -411,7 +439,6 @@ contract MarketFacet is IMarket {
         onlyMediaCaller
         returns (bool)
     {
-        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
         require(
             !this.isTokenApproved(_tokenAddress),
             "Market: Token Already Configured!"
@@ -432,7 +459,6 @@ contract MarketFacet is IMarket {
         onlyMediaCaller
         returns (bool)
     {
-        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
         require(
             this.isTokenApproved(_tokenAddress),
             "Market: Token not found!"
@@ -611,14 +637,25 @@ contract MarketFacet is IMarket {
             (ms._adminCommissionPercentage * ms.EXPO)) / (ms.BASE);
         uint256 _amount = _amountToDistribute - adminCommission;
 
-        token.transfer(ms._adminAddress, adminCommission);
-
         // fetch owners added royalty points
         uint256 collabPercentage = ms.tokenRoyaltyPercentage[_tokenID];
         uint256 royaltyPoints = (_amount * (collabPercentage * ms.EXPO)) / (ms.BASE);
 
-        // royaltyPoints represents amount going to divide among Collaborators
-        token.transfer(_owner, _amount - royaltyPoints);
+        if (_ask._currency == address(0)) {
+            (bool success, ) = ms._adminAddress.call{value: adminCommission}("");
+
+            require(success, "error when sending admin comission");
+
+            // royaltyPoints represents amount going to divide among Collaborators
+            (success, ) = _owner.call{value: _amount - royaltyPoints}("");
+
+            require(success, "error when sending owner royality points");
+        } else {
+            token.transfer(ms._adminAddress, adminCommission);
+            // royaltyPoints represents amount going to divide among Collaborators
+            token.transfer(_owner, _amount - royaltyPoints);
+        }
+
 
         // Collaborators will only receive share when creator have set some royalty and sale is occurring for the first time
         Collaborators storage tokenCollab = ms.tokenCollaborators[_tokenID];
@@ -635,10 +672,16 @@ contract MarketFacet is IMarket {
                 uint256 amountToTransfer = (royaltyPoints *
                     (tokenCollab._percentages[index] * ms.EXPO)) / (ms.BASE);
                 // transfer Individual Collaborator's share Amount
-                token.transfer(
-                    tokenCollab._collaborators[index],
-                    amountToTransfer
-                );
+                if (_ask._currency == address(0)) {
+                    (bool success, ) = tokenCollab._collaborators[index].call{value: amountToTransfer}("");
+
+                    require(success, "error when send collab share amount");
+                } else {
+                    token.transfer(
+                        tokenCollab._collaborators[index],
+                        amountToTransfer
+                    );
+                }
                 // Total Amount Transferred
                 totalAmountTransferred =
                     totalAmountTransferred +
@@ -649,7 +692,13 @@ contract MarketFacet is IMarket {
             tokenCollab._receiveCollabShare = true;
         }
 
-        token.transfer(_creator, royaltyPoints - totalAmountTransferred);
+        if (_ask._currency == address(0)) {
+            (bool success, ) = _creator.call{value: royaltyPoints - totalAmountTransferred}("");
+
+            require(success, "error when sending remaining share to creatore");
+        } else {
+            token.transfer(_creator, royaltyPoints - totalAmountTransferred);
+        }
 
         totalAmountTransferred =
             totalAmountTransferred +

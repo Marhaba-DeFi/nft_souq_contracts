@@ -1,3 +1,4 @@
+const { ethers } = require('hardhat');
 const { convertFromBigNumber } = require('../utils/util');
 
 /**
@@ -44,11 +45,19 @@ async function approveTokens(contract, from, to, amount) {
  */
 async function setBid(mediaContract, from, tokenId, bidParams) {
   // send bid to Media Contract
-  return mediaContract.connect(from).setBid(
-    tokenId, // _tokenCounter.toString(),
-    bidParams,
-    { from: from.address },
-  );
+  if (bidParams[2] === ethers.constants.AddressZero) {
+    return mediaContract.connect(from).setBid(
+      tokenId, // _tokenCounter.toString(),
+      bidParams,
+      { from: from.address, value: bidParams[1] },
+    );
+  } else {
+    return mediaContract.connect(from).setBid(
+      tokenId, // _tokenCounter.toString(),
+      bidParams,
+      { from: from.address },
+    );
+  }
 }
 /**
  *

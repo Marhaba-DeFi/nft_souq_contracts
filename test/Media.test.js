@@ -229,6 +229,9 @@ describe('marketContract', async function() {
       );
 
       // admin is approving the currency that can used while ask and bid time
+      // native token: eth, bsc or matic depend on chain
+      await this.mediaFacet.connect(this.admin).addCurrency(ethers.constants.AddressZero);
+      // marhaba token
       await this.mediaFacet.connect(this.admin).addCurrency(this.marhabaToken.address);
     });
 
@@ -903,6 +906,36 @@ describe('marketContract', async function() {
       expect(nftowner).to.equals(this.alice.address);
 
       const mediaInfo = await this.mediaFacet.getToken(1);
+    });
+
+     it('should be able to minth with native token', async function() {
+      this.mintParamsTuples[9] = ethers.constants.AddressZero;
+
+      const tx = await mintTokens(
+        this.mediaFacet,
+        this.alice,
+        this.mintParamsTuples,
+      );
+      const tokenCounter = await fetchMintEvent(tx);
+      expect(tokenCounter.toString()).to.equals('1');
+
+      // place bid
+      await setBid(this.mediaFacet, this.bob, tokenCounter, [
+        1, // quantity of the tokens being bid
+        convertToBigNumber(5), // amount of eth to bid
+        ethers.constants.AddressZero, // Address is 0x00.. paying by native token
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsTuples[6],
+      ]);
+
+      const aliceBlalance = await ethers.provider.getBalance(this.alice.address);
+      expect(parseInt(convertFromBigNumber(aliceBlalance))).to.equals(10004);
+      console.log('alice balance', parseInt(convertFromBigNumber(aliceBlalance)));
+      
+      const bobBlalance = await ethers.provider.getBalance(this.bob.address);
+      expect(parseInt(convertFromBigNumber(bobBlalance))).to.equals(9994);
+      console.log('bob balance', parseInt(convertFromBigNumber(bobBlalance)));
     });
 
     // it('Mint Token, Place Bid by the bidder and update ask by the ask Sender', async function() {
