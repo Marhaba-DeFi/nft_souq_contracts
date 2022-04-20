@@ -61,6 +61,12 @@ module.exports = {
         count: 20,
       },
     },
+    polygonMainnet: {
+      url: "https://polygon-mainnet.g.alchemy.com/v2/ARoEjFsFTU6nG5NG6bkBth7QabDERGoD",
+      chainId: 137,
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 70000000000
+    },
   },
 
   mocha: {
