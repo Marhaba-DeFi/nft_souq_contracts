@@ -196,6 +196,7 @@ contract MediaFacet is IMedia {
 
     function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
+        payable
         override
         whenTokenExist(_tokenID)
         returns (bool)
@@ -249,7 +250,7 @@ contract MediaFacet is IMedia {
     function ifSoldTransfer(uint256 _tokenID, Iutils.Bid calldata bid, address _owner) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
-        bool tokenSold = IMarket(ms.diamondAddress).setBid(
+        bool tokenSold = IMarket(ms.diamondAddress).setBid{value: msg.value}(
             _tokenID,
             msg.sender,
             bid,

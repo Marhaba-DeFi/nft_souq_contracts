@@ -62,7 +62,7 @@ interface IMarket {
         Iutils.Bid calldata bid,
         address _owner,
         address _creator
-    ) external returns (bool);
+    ) external payable returns (bool);
 
     function removeBid(uint256 tokenId, address bidder) external;
 
