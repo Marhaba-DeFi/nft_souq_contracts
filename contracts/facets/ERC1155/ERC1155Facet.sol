@@ -40,31 +40,6 @@ contract ERC1155Facet is Context {
      */
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
 
-    function erc1155Init(
-    string memory name_,
-    string memory symbol_
-  ) external {
-    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
-    LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
-
-    require(
-      bytes(es._name).length == 0 &&
-      bytes(es._symbol).length == 0,
-      "ALREADY_INITIALIZED"
-    );
-
-    require(
-      bytes(name_).length != 0 &&
-      bytes(symbol_).length != 0,
-      "INVALID_PARAMS"
-    );
-
-    require(msg.sender == ds.contractOwner, "Must own the contract.");
-
-    es._name = name_;
-    es._symbol = symbol_;
-  }
-
     /**
      * @dev See {IERC1155MetadataURI-uri}.
      *

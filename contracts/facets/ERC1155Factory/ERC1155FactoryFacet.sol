@@ -16,6 +16,31 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         _;
     }
 
+    function erc1155FactoryFacetInit(
+    string memory name_,
+    string memory symbol_
+    ) external{
+     LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+     LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+     require(
+      bytes(es.name).length == 0 &&
+      bytes(es.symbol).length == 0,
+      "ALREADY_INITIALIZED"
+    );
+
+     require(
+      bytes(name_).length != 0 &&
+      bytes(symbol_).length != 0,
+      "INVALID_PARAMS"
+    );
+
+
+    require(msg.sender == ds.contractOwner, "Must own the contract.");
+
+    es.name = name_;
+    es.symbol = symbol_;
+    }
+
     function mint(
         uint256 _tokenID,
         address _owner,

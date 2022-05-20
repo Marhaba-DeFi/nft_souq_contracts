@@ -11,6 +11,10 @@ library LibERC1155FactoryStorage {
     mapping(uint256 => address) nftToOwners;
     // tokenID => Creator
     mapping(uint256 => address) nftToCreators;
+    // token name
+    string name;
+    // token symbol
+    string symbol;
   }
 
   function erc1155FactoryStorage() internal pure returns (ERC1155FactoryStorage storage es) {

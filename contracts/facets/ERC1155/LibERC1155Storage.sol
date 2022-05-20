@@ -7,10 +7,6 @@ library LibERC1155Storage {
   );
 
   struct ERC1155Storage {
-    // Token name
-    string _name;
-    // Token symbol
-    string _symbol;
     // Mapping from token ID to account balances
     mapping(uint256 => mapping(address => uint256)) _balances;
     // Used as the URI for all token types by relying on ID substitution, e.g. https://token-cdn-domain/{id}.json

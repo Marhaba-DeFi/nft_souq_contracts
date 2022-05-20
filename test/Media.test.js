@@ -116,7 +116,7 @@ describe('marketContract', async function() {
 
       const erc1155Name = 'NFT SOUQ';
       const erc1155Symbol = 'NFTSOUQ';
-      await this.erc1155FactoryFacet.erc1155Init(erc1155Name, erc1155Symbol);
+      await this.erc1155FactoryFacet.erc1155FactoryFacetInit(erc1155Name, erc1155Symbol);
 
       await this.marketFacet.marketInit();
 
