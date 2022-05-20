@@ -348,6 +348,12 @@ contract MarketFacet is IMarket {
             ms._tokenAsks[_tokenID] = _updatedAsk;
             emit AskUpdated(_tokenID, _updatedAsk);
         } else {
+
+            // set bidder, firstBidTime and highest bid to default state
+            ask._bidder = address(0);
+            ask._firstBidTime = 0;
+            ask._highestBid = 0;
+
             ms._tokenAsks[_tokenID] = ask;
             ms._tokenAsks[_tokenID]._createdAt = block.timestamp;
             emit AskUpdated(_tokenID, ask);
@@ -555,21 +561,25 @@ contract MarketFacet is IMarket {
         address _creator
     ) external override onlyMediaCaller returns (bool) {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+        address bidder = ms._tokenAsks[_tokenID]._bidder;
+
+        // retrieve bid info
+        Iutils.Bid memory bidInfo = ms._tokenBidders[_tokenID][bidder];
         require(
             uint256(ms._tokenAsks[_tokenID]._firstBidTime) != 0,
             "Market.Auction hasn't begun"
         );
         require(uint256(ms._tokenAsks[_tokenID]._highestBid) != 0, "No Bid Found");
+        require(address(bidInfo._bidder) != address(0), "Media: No Bid Found against token ask");
         // address(0) for _bidder is only need when sale type is of type Auction
-        address newOwner = ms._tokenAsks[_tokenID]._bidder;
         divideMoney(
             _tokenID,
             _owner,
             address(0),
-            ms._tokenAsks[_tokenID]._highestBid,
+            bidInfo._amount, // make sure to pass amount from bid so that we avoid manupulation by asker
             _creator
         );
-        emit BidAccepted(_tokenID, newOwner);
+        emit BidAccepted(_tokenID, bidder);
         return true;
     }
 
