@@ -101,9 +101,9 @@ contract MediaFacet is IMedia {
             );
         } else {
             ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
-            ms.nftToOwners[ms._tokenCounter] = msg.sender;
+            
         }
-
+        ms.nftToOwners[ms._tokenCounter] = msg.sender;
         ms.nftToCreators[ms._tokenCounter] = msg.sender;
 
         MediaInfo memory newToken = MediaInfo(
@@ -230,12 +230,19 @@ contract MediaFacet is IMedia {
      * @notice see IMedia
      */
     function setAsk(uint256 _tokenID, Iutils.Ask memory ask) external override {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+        // make sure asker is the owner of the token
         require(
             msg.sender == ask._sender,
             "MEDIA: sender in ask tuple needs to be msg.sender"
         );
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        
+
+        require(
+            msg.sender == ms.nftToOwners[_tokenID],
+            "MEDIA: sender needs to be the owner of the token"
+        );
+
         IMarket(ms.diamondAddress)._setAsk(_tokenID, ask);
     }
 
@@ -453,8 +460,8 @@ contract MediaFacet is IMedia {
                 _recipient,
                 _tokenID
             );
-            ms.nftToOwners[_tokenID] = _recipient;
         }
+        ms.nftToOwners[_tokenID] = _recipient;
         ms.tokenIDToToken[_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
     }

@@ -292,6 +292,11 @@ contract MarketFacet is IMarket {
     {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         Iutils.Ask storage _oldAsk = ms._tokenAsks[_tokenID];
+        // make sure, currency is the one enable in contract
+        require(
+                this.isTokenApproved(ask._currency),
+                "Market: ask currency not approved by admin"
+            );
 
         if (_oldAsk._sender != address(0)) {
             if (ask.askType == Iutils.AskTypes.AUCTION) {
@@ -310,10 +315,6 @@ contract MarketFacet is IMarket {
                 );
             }
 
-            require(
-                this.isTokenApproved(ask._currency),
-                "Market: ask currency not approved by admin"
-            );
             require(
                 _oldAsk._sender == ask._sender,
                 "Market: sender should be token owner"
