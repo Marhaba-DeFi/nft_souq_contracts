@@ -102,47 +102,43 @@ contract MarketFacet is IMarket {
         Iutils.Bid calldata _bid,
         address _owner,
         address _creator
-    ) external override onlyMediaCaller returns (bool) {
+    ) external payable override onlyMediaCaller returns (bool) {
         require(_bid._amount != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._bidAmount != 0, "Market: You Can't Bid For 0 Tokens");
         require(
             !(_bid._bidAmount < 0),
             "Market: You Can't Bid For Negative Tokens"
         );
-        require(
-            _bid._currency != address(0),
-            "Market: bid currency cannot be 0 address"
-        );
-        require(
-            this.isTokenApproved(_bid._currency),
-            "Market: bid currency not approved by admin"
-        );
+        
+        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+
+
         require(
             _bid._recipient != address(0),
             "Market: bid recipient cannot be 0 address"
         );
-
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         
         require(
-            ms._tokenAsks[_tokenID]._currency != address(0),
+            ms._tokenAsks[_tokenID]._sender != address(0),
             "Market: Token is not open for Sale"
         );
+
+        require(_bid._currency == ms._tokenAsks[_tokenID]._currency, "Market: Invalid Currency Supplied for bid");
+
+        // TODO: improve with some functional check OR multi require
+        if ( ms._tokenAsks[_tokenID]._currency != address(0)){
         require(
             _bid._amount >= ms._tokenAsks[_tokenID]._reserveAmount,
             "Market: Bid Cannot be placed below the min Amount"
         );
-        require(
-            _bid._currency == ms._tokenAsks[_tokenID]._currency,
-            "Market: Incorrect payment Method"
+        }else{
+            require(msg.value >= ms._tokenAsks[_tokenID]._reserveAmount,
+            "Market: Bid Cannot be placed below the min Amount"
         );
+        }
 
-        IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
-        // fetch existing bid, if there is any
-        require(
-            token.allowance(_bid._bidder, address(this)) >= _bid._amount,
-            "Market: Please Approve Tokens Before You Bid"
-        );
+        _handleIncomingTransfer(_tokenID, _bid);
+
         Iutils.Bid storage existingBid = ms._tokenBidders[_tokenID][_bidder];
 
         if (ms._tokenAsks[_tokenID].askType == Iutils.AskTypes.FIXED) {
@@ -175,12 +171,10 @@ contract MarketFacet is IMarket {
             // // If a bid meets the criteria for an ask, automatically accept the bid.
             // // If no ask is set or the bid does not meet the requirements, ignore.
             if (
-                ms._tokenAsks[_tokenID]._currency != address(0) &&
-                _bid._currency == ms._tokenAsks[_tokenID]._currency &&
                 _bid._amount >= ms._tokenAsks[_tokenID]._askAmount
             ) {
                 // Finalize Exchange
-                divideMoney(_tokenID, _owner, _bidder, _bid._amount, _creator);
+                divideMoney(_tokenID, ms._tokenAsks[_tokenID]._currency, _owner, _bidder, _bid._amount, _creator);
             }
             return true;
         } else {
@@ -188,13 +182,25 @@ contract MarketFacet is IMarket {
         }
     }
 
+    function _handleIncomingTransfer(uint256 _tokenID, Iutils.Bid calldata _bid) internal {
+        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+
+        if (_bid._currency == address(0)) {
+            require(msg.value >= _bid._amount, "Market: bid amount is less than expected amount");
+        } else {
+            IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
+            // fetch existing bid, if there is any
+            require(
+                token.allowance(_bid._bidder, address(this)) >= _bid._amount,
+                "Market: Please Approve Tokens Before You Bid"
+            );
+        }
+    }
+
     function _handleAuction(uint256 _tokenID, Iutils.Bid calldata _bid, address _owner, address _creator)
         internal
     returns (bool){
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        
-        IERC20 token = IERC20(ms._tokenAsks[_tokenID]._currency);
-
         // Manage if the Bid is of Auction Type
         address lastBidder = ms._tokenAsks[_tokenID]._bidder;
 
@@ -219,9 +225,13 @@ contract MarketFacet is IMarket {
             ms._tokenAsks[_tokenID]._firstBidTime = block.timestamp;
             // Set New Bid for the Token
         } else if (lastBidder != address(0)) {
-            // If it's not, then we should refund the last bidder
+            // If it's not, then we should refund the last bid amount
+            uint256 bidAmountToReturn = ms._tokenBidders[_tokenID][lastBidder]._amount;
             delete ms._tokenBidders[_tokenID][lastBidder];
-            token.safeTransfer(lastBidder, ms._tokenAsks[_tokenID]._highestBid);
+
+            // return bid to outbidder either its native or erc20
+            transferNativeOrErc20(ms._tokenAsks[_tokenID]._currency, lastBidder, bidAmountToReturn);
+
         }
         ms._tokenAsks[_tokenID]._highestBid = _bid._amount;
         ms._tokenAsks[_tokenID]._bidder = _bid._bidder;
@@ -252,6 +262,7 @@ contract MarketFacet is IMarket {
 
         divideMoney(
             _tokenID,
+            ms._tokenAsks[_tokenID]._currency,
             _owner,
             address(0),
             ms._tokenAsks[_tokenID]._highestBid,
@@ -262,7 +273,6 @@ contract MarketFacet is IMarket {
         }
         return false;
     }
-
     function _handleIncomingBid(
         uint256 _amount,
         address _currency,
@@ -271,6 +281,10 @@ contract MarketFacet is IMarket {
         // We must check the balance that was actually transferred to the auction,
         // as some tokens impose a transfer fee and would not actually transfer the
         // full amount to the market, resulting in potentially locked funds
+        if (_currency == address(0)){
+            (bool success, ) = _bidder.call{value: _amount}("");
+            require(success, "Address: unable to transfer native tokens, recipient may have reverted");
+        }else{
         IERC20 token = IERC20(_currency);
         uint256 beforeBalance = token.balanceOf(address(this));
         token.safeTransferFrom(_bidder, address(this), _amount);
@@ -279,6 +293,7 @@ contract MarketFacet is IMarket {
             beforeBalance + _amount == afterBalance,
             "Token transfer call did not transfer expected amount"
         );
+        }
     }
 
     // /**
@@ -293,8 +308,9 @@ contract MarketFacet is IMarket {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         Iutils.Ask storage _oldAsk = ms._tokenAsks[_tokenID];
         // make sure, currency is the one enable in contract
+
         require(
-                this.isTokenApproved(ask._currency),
+                ask._currency !=address(0) && this.isTokenApproved(ask._currency),
                 "Market: ask currency not approved by admin"
             );
 
@@ -546,6 +562,7 @@ contract MarketFacet is IMarket {
         // address(0) for _bidder is only need when sale type is of type Auction
         divideMoney(
             _tokenID,
+            ms._tokenAsks[_tokenID]._currency,
             _owner,
             address(0),
             ms._tokenAsks[_tokenID]._highestBid,
@@ -574,6 +591,7 @@ contract MarketFacet is IMarket {
         // address(0) for _bidder is only need when sale type is of type Auction
         divideMoney(
             _tokenID,
+            ms._tokenAsks[_tokenID]._currency,
             _owner,
             address(0),
             bidInfo._amount, // make sure to pass amount from bid so that we avoid manupulation by asker
@@ -602,6 +620,7 @@ contract MarketFacet is IMarket {
      */
     function divideMoney(
         uint256 _tokenID,
+        address _currency,
         address _owner,
         address _bidder,
         uint256 _amountToDistribute,
@@ -614,22 +633,18 @@ contract MarketFacet is IMarket {
 
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         
-        Iutils.Ask memory _ask = ms._tokenAsks[_tokenID];
-        IERC20 token = IERC20(_ask._currency);
-
         // first send admin cut
         uint256 adminCommission = (_amountToDistribute *
             (ms._adminCommissionPercentage * ms.EXPO)) / (ms.BASE);
         uint256 _amount = _amountToDistribute - adminCommission;
 
-        token.transfer(ms._adminAddress, adminCommission);
-
+        transferNativeOrErc20(_currency, ms._adminAddress, adminCommission);
         // fetch owners added royalty points
         uint256 collabPercentage = ms.tokenRoyaltyPercentage[_tokenID];
         uint256 royaltyPoints = (_amount * (collabPercentage * ms.EXPO)) / (ms.BASE);
 
         // royaltyPoints represents amount going to divide among Collaborators
-        token.transfer(_owner, _amount - royaltyPoints);
+        transferNativeOrErc20(_currency, _owner, _amount - royaltyPoints);
 
         // Collaborators will only receive share when creator have set some royalty and sale is occurring for the first time
         Collaborators storage tokenCollab = ms.tokenCollaborators[_tokenID];
@@ -646,10 +661,8 @@ contract MarketFacet is IMarket {
                 uint256 amountToTransfer = (royaltyPoints *
                     (tokenCollab._percentages[index] * ms.EXPO)) / (ms.BASE);
                 // transfer Individual Collaborator's share Amount
-                token.transfer(
-                    tokenCollab._collaborators[index],
-                    amountToTransfer
-                );
+                transferNativeOrErc20(_currency, tokenCollab._collaborators[index], amountToTransfer);
+
                 // Total Amount Transferred
                 totalAmountTransferred =
                     totalAmountTransferred +
@@ -659,8 +672,7 @@ contract MarketFacet is IMarket {
             // update collaborators got the shares
             tokenCollab._receiveCollabShare = true;
         }
-
-        token.transfer(_creator, royaltyPoints - totalAmountTransferred);
+        transferNativeOrErc20(_currency, _creator, royaltyPoints - totalAmountTransferred);
 
         totalAmountTransferred =
             totalAmountTransferred +
@@ -719,5 +731,15 @@ contract MarketFacet is IMarket {
         returns (bool)
     {
         return s._operatorApprovals[owner][operator];
+    }
+
+    function transferNativeOrErc20(address _currency, address _receiver, uint256 _amount) internal{
+        if ( _currency == address(0)){
+            (bool success, ) = _receiver.call{value: _amount}("");
+            require(success, "Address: unable to transfer native tokens, recipient may have reverted");
+        }else{
+            IERC20 token = IERC20(_currency);
+            token.transfer(_receiver, _amount);
+        }
     }
 }
