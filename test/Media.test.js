@@ -412,7 +412,7 @@ describe('marketContract', async function() {
       );
       // place bid
       await setBid(this.mediaFacet, this.bob, _tokenCounter, [
-        2, // quantity of the tokens being bid
+        5, // quantity of the tokens being bid
         convertToBigNumber(3), // amount of ERC20 token being used to bid
         this.marhabaToken.address, // Address to the ERC20 token being used to bid,
         this.bob.address, // bidder address
@@ -436,8 +436,14 @@ describe('marketContract', async function() {
       expect(parseFloat(balances.alice) + parseFloat(balances.bob)).to.equals(
         1999.94,
       );
-      // Bought again request
-      // place bid
+      console.log('trying to bought again')
+      // approve tokens before making request
+      await approveTokens(
+        this.marhabaToken,
+        this.alice,
+        this.marketFacet.address,
+        convertToBigNumber(1000),
+      );
       await expect(
         setBid(this.mediaFacet, this.alice, _tokenCounter, [
           2, // quantity of the tokens being bid
@@ -447,7 +453,7 @@ describe('marketContract', async function() {
           this.alice.address, // recipient address
           this.mintParamsTuples[6],
         ]),
-      ).to.be.revertedWith('Token is not open for Sale');
+      ).to.be.revertedWith('Market: Token is not open for Sale');
     });
 
     it('Should Pass Again Buy, Sold 1155 NFT without collabs', async function() {
@@ -812,8 +818,7 @@ describe('marketContract', async function() {
         this.mintParamsAuction[6],
 
       ]);
-
-      const oneDay = Date.now() + (1 * 24 * 60 * 60);
+            const oneDay = Date.now() + (1 * 24 * 60 * 60);
 
       await ethers.provider.send('evm_increaseTime', [oneDay]);
       await ethers.provider.send('evm_mine');
@@ -847,7 +852,8 @@ describe('marketContract', async function() {
       // check ownerOf in expect
       let nftowner = await this.erc721FactoryFacet.ownerOf(1);
       expect(nftowner).to.equals(this.bob.address);
-
+      // update sender of ask
+      this.askParams[0] = this.bob.address
       // set Fixed sell of the NFT
       await setAsk(this.mediaFacet, this.bob, _tokenCounter, this.askParams);
 
@@ -905,141 +911,115 @@ describe('marketContract', async function() {
       const mediaInfo = await this.mediaFacet.getToken(1);
     });
 
-    // it('Mint Token, Place Bid by the bidder and update ask by the ask Sender', async function() {
-    //   let mintTx = await this.media
-    //     .connect(this.alice)
-    //     .mintToken(this.mintParamsAuction);
-    //   mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
-    //   const event = mintTx.events.find(
-    //     (event) => event.event === 'TokenCounter',
-    //   );
-    //   const [_tokenCounter] = event.args;
-    //   expect(_tokenCounter.toString()).to.equals('1');
+    it('Multiple Buyer for erc1155 token', async function() {
 
-    //   // approve tokens before making request
-    //   await approveTokens(
-    //     this.marhabaToken,
-    //     this.bob,
-    //     this.marketFacet.address,
-    //     convertToBigNumber(51),
-    //   );
+      this.mintParamsTuples[2] = 10 // updating mininting supply to 10 to mint erc1155
+      let tx = await mintTokens(
+        this.mediaFacet,
+        this.alice,
+        this.mintParamsTuples,
+      );
+      let tokenCounter = await fetchMintEvent(tx);
+      expect(tokenCounter.toString()).to.equals('1');
 
-    //   // place bid
-    //   await setBid(this.mediaFacet, this.bob, _tokenCounter, [
-    //     1, // quantity of the tokens being bid
-    //     convertToBigNumber(51), // amount of ERC20 token being used to bid
-    //     this.marhabaToken.address, // Address to the ERC20 token being used to bid,
-    //     this.bob.address, // bidder address
-    //     this.bob.address, // recipient address
-    //     this.mintParamsAuction[6],
+      bob approve 5 of MRHB tokens
+      await approveTokens(this.marhabaToken, this.bob, this.marketFacet.address, convertToBigNumber(5));
 
-    //   ]);
+      // bob bid for alice nft with 5 of MRHB token
+      await setBid(this.mediaFacet, this.bob, tokenCounter, [
+        3, // quantity of the tokens being bid
+        convertToBigNumber(5), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsTuples[6], // auction type: fixed
+      ]);
 
-    //   console.log('Ask Details Before Update');
+      let tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter);
 
-    //   const getAskDetails = await this.mediaFacet.getTokenAsks(1);
-    //   // console.log(getAskDetails);
-    //   // for (let i = 0; i < getAskDetails.length; i++) {
-    //   //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
-    //   // }
+      expect((tokensAsksTx._amount)).to.equals('7');
 
-    //   // update the auction sell of the NFT
-    //   // 100 is the ask amount and 50 is reserve amount, which is greater then reserve amount
-    //   // eslint-disable-next-line max-len
-    //   await setAsk(this.mediaFacet, this.alice, _tokenCounter, [
-    //     this.alice.address, // sender address who is setting ask
-    //     convertToBigNumber(50), // _reserveAmount
-    //     convertToBigNumber(100), // _askAmount
-    //     this.askParams[3], // amount || quantity
-    //     this.marhabaToken.address,
-    //     mintObjectAuction.auctionType, // fixed or auction
-    //     getAskDetails[6], // duration
-    //     getAskDetails[7], // first bid time
-    //     getAskDetails[8], // bidder
-    //     getAskDetails[9], // highest bid
-    //   ]);
+      let erc1155Info = await this.erc1155FactoryFacet.balanceOf(this.alice.address, 1)
+      console.log('erc1155Info ', erc1155Info);
+      erc1155Info = await this.erc1155FactoryFacet.balanceOf(this.bob.address, 1)
+      console.log('erc1155Info ', erc1155Info);
+      await approveTokens(this.marhabaToken, this.carol, this.marketFacet.address, convertToBigNumber(5));
+      // bob bid for alice nft with 5 of MRHB token
+      await setBid(this.mediaFacet, this.carol, tokenCounter, [
+        3, // quantity of the tokens being bid
+        convertToBigNumber(5), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.carol.address, // bidder address
+        this.carol.address, // recipient address
+        this.mintParamsTuples[6], // auction type: fixed
+      ]);
 
-    //   // ask details after udpating
-    //   // console.log(' Ask Details After updating');
-    //   // getAskDetails = await this.mediaFacet.getTokenAsks(1);
-    //   // console.log(getAskDetails);
-    //   // for (let i = 0; i < getAskDetails.length; i++) {
-    //   //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
-    //   // }
+      tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter);
 
-    //   // approving againg tokens before making another bid request for new ask
-    //   await approveTokens(
-    //     this.marhabaToken,
-    //     this.bob,
-    //     this.marketFacet.address,
-    //     convertToBigNumber(70),
-    //   );
+      expect((tokensAsksTx._amount)).to.equals('0');
 
-    //   // // place bid
-    //   await setBid(this.mediaFacet, this.bob, _tokenCounter, [
-    //     1, // quantity of the tokens being bid
-    //     convertToBigNumber(70), // amount of ERC20 token being used to bid
-    //     this.marhabaToken.address, // Address to the ERC20 token being used to bid,
-    //     this.bob.address, // bidder address
-    //     this.bob.address, // recipient address
-    //     this.mintParamsAuction[6],
 
-    //   ]);
+    });
 
-    //   // console.log('***************');
-    //   // // ask details after udpating
-    //   // console.log(' Ask Details After second bid');
-    //   // getAskDetails = await this.mediaFacet.getTokenAsks(1);
-    //   // for (let i = 0; i < getAskDetails.length; i++) {
-    //   //   console.log(convertFromBigNumber(getAskDetails[i].toString()));
-    //   // }
+    it('the ask should be updated after a bid', async function() {
+      // alice mint an erc721 nft and ask for 5 of MRHB token
+      let tx = await mintTokens(
+        this.mediaFacet,
+        this.alice,
+        this.mintParamsTuples,
+      );
+      let tokenCounter = await fetchMintEvent(tx);
+      expect(tokenCounter.toString()).to.equals('1');
 
-    //   console.log('*************************************');
+      // bob approve 5 of MRHB tokens
+      await approveTokens(this.marhabaToken, this.bob, this.marketFacet.address, convertToBigNumber(5));
 
-    //   // increasing time so that auction can be ended
+      // bob bid for alice nft with 5 of MRHB token
+      await setBid(this.mediaFacet, this.bob, tokenCounter, [
+        1, // quantity of the tokens being bid
+        convertToBigNumber(5), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsTuples[6], // auction type: fixed
+      ]);
 
-    //   const oneDay = 1 * 24 * 60 * 60;
+      let tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter);
 
-    //   const blockNumBefore = await ethers.provider.getBlockNumber();
-    //   const blockBefore = await ethers.provider.getBlock(blockNumBefore);
-    //   const timestampBefore = blockBefore.timestamp;
-    //   console.log('timestamp before', timestampBefore);
+      expect(convertFromBigNumber(tokensAsksTx[3])).to.equals('0.0');
 
-    //   await ethers.provider.send('evm_increaseTime', [oneDay]);
-    //   await ethers.provider.send('evm_mine');
+      this.mintParamsTuples[7] = convertToBigNumber(3); // ask Amount
+      this.mintParamsTuples[8] = convertToBigNumber(3); // reserve Amount
+      this.mintParamsTuples[2] = 5; // total supply
+      this.mintParamsTuples[0] = 'generaterandom234234444'; // title
+      tx = await this.mediaFacet
+        .connect(this.alice)
+        .mintToken(this.mintParamsTuples);
+      tx = await tx.wait(); // 0ms, as tx is already confirmed
+      const event = tx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
 
-    //   const blockNumAfter = await ethers.provider.getBlockNumber();
-    //   const blockAfter = await ethers.provider.getBlock(blockNumAfter);
-    //   const timestampAfter = blockAfter.timestamp;
-    //   console.log('timestamp after', timestampAfter);
+      [tokenCounter] = event.args;
+      expect(tokenCounter.toString()).to.equals('2');
 
-    //   expect(timestampAfter).to.greaterThan(parseInt(getAskDetails[6]));
+      // bob approve 3 of MRHB tokens
+      await approveTokens(this.marhabaToken, this.bob, this.marketFacet.address, convertToBigNumber(3));
 
-    //   await endAuction(this.mediaFacet, this.alice, _tokenCounter);
+      // bob bid for alice nft with 3 of MRHB token
+      await setBid(this.mediaFacet, this.bob, tokenCounter, [
+        2, // quantity of the tokens being bid
+        convertToBigNumber(3), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsTuples[6], // auction type: fixed
+      ]);
 
-    //   // balances after auction end
-    //   // eslint-disable-next-line no-unused-vars
-    //   const balances = await getBalance(this.marhabaToken, [
-    //     { name: 'alice', address: this.alice.address },
-    //     { name: 'bob', address: this.bob.address },
-    //     { name: 'collabs1', address: this.mintParamsAuction[4][0] },
-    //     { name: 'collabs2', address: this.mintParamsAuction[4][1] },
-    //     { name: 'admin', address: this.admin.address },
-    //     { name: 'marketContract ', address: this.marketFacet.address },
-    //     { name: 'carol ', address: this.carol.address },
+      tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter);
 
-    //   ]);
+      expect(convertFromBigNumber(tokensAsksTx[3])).to.equals('0.000000000000000003');
+    });
 
-    //   // nft balances after auction end
-    //   // eslint-disable-next-line no-unused-vars
-    //   const nftBalance = await getBalanceNFT(this.erc721FactoryFacet, [
-    //     { name: 'alice', address: this.alice.address },
-    //     { name: 'bob', address: this.bob.address },
-    //     { name: 'collabs1', address: this.mintParamsAuction[4][0] },
-    //     { name: 'collabs2', address: this.mintParamsAuction[4][1] },
-    //     { name: 'admin', address: this.admin.address },
-    //     { name: 'carol ', address: this.carol.address },
-    //   ]);
-    // });
   });
 });

@@ -9,7 +9,7 @@ interface Iutils {
     }
     struct Bid {
         // quantity of the tokens being bid
-        uint256 _bidAmount;
+        uint256 _quantity;
         // amount of ERC20 token being used to bid
         uint256 _amount;
         // Address to the ERC20 token being used to bid
