@@ -8,6 +8,10 @@ interface Iutils {
         FIXED
     }
     struct Bid {
+        // Token Address on which user is putting bid
+        address _tokenAddress;
+        // Token Owner against user is putting bid
+        address _owner;
         // quantity of the tokens being bid
         uint256 _quantity;
         // amount of ERC20 token being used to bid
@@ -22,6 +26,8 @@ interface Iutils {
         AskTypes askType;
     }
     struct Ask {
+         // Token Address which user is putting on sale
+        address _tokenAddress;
         //this is to check in Ask function if _sender is the token Owner
         address _sender;
         // min amount Asked

@@ -160,6 +160,8 @@ contract MarketFacet is IMarket {
 
             // Set New Bid for the Token
             ms._tokenBidders[_tokenAddress][_bid._bidder][_tokenID] = Iutils.Bid(
+                _bid._tokenAddress,
+                _bid._owner,
                 _bid._quantity,
                 _bid._amount,
                 _bid._currency,
@@ -248,6 +250,8 @@ contract MarketFacet is IMarket {
 
         // create new Bid
         ms._tokenBidders[_tokenAddress][_bid._bidder][_tokenID] = Iutils.Bid(
+            _bid._tokenAddress,
+            _bid._owner,
             _bid._quantity,
             _bid._amount,
             _bid._currency,
@@ -355,6 +359,7 @@ contract MarketFacet is IMarket {
             );
 
             Iutils.Ask memory _updatedAsk = Iutils.Ask(
+                _oldAsk._tokenAddress,
                 _oldAsk._sender,
                 ask._reserveAmount,
                 ask._askAmount,

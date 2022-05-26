@@ -134,6 +134,7 @@ contract MediaFacet is IMedia {
 
         // Put token on sale asa token got minted
         Iutils.Ask memory _ask = Iutils.Ask(
+            data._tokenAddress,
             msg.sender,
             data._reserveAmount,
             data._askAmount,
@@ -194,34 +195,34 @@ contract MediaFacet is IMedia {
         return ms._tokenCounter;
     }
 
-    function setBid(uint256 _tokenID, address _tokenAddress, address _owner, Iutils.Bid calldata bid)
+    function setBid(uint256 _tokenID, Iutils.Bid calldata _bid)
         external
         payable
         override
-        whenTokenExist(_tokenID, _tokenAddress, _owner)
+        whenTokenExist(_tokenID, _bid._tokenAddress, _bid._owner)
         returns (bool)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        MediaInfo memory token = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
+        MediaInfo memory token = ms.tokenIDToToken[_bid._tokenAddress][_bid._owner][_tokenID];
         // address _actualOwner = token._currentOwner;
-        require(msg.sender == bid._bidder, "Media: Bidder must be msg sender");
-        require(_owner != msg.sender, "Media: The Token Owner Can't Bid!");
+        require(msg.sender == _bid._bidder, "Media: Bidder must be msg sender");
+        require(_bid._owner != msg.sender, "Media: The Token Owner Can't Bid!");
         // require( _actualOwner == _owner, "Media: Incorrect Owner address is Supplied");
         require(
-                ms.nftToOwners[_tokenAddress][_owner][_tokenID] == _owner,
+                ms.nftToOwners[_bid._tokenAddress][_bid._owner][_tokenID] == _bid._owner,
                 "Media: Invalid Owner Provided!"
             );
         if (token._isFungible) {
             require(
-                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(_owner, _tokenID) >=
-                    bid._quantity,
+                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(_bid._owner, _tokenID) >=
+                    _bid._quantity,
                 "Media: The Owner Does Not Have That Much Tokens!"
             );
         } else {
-            require(bid._quantity == 1, "Media: Only 1 Token Is Available");
+            require(_bid._quantity == 1, "Media: Only 1 Token Is Available");
         }
-        address _creator = ms.nftToCreators[_tokenAddress][_owner][_tokenID];
-        ifSoldTransfer(_tokenID, _tokenAddress, _owner, _creator, bid);
+        address _creator = ms.nftToCreators[_bid._tokenAddress][_bid._owner][_tokenID];
+        ifSoldTransfer(_tokenID, _bid._tokenAddress, _bid._owner, _creator, _bid);
 
         return true;
     }
@@ -229,24 +230,24 @@ contract MediaFacet is IMedia {
     /**
      * @notice see IMedia
      */
-    function setAsk(uint256 _tokenID, address _tokenAddress, Iutils.Ask memory ask) external override {
+    function setAsk(uint256 _tokenID, Iutils.Ask memory _ask) external override {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         address _owner = msg.sender;
 
         // make sure asker is the owner of the token
         require(
-            msg.sender == ask._sender,
+            msg.sender == _ask._sender,
             "MEDIA: sender in ask tuple needs to be msg.sender"
         );
 
         require(
-            msg.sender == ms.nftToOwners[_tokenAddress][msg.sender][_tokenID],
+            msg.sender == ms.nftToOwners[_ask._tokenAddress][msg.sender][_tokenID],
             "MEDIA: sender needs to be the owner of the token"
         );
 
 
-        IMarket(ms.diamondAddress)._setAsk(_tokenID, _tokenAddress, _owner, ask);
+        IMarket(ms.diamondAddress)._setAsk(_tokenID, _ask._tokenAddress, _owner, _ask);
     }
 
     function ifSoldTransfer(uint256 _tokenID, address _tokenAddress, address _owner, address _creator, Iutils.Bid calldata bid) internal {

@@ -44,7 +44,7 @@ interface IMedia {
      /**
      * @notice Set the ask on a piece of media
      */
-    function setAsk(uint256 tokenId, address _tokenAddress, Iutils.Ask calldata ask) external;
+    function setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
 
     event TokenCounter(uint256 _tokenCounter);
 
@@ -87,7 +87,7 @@ interface IMedia {
      *
      * @return bool Transaction status
      */
-    function setBid(uint256 _tokenID, address _tokenAddress, address _owner, Iutils.Bid calldata bid)
+    function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
         payable
         returns (bool);
