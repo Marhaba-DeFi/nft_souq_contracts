@@ -139,19 +139,13 @@ contract MarketFacet is IMarket {
         );
         }
 
-        _handleIncomingTransfer(_tokenID, _tokenAddress, _owner, _bid);
-
-        Iutils.Bid storage existingBid = ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
+        _verifyIncomingTransfer(_tokenID, _tokenAddress, _owner, _bid);
 
         if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
                 _bid._amount <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount,
                 "Market: You Cannot Pay more then Max Asked Amount "
             );
-            // If there is an existing bid, refund it before continuing
-            if (existingBid._amount > 0) {
-                removeBid(_tokenID, _tokenAddress, _bid._bidder);
-            }
             _handleIncomingBid(
                 _bid._amount,
                 ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
@@ -187,7 +181,7 @@ contract MarketFacet is IMarket {
         }
     }
 
-    function _handleIncomingTransfer(uint256 _tokenID, address _tokenAddress ,address _owner, Iutils.Bid calldata _bid) internal {
+    function _verifyIncomingTransfer(uint256 _tokenID, address _tokenAddress ,address _owner, Iutils.Bid calldata _bid) internal {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         if (_bid._currency == address(0)) {
@@ -274,7 +268,7 @@ contract MarketFacet is IMarket {
             _tokenAddress,
             askInfo._currency,
             _owner,
-            address(0),
+            lastBidder,
             askInfo._highestBid,
             _creator
         );
@@ -291,10 +285,7 @@ contract MarketFacet is IMarket {
         // We must check the balance that was actually transferred to the auction,
         // as some tokens impose a transfer fee and would not actually transfer the
         // full amount to the market, resulting in potentially locked funds
-        if (_currency == address(0)){
-            (bool success, ) = _bidder.call{value: _amount}("");
-            require(success, "Address: unable to transfer native tokens, recipient may have reverted");
-        }else{
+        if (_currency != address(0)){
         IERC20 token = IERC20(_currency);
         uint256 beforeBalance = token.balanceOf(address(this));
         token.safeTransferFrom(_bidder, address(this), _amount);
@@ -319,10 +310,8 @@ contract MarketFacet is IMarket {
         Iutils.Ask storage _oldAsk = ms._tokenAsks[_tokenAddress][_owner][_tokenID];
         // make sure, currency is the one enable in contract
 
-        require(
-                ask._currency !=address(0) && this.isTokenApproved(ask._currency),
-                "Market: ask currency not approved by admin"
-            );
+        if (ask._currency != address(0) )
+        require( this.isTokenApproved(ask._currency), "Market: Token Not Approved");
 
         if (_oldAsk._sender != address(0)) {
             if (ask.askType == Iutils.AskTypes.AUCTION) {
@@ -402,11 +391,9 @@ contract MarketFacet is IMarket {
             "Market: Only bidder can remove the bid"
         );
         require(bid._amount > 0, "Market: cannot remove bid amount of 0");
-
-        IERC20 token = IERC20(bidCurrency);
+        transferNativeOrErc20(bidCurrency, bid._bidder, bidAmount);
         emit BidRemoved(_tokenID, bid);
         // line safeTransfer should be upper before delete??
-        token.safeTransfer(bid._bidder, bidAmount);
         delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
     }
 
@@ -582,7 +569,7 @@ contract MarketFacet is IMarket {
             _tokenAddress,
             ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
             _owner,
-            address(0),
+            bidder,
             bidInfo._amount,
             _creator
         );
@@ -616,7 +603,7 @@ contract MarketFacet is IMarket {
             _tokenAddress,
             ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
             _owner,
-            address(0),
+            bidInfo._bidder,
             bidInfo._amount, // make sure to pass amount from bid so that we avoid manupulation by asker
             _creator
         );
@@ -760,6 +747,7 @@ contract MarketFacet is IMarket {
     }
 
     function transferNativeOrErc20(address _currency, address _receiver, uint256 _amount) internal{
+        require(_receiver != address(0), "Market: receipent is zero address");
         if ( _currency == address(0)){
             (bool success, ) = _receiver.call{value: _amount}("");
             require(success, "Address: unable to transfer native tokens, recipient may have reverted");

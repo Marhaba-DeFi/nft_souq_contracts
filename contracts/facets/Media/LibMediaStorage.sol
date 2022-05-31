@@ -20,7 +20,7 @@ library LibMediaStorage {
     mapping(address => mapping(address => mapping(uint256 => address))) nftToOwners;
 
     // tokenAddress - owner - tokenID - tokenQuantity
-    mapping(address => mapping(address => mapping(uint256 => address))) nftToCreators;
+    mapping(address => mapping(uint256 => address)) nftToCreators;
 
     // tokenAddress - owner - tokenID - tokenQuantity = MediaInfo
     mapping(address => mapping(address => mapping(uint256 => IMedia.MediaInfo))) tokenIDToToken;

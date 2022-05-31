@@ -10,14 +10,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../libraries/LibDiamond.sol";
 import "./LibMediaStorage.sol";
+import "../Market/LibMarketStorage.sol";
 
 contract MediaFacet is IMedia {
     
-    modifier whenTokenExist(uint256 _tokenID, address _tokenAddress, address _owner) {
+    modifier whenTokenExist(uint256 _tokenID, address _tokenAddress) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         require(
-            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._creator != address(0),
+            ms.nftToCreators[_tokenAddress][_tokenID] != address(0),
             "Media: The Token Doesn't Exist!"
         );
         _;
@@ -28,10 +29,15 @@ contract MediaFacet is IMedia {
         _;
     }
 
-    // modifier onlyApprovedOrOwner(address spender, uint256 _tokenID) {
-    //     require(_isApprovedOrOwner(spender, _tokenID), 'Media: Only approved or owner');
-    //     _;
-    // }
+    function getCollabsInfo(uint256 tokenId) external view returns (IMarket.Collaborators memory ) {
+        LibMarketStorage.MarketStorage storage marketStorage = LibMarketStorage.marketStorage();
+        return marketStorage._tokenCollaborators[tokenId];
+    }
+
+    function getNftCreator(address _tokenAddress, uint256 _tokenID) external view returns (address){
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        return ms.nftToCreators[_tokenAddress][_tokenID];
+    }
 
     function mediaInit(
         address _diamondAddress
@@ -104,7 +110,7 @@ contract MediaFacet is IMedia {
             
         }
         ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
-        ms.nftToCreators[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
+        ms.nftToCreators[data._tokenAddress][ms._tokenCounter] = msg.sender;
 
         MediaInfo memory newToken = MediaInfo(
             ms._tokenCounter,
@@ -183,7 +189,7 @@ contract MediaFacet is IMedia {
         external
         view
         override
-        whenTokenExist(_tokenID, _tokenAddress, _owner)
+        whenTokenExist(_tokenID, _tokenAddress)
         returns (MediaInfo memory)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
@@ -199,7 +205,7 @@ contract MediaFacet is IMedia {
         external
         payable
         override
-        whenTokenExist(_tokenID, _bid._tokenAddress, _bid._owner)
+        whenTokenExist(_tokenID, _bid._tokenAddress)
         returns (bool)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
@@ -214,14 +220,15 @@ contract MediaFacet is IMedia {
             );
         if (token._isFungible) {
             require(
-                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(_bid._owner, _tokenID) >=
+                ERC1155FactoryFacet(_bid._tokenAddress).balanceOf(_bid._owner, _tokenID) >=
                     _bid._quantity,
-                "Media: The Owner Does Not Have That Much Tokens!"
+                "Media: The Owner Don't Not Have Enough Tokens!"
             );
         } else {
             require(_bid._quantity == 1, "Media: Only 1 Token Is Available");
+            require(ERC721FactoryFacet(_bid._tokenAddress).balanceOf(_bid._owner) >= _bid._quantity, "Media: The Owner Don't Have Enough Tokens!");
         }
-        address _creator = ms.nftToCreators[_bid._tokenAddress][_bid._owner][_tokenID];
+        address _creator = ms.nftToCreators[_bid._tokenAddress][_tokenID];
         ifSoldTransfer(_tokenID, _bid._tokenAddress, _bid._owner, _creator, _bid);
 
         return true;
@@ -268,7 +275,7 @@ contract MediaFacet is IMedia {
     function removeBid(uint256 _tokenID, address _tokenAddress)
         external
         override
-        whenTokenExist(_tokenID, _tokenAddress, msg.sender)
+        whenTokenExist(_tokenID, _tokenAddress)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         IMarket(ms.diamondAddress).removeBid(_tokenID, _tokenAddress, msg.sender);
@@ -277,7 +284,7 @@ contract MediaFacet is IMedia {
     function endAuction(uint256 _tokenID, address _tokenAddress)
         external
         override
-        whenTokenExist(_tokenID, _tokenAddress, msg.sender)
+        whenTokenExist(_tokenID, _tokenAddress)
         returns (bool)
     {
         address _owner = msg.sender;
@@ -290,7 +297,7 @@ contract MediaFacet is IMedia {
             "Media: Invalid Ask Type"
         );
         //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
-        address _creator = ms.nftToCreators[_tokenAddress][_owner][_tokenID];
+        address _creator = ms.nftToCreators[_tokenAddress][_tokenID];
         IMarket(ms.diamondAddress).endAuction(_tokenID, _tokenAddress, _owner, _creator);
 
         _transfer(_tokenID, _tokenAddress, _owner, _bid._recipient, _bid._quantity);
@@ -301,7 +308,7 @@ contract MediaFacet is IMedia {
     function acceptBid(uint256 _tokenID, address _tokenAddress, address _owner)
         external
         override
-        whenTokenExist(_tokenID, _tokenAddress, _owner)
+        whenTokenExist(_tokenID, _tokenAddress)
         returns (bool)
     {
         // TODO this is done now below, check either token is of type auction or not
@@ -314,7 +321,7 @@ contract MediaFacet is IMedia {
         );
         address _currentOwner = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         require(msg.sender == _currentOwner, "Media: Only Token Owner Can accept Bid");
-        address _creator = ms.nftToCreators[_tokenAddress][_owner][_tokenID];
+        address _creator = ms.nftToCreators[_tokenAddress][_tokenID];
         IMarket(ms.diamondAddress).acceptBid(_tokenID, _tokenAddress, _owner, _creator);
 
         _transfer(_tokenID, _tokenAddress, _owner, _bid._recipient, _bid._quantity);
@@ -424,7 +431,7 @@ contract MediaFacet is IMedia {
         address _owner,
         address _recipient,
         uint256 _amount
-    ) external override whenTokenExist(_tokenID, _tokenAddress, _owner) returns (bool) {
+    ) external override whenTokenExist(_tokenID, _tokenAddress) returns (bool) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         MediaInfo memory mediainfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
         if (mediainfo._isFungible) {
@@ -469,11 +476,30 @@ contract MediaFacet is IMedia {
                 _tokenID
             );
         }
-        ms.nftToOwners[_tokenAddress][_owner][_tokenID] = _recipient;
-        ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._currentOwner = _recipient;
+        MediaInfo memory tokenInstance = MediaInfo(
+            _tokenID,
+            _recipient,
+            _recipient,
+            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._uri,
+            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._title,
+            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._isFungible
+        );
+        ms.tokenIDToToken[_tokenAddress][_recipient][ms._tokenCounter] = tokenInstance;
+
+        ms.nftToOwners[_tokenAddress][_recipient][_tokenID] = _recipient;
+        ms.tokenIDToToken[_tokenAddress][_recipient][_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
     }
 
+    function getTokenDetails(uint256 _tokenId, address _tokenAddress, address _owner)
+        external
+        view
+        returns (IMedia.MediaInfo memory)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        
+        return ms.tokenIDToToken[_tokenAddress][_owner][_tokenId];
+    }
     function getTokenAsks(uint256 _tokenId, address _tokenAddress, address _owner)
         external
         view
