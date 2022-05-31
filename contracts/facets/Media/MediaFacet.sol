@@ -463,14 +463,14 @@ contract MediaFacet is IMedia {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         if (ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._isFungible) {
-            ERC1155FactoryFacet(ms.diamondAddress).transferFrom(
+            ERC1155FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
                 _tokenID,
                 _amount
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).transferFrom(
+            ERC721FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
                 _tokenID

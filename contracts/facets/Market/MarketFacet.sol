@@ -139,7 +139,7 @@ contract MarketFacet is IMarket {
         );
         }
 
-        _verifyIncomingTransfer(_tokenID, _tokenAddress, _owner, _bid);
+        _verifyBidAmount(_tokenID, _tokenAddress, _owner, _bid);
 
         if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
@@ -177,18 +177,17 @@ contract MarketFacet is IMarket {
             }
             return true;
         } else {
-            return _handleAuction(_tokenID, _tokenAddress, _owner, _creator, _bid);
+            return _setIncomingBid(_tokenID, _tokenAddress, _owner, _creator, _bid);
         }
     }
 
-    function _verifyIncomingTransfer(uint256 _tokenID, address _tokenAddress ,address _owner, Iutils.Bid calldata _bid) internal {
+    function _verifyBidAmount(uint256 _tokenID, address _tokenAddress ,address _owner, Iutils.Bid calldata _bid) internal {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         if (_bid._currency == address(0)) {
             require(msg.value >= _bid._amount, "Market: bid amount is less than expected amount");
         } else {
             IERC20 token = IERC20(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency);
-            // fetch existing bid, if there is any
             require(
                 token.allowance(_bid._bidder, address(this)) >= _bid._amount,
                 "Market: Please Approve Tokens Before You Bid"
@@ -196,7 +195,7 @@ contract MarketFacet is IMarket {
         }
     }
 
-    function _handleAuction(uint256 _tokenID, address _tokenAddress ,address _owner, address _creator, Iutils.Bid calldata _bid)
+    function _setIncomingBid(uint256 _tokenID, address _tokenAddress ,address _owner, address _creator, Iutils.Bid calldata _bid)
         internal
     returns (bool){
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
@@ -392,9 +391,9 @@ contract MarketFacet is IMarket {
         );
         require(bid._amount > 0, "Market: cannot remove bid amount of 0");
         transferNativeOrErc20(bidCurrency, bid._bidder, bidAmount);
-        emit BidRemoved(_tokenID, bid);
         // line safeTransfer should be upper before delete??
         delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
+        emit BidRemoved(_tokenID, bid);
     }
 
     /**
