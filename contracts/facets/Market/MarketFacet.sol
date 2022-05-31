@@ -104,7 +104,7 @@ contract MarketFacet is IMarket {
         Iutils.Bid calldata _bid,
         address _creator
     ) external payable override onlyMediaCaller returns (bool) {
-        require(_bid._amount != 0, "Market: You Can't Bid With 0 Amount!");
+        require(_bid._bidPrice != 0, "Market: You Can't Bid With 0 Amount!");
         require(_bid._quantity != 0, "Market: You Can't Bid For 0 Tokens");
         require(
             !(_bid._quantity < 0),
@@ -130,7 +130,7 @@ contract MarketFacet is IMarket {
         // TODO: improve with some functional check OR multi require
         if ( ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency != address(0)){
         require(
-            _bid._amount >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reserveAmount,
+            _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reserveAmount,
             "Market: Bid Cannot be placed below the min Amount"
         );
         }else{
@@ -143,11 +143,11 @@ contract MarketFacet is IMarket {
 
         if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
-                _bid._amount <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount,
+                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount,
                 "Market: You Cannot Pay more then Max Asked Amount "
             );
             _handleIncomingBid(
-                _bid._amount,
+                _bid._bidPrice,
                 ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
                 _bid._bidder
             );
@@ -157,7 +157,7 @@ contract MarketFacet is IMarket {
                 _bid._tokenAddress,
                 _bid._owner,
                 _bid._quantity,
-                _bid._amount,
+                _bid._bidPrice,
                 _bid._currency,
                 _bid._bidder,
                 _bid._recipient,
@@ -169,11 +169,11 @@ contract MarketFacet is IMarket {
             // // If a bid meets the criteria for an ask, automatically accept the bid.
             // // If no ask is set or the bid does not meet the requirements, ignore.
             if (
-                _bid._amount >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount
+                _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount
             ) {
                 ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount -= _bid._quantity;
                 // Finalize Exchange
-                divideMoney(_tokenID, _tokenAddress, ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, _owner, _bidder, _bid._amount, _creator);
+                divideMoney(_tokenID, _tokenAddress, ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, _owner, _bidder, _bid._bidPrice, _creator);
             }
             return true;
         } else {
@@ -185,11 +185,11 @@ contract MarketFacet is IMarket {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         if (_bid._currency == address(0)) {
-            require(msg.value >= _bid._amount, "Market: bid amount is less than expected amount");
+            require(msg.value >= _bid._bidPrice, "Market: bid amount is less than expected amount");
         } else {
             IERC20 token = IERC20(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency);
             require(
-                token.allowance(_bid._bidder, address(this)) >= _bid._amount,
+                token.allowance(_bid._bidder, address(this)) >= _bid._bidPrice,
                 "Market: Please Approve Tokens Before You Bid"
             );
         }
@@ -213,7 +213,7 @@ contract MarketFacet is IMarket {
         );
 
         require(
-            _bid._amount >=
+            _bid._bidPrice >=
                 askInfo._highestBid +
                     (askInfo._highestBid *
                         (ms._minBidIncrementPercentage * ms._EXPO)) /
@@ -226,17 +226,17 @@ contract MarketFacet is IMarket {
             // Set New Bid for the Token
         } else if (lastBidder != address(0)) {
             // If it's not, then we should refund the last bid amount
-            uint256 bidAmountToReturn = ms._tokenBidders[_tokenAddress][lastBidder][_tokenID]._amount;
+            uint256 bidAmountToReturn = ms._tokenBidders[_tokenAddress][lastBidder][_tokenID]._bidPrice;
             delete ms._tokenBidders[_tokenAddress][lastBidder][_tokenID];
 
             // return bid to outbidder either its native or erc20
             transferNativeOrErc20(askInfo._currency, lastBidder, bidAmountToReturn);
 
         }
-        askInfo._highestBid = _bid._amount;
+        askInfo._highestBid = _bid._bidPrice;
         askInfo._bidder = _bid._bidder;
         _handleIncomingBid(
-            _bid._amount,
+            _bid._bidPrice,
             askInfo._currency,
             _bid._bidder
         );
@@ -246,7 +246,7 @@ contract MarketFacet is IMarket {
             _bid._tokenAddress,
             _bid._owner,
             _bid._quantity,
-            _bid._amount,
+            _bid._bidPrice,
             _bid._currency,
             _bid._bidder,
             _bid._recipient,
@@ -258,7 +258,7 @@ contract MarketFacet is IMarket {
         // if the bid amount is >= askAmount accept the bid and close the auction
         // Note: askAmount is the maximum amount seller wanted to accept against its NFT
 
-        if ( _bid._amount >= askInfo._askAmount ){
+        if ( _bid._bidPrice >= askInfo._askAmount ){
 
         address newOwner = askInfo._bidder;
 
@@ -382,14 +382,14 @@ contract MarketFacet is IMarket {
     {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
         Iutils.Bid storage bid = ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
-        uint256 bidAmount = bid._amount;
+        uint256 bidAmount = bid._bidPrice;
         address bidCurrency = bid._currency;
 
         require(
             bid._bidder == _bidder,
             "Market: Only bidder can remove the bid"
         );
-        require(bid._amount > 0, "Market: cannot remove bid amount of 0");
+        require(bid._bidPrice > 0, "Market: cannot remove bid amount of 0");
         transferNativeOrErc20(bidCurrency, bid._bidder, bidAmount);
         // line safeTransfer should be upper before delete??
         delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
@@ -569,7 +569,7 @@ contract MarketFacet is IMarket {
             ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
             _owner,
             bidder,
-            bidInfo._amount,
+            bidInfo._bidPrice,
             _creator
         );
         emit BidAccepted(_tokenID, bidder);
@@ -603,7 +603,7 @@ contract MarketFacet is IMarket {
             ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
             _owner,
             bidInfo._bidder,
-            bidInfo._amount, // make sure to pass amount from bid so that we avoid manupulation by asker
+            bidInfo._bidPrice, // make sure to pass amount from bid so that we avoid manupulation by asker
             _creator
         );
         emit BidAccepted(_tokenID, bidder);

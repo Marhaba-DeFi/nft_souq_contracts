@@ -15,7 +15,7 @@ interface Iutils {
         // quantity of the tokens being bid
         uint256 _quantity;
         // amount of ERC20 token being used to bid
-        uint256 _amount;
+        uint256 _bidPrice;
         // Address to the ERC20 token being used to bid
         address _currency;
         // Address of the bidder
