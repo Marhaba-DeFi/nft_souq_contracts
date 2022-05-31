@@ -123,7 +123,7 @@ contract MarketFacet is IMarket {
             "Market: Token is not open for Sale"
         );
 
-        require(_bid._quantity <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount, "Market: Invalid quantity value supplied");
+        require(_bid._quantity <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity, "Market: Invalid quantity value supplied");
 
         require(_bid._currency == ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, "Market: Invalid Currency Supplied for bid");
 
@@ -171,7 +171,7 @@ contract MarketFacet is IMarket {
             if (
                 _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount
             ) {
-                ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount -= _bid._quantity;
+                ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= _bid._quantity;
                 // Finalize Exchange
                 divideMoney(_tokenID, _tokenAddress, ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, _owner, _bidder, _bid._bidPrice, _creator);
             }
@@ -351,7 +351,7 @@ contract MarketFacet is IMarket {
                 _oldAsk._sender,
                 ask._reservePrice,
                 ask._askAmount,
-                ask._amount,
+                ask._askQuantity,
                 ask._currency,
                 ask.askType,
                 ask._duration,
@@ -560,7 +560,7 @@ contract MarketFacet is IMarket {
 
         Iutils.Bid memory bidInfo = ms._tokenBidders[_tokenAddress][bidder][_tokenID];
 
-        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount -= bidInfo._quantity;
+        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= bidInfo._quantity;
 
         // address(0) for _bidder is only need when sale type is of type Auction
         divideMoney(
@@ -594,7 +594,7 @@ contract MarketFacet is IMarket {
         require(uint256(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._highestBid) != 0, "No Bid Found");
         require(address(bidInfo._bidder) != address(0), "Media: No Bid Found against token ask");
 
-        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount -= bidInfo._quantity;
+        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= bidInfo._quantity;
         
         // address(0) for _bidder is only need when sale type is of type Auction
         divideMoney(
@@ -706,7 +706,7 @@ contract MarketFacet is IMarket {
         LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
 
         delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
-        if (ms._tokenAsks[_tokenAddress][_owner][_tokenID]._amount == 0) {
+        if (ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity == 0) {
         delete ms._tokenAsks[_tokenAddress][_owner][_tokenID];
         }
     }

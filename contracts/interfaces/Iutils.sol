@@ -35,7 +35,7 @@ interface Iutils {
         // Amount of the currency being asked
         uint256 _askAmount;
         // Amount of the tokens being asked
-        uint256 _amount;
+        uint256 _askQuantity;
         // Address to the ERC20 token being asked
         address _currency;
         // Type of ask

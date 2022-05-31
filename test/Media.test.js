@@ -273,7 +273,7 @@ describe('marketContract', async function() {
 
       let tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter, this.erc1155FactoryFacet.address, this.alice.address);
 
-      expect((tokensAsksTx._amount)).to.equals('7');
+      expect((tokensAsksTx._askQuantity)).to.equals('7');
 
       let aliceBalanceAfterBid = await this.erc1155FactoryFacet.balanceOf(this.alice.address, 1)
       console.log('aliceBalanceAfterBid ', aliceBalanceAfterBid);
@@ -309,7 +309,7 @@ describe('marketContract', async function() {
 
       expect(carolalanceAfterBid).to.equal('7')
 
-      expect((tokensAsksTx._amount)).to.equals('0');
+      expect((tokensAsksTx._askQuantity)).to.equals('0');
 
     });
     it('Multiple Buyer for erc721 token', async function() {
@@ -343,7 +343,7 @@ describe('marketContract', async function() {
 
       let tokensAsksTx = await this.mediaFacet.getTokenAsks(tokenCounter, this.erc721FactoryFacet.address, this.alice.address);
 
-      expect((tokensAsksTx._amount)).to.equals('0');
+      expect((tokensAsksTx._askQuantity)).to.equals('0');
       this.askParams[0] = this.erc721FactoryFacet.address
       await setAsk(this.mediaFacet, this.bob, tokenCounter, this.askParams);
 
@@ -381,7 +381,7 @@ describe('marketContract', async function() {
 
       expect(carolalanceAfterBid).to.equal('1')
 
-      expect((tokensAsksTx._amount)).to.equals('0');
+      expect((tokensAsksTx._askQuantity)).to.equals('0');
 
 
     });
