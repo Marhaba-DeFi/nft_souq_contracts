@@ -130,11 +130,11 @@ contract MarketFacet is IMarket {
         // TODO: improve with some functional check OR multi require
         if ( ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency != address(0)){
         require(
-            _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reserveAmount,
+            _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reservePrice,
             "Market: Bid Cannot be placed below the min Amount"
         );
         }else{
-            require(msg.value >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reserveAmount,
+            require(msg.value >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reservePrice,
             "Market: Bid Cannot be placed below the min Amount"
         );
         }
@@ -319,12 +319,12 @@ contract MarketFacet is IMarket {
                     "Market: Auction Started, Nothing can be modified"
                 );
                 require(
-                    ask._reserveAmount < ask._askAmount,
+                    ask._reservePrice < ask._askAmount,
                     "Market reserve amount error"
                 );
             } else {
                 require(
-                    ask._reserveAmount == ask._askAmount,
+                    ask._reservePrice == ask._askAmount,
                     "Amount observe and Asked Need to be same for Fixed Sale"
                 );
             }
@@ -349,7 +349,7 @@ contract MarketFacet is IMarket {
             Iutils.Ask memory _updatedAsk = Iutils.Ask(
                 _oldAsk._tokenAddress,
                 _oldAsk._sender,
-                ask._reserveAmount,
+                ask._reservePrice,
                 ask._askAmount,
                 ask._amount,
                 ask._currency,

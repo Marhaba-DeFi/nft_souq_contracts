@@ -31,7 +31,7 @@ interface Iutils {
         //this is to check in Ask function if _sender is the token Owner
         address _sender;
         // min amount Asked
-        uint256 _reserveAmount;
+        uint256 _reservePrice;
         // Amount of the currency being asked
         uint256 _askAmount;
         // Amount of the tokens being asked
