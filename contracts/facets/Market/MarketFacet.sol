@@ -143,7 +143,7 @@ contract MarketFacet is IMarket {
 
         if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
             require(
-                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount,
+                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice,
                 "Market: You Cannot Pay more then Max Asked Amount "
             );
             _handleIncomingBid(
@@ -169,7 +169,7 @@ contract MarketFacet is IMarket {
             // // If a bid meets the criteria for an ask, automatically accept the bid.
             // // If no ask is set or the bid does not meet the requirements, ignore.
             if (
-                _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askAmount
+                _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice
             ) {
                 ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= _bid._quantity;
                 // Finalize Exchange
@@ -258,7 +258,7 @@ contract MarketFacet is IMarket {
         // if the bid amount is >= askAmount accept the bid and close the auction
         // Note: askAmount is the maximum amount seller wanted to accept against its NFT
 
-        if ( _bid._bidPrice >= askInfo._askAmount ){
+        if ( _bid._bidPrice >= askInfo._buyNowPrice ){
 
         address newOwner = askInfo._bidder;
 
@@ -319,12 +319,12 @@ contract MarketFacet is IMarket {
                     "Market: Auction Started, Nothing can be modified"
                 );
                 require(
-                    ask._reservePrice < ask._askAmount,
+                    ask._reservePrice < ask._buyNowPrice,
                     "Market reserve amount error"
                 );
             } else {
                 require(
-                    ask._reservePrice == ask._askAmount,
+                    ask._reservePrice == ask._buyNowPrice,
                     "Amount observe and Asked Need to be same for Fixed Sale"
                 );
             }
@@ -350,7 +350,7 @@ contract MarketFacet is IMarket {
                 _oldAsk._tokenAddress,
                 _oldAsk._sender,
                 ask._reservePrice,
-                ask._askAmount,
+                ask._buyNowPrice,
                 ask._askQuantity,
                 ask._currency,
                 ask.askType,

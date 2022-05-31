@@ -32,9 +32,9 @@ interface Iutils {
         address _sender;
         // min amount Asked
         uint256 _reservePrice;
-        // Amount of the currency being asked
-        uint256 _askAmount;
-        // Amount of the tokens being asked
+        // max amount to buy at now
+        uint256 _buyNowPrice;
+        // quantity of the tokens being asked
         uint256 _askQuantity;
         // Address to the ERC20 token being asked
         address _currency;
