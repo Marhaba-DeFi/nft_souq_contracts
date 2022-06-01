@@ -1,3 +1,4 @@
+const { ethers } = require('ethers');
 const { convertFromBigNumber } = require('../utils/util');
 
 /**
@@ -42,12 +43,15 @@ async function approveTokens(contract, from, to, amount) {
  * @param {*} tokenId
  * @param {*} bidParams
  */
-async function setBid(mediaContract, from, tokenId, bidParams) {
+async function setBid(mediaContract, from, tokenId, bidParams, isEthers = false) {
   // send bid to Media Contract
+  // console.log('bidParams[3] ', ethers.utils.parseEther(convertFromBigNumber(bidParams[3])))
   return mediaContract.connect(from).setBid(
     tokenId, // _tokenCounter.toString(),
     bidParams,
-    { from: from.address },
+    { from: from.address,
+      value: isEthers ? bidParams[3] : 0
+    },
   );
 }
 /**

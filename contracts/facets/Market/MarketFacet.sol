@@ -138,14 +138,14 @@ contract MarketFacet is IMarket {
             "Market: Bid Cannot be placed below the min Amount"
         );
         }
+        require(
+                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice,
+                "Market: You Cannot Pay more then Buy Asked Amount "
+        );
 
         _verifyBidAmount(_tokenID, _tokenAddress, _owner, _bid);
 
         if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
-            require(
-                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice,
-                "Market: You Cannot Pay more then Max Asked Amount "
-            );
             _handleIncomingBid(
                 _bid._bidPrice,
                 ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
@@ -267,7 +267,7 @@ contract MarketFacet is IMarket {
             _tokenAddress,
             askInfo._currency,
             _owner,
-            lastBidder,
+            _bid._bidder,
             askInfo._highestBid,
             _creator
         );
@@ -363,6 +363,11 @@ contract MarketFacet is IMarket {
             ms._tokenAsks[_tokenAddress][_owner][_tokenID] = _updatedAsk;
             emit AskUpdated(_tokenID, _updatedAsk);
         } else {
+            
+            if ( ask.askType == Iutils.AskTypes.FIXED )
+            require(ask._reservePrice == ask._buyNowPrice, "Market: reserve and buyNow price needs to be same");
+            else
+            require(ask._reservePrice <= ask._buyNowPrice, "Market: buyNow price needs to be higher the reserve price");
 
             // set bidder, firstBidTime and highest bid to default state
             ask._bidder = address(0);

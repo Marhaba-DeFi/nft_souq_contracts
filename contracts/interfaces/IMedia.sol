@@ -8,14 +8,13 @@ import "./Iutils.sol";
 interface IMedia {
     struct MediaInfo {
         uint256 _tokenID;
-        address _creator;
         address _currentOwner;
         string _uri;
         string _title;
         bool _isFungible;
     }
 
-    struct MediaData {
+    struct MintAndSaleTokenData {
         address _tokenAddress;
         string uri;
         string title;
@@ -28,6 +27,16 @@ interface IMedia {
         uint256 _reserveAmount;
         address currencyAsked;
         uint256 _duration;
+    }
+
+    struct MintData {
+        address _tokenAddress;
+        string uri;
+        string title;
+        uint256 totalSupply;
+        uint8 royaltyPoints;
+        address[] collaborators;
+        uint8[] percentages;
     }
 
     event MintToken(
@@ -60,7 +69,10 @@ interface IMedia {
      *
      * @return uint256 Token Id of the Minted Token
      */
-    function mintToken(MediaData calldata data) external returns (uint256);
+    function mintTokenWithoutSale(MintData calldata data) external returns (uint256);
+
+    function mintToken(MintAndSaleTokenData calldata data) external returns (uint256);
+
 
     function endAuction(uint256 _tokenID, address _tokenAddress) external returns (bool);
 

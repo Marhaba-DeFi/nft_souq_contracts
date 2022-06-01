@@ -3,6 +3,7 @@
 const { expect } = require('chai');
 const fs = require('fs');
 const hre = require('hardhat');
+const { BigNumber } = hre.ethers;
 const ethers = hre.ethers;
 const { convertToBigNumber, convertFromBigNumber } = require('../utils/util');
 const { generatedWallets } = require('../utils/wallets');
@@ -233,6 +234,221 @@ describe('marketContract', async function() {
 
       // admin is approving the currency that can used while ask and bid time
       await this.mediaFacet.connect(this.admin).addCurrency(this.marhabaToken.address);
+    });
+
+
+    it('Should set Token on ASK against Native token when minting and allow BID and buying', async function () {
+      // make sure to set ASKCURRENCY address to this.marhabaToken.address in "mintParamsAuction[]" when bidding with ERC20 tokens
+      // mints token
+      this.mintParamsAuction[10] = '0x0000000000000000000000000000000000000000'
+      this.mintParamsAuction[8] = convertToBigNumber(100)
+      this.mintParamsAuction[9] = convertToBigNumber(50)
+
+      let mintTx = await this.mediaFacet
+        .connect(this.alice)
+        .mintToken(this.mintParamsAuction);
+      mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
+      const event = mintTx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
+      const [_tokenCounter] = event.args;
+      expect(_tokenCounter.toString()).to.equals('1');
+      const bobBalanceBeforeBid = await ethers.provider.getBalance(
+        this.bob.address,
+      );
+      console.log(' token minted ');
+
+      //setting bid
+      const tx1 = await setBid(this.mediaFacet, this.bob, _tokenCounter, [
+        this.erc721FactoryFacet.address,
+        this.alice.address,
+        1, // quantity of the tokens being bid
+        convertToBigNumber(70), // amount of ERC20 token being used to bid
+        '0x0000000000000000000000000000000000000000', // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[7],
+      ], true);
+      console.log(' bid placed ');
+
+      const bobBalanceAfterBid = await ethers.provider.getBalance(
+        this.bob.address,
+      );
+      const receipt1 = await tx1.wait();
+      // calculating gas used by transaction
+      const gasUsed = BigNumber.from(receipt1.cumulativeGasUsed).mul(
+        receipt1.effectiveGasPrice,
+      );
+      let result = BigNumber.from(bobBalanceBeforeBid)
+        .sub(convertToBigNumber(70))
+        .sub(gasUsed);
+      // amount = BigNumber.from(amount).sub(gasUsed);
+      expect(result).to.be.equal(bobBalanceAfterBid);
+      const carolBalanceBeforeBid = await ethers.provider.getBalance(
+        this.carol.address,
+      );
+      //setting bid
+      const tx2 = await setBid(this.mediaFacet, this.carol, _tokenCounter, [
+        this.erc721FactoryFacet.address,
+        this.alice.address,
+        1, // quantity of the tokens being bid
+        convertToBigNumber(100), // amount of ERC20 token being used to bid
+        '0x0000000000000000000000000000000000000000', // Address to the ERC20 token being used to bid,
+        this.carol.address, // bidder address
+        this.carol.address, // recipient address
+        this.mintParamsAuction[7],
+      ], true);
+      console.log(' bid placed ');
+      const carolBalanceAfterBid = await ethers.provider.getBalance(
+        this.carol.address,
+      );
+      const receipt2 = await tx2.wait();
+      // calculating gas used by transaction
+      const gasUsed2 = BigNumber.from(receipt2.cumulativeGasUsed).mul(
+        receipt2.effectiveGasPrice,
+      );
+      let result2 = BigNumber.from(carolBalanceBeforeBid)
+        .sub(convertToBigNumber(100))
+        .sub(gasUsed2);
+      expect(result2).to.be.equal(carolBalanceAfterBid);
+      // checking if BOB's bid is refunded or not
+      let bobNewBalance = await ethers.provider.getBalance(this.bob.address);
+      expect(
+        BigNumber.from(bobBalanceAfterBid).add(convertToBigNumber(70)),
+      ).to.be.equal(bobNewBalance);
+    });
+
+    it('Only Bidder should remove the bid and gets correct amount => when ERC20 as payment', async function () {
+      this.mintParamsTuples[4] = 5 
+      this.mintParamsTuples[7] = 0;
+      this.mintParamsTuples[8] = convertToBigNumber(100);
+      this.mintParamsTuples[9] = convertToBigNumber(50);
+      this.mintParamsTuples[11] = parseInt(Date.now() + 86400);
+
+      // mints token
+      let mintTx = await this.mediaFacet
+        .connect(this.alice)
+        .mintToken(this.mintParamsAuction);
+      mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
+      const event = mintTx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
+      const [_tokenCounter] = event.args;
+      expect(_tokenCounter.toString()).to.equals('1');
+      // approve tokens before making request
+      await approveTokens(
+        this.marhabaToken,
+        this.bob,
+        this.marketFacet.address,
+        convertToBigNumber(1000),
+      );
+      // fetch balances
+      let beforebalances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        // { name: 'collabs', address: this.mintParamsAuction[4][0] },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      // // place bid
+      await setBid(this.mediaFacet, this.bob, _tokenCounter, [
+        this.erc721FactoryFacet.address,
+        this.alice.address,
+        this.mintParamsTuples[3], // quantity of the tokens being bid
+        convertToBigNumber(70), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[7],
+      ]);
+      // fetch balances after BID
+      let afterbalances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      expect(_tokenCounter.toString()).to.equals('1');
+      expect(afterbalances.alice).to.equals('1000.0');
+      expect(afterbalances.bob).to.equals('930.0');
+      // //removes bid
+      await this.mediaFacet.connect(this.bob).removeBid(_tokenCounter, this.erc721FactoryFacet.address);
+      // fetch balances after bid is removed
+      let afterBidRemovebalances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      expect(afterBidRemovebalances.bob).to.equal('1000.0');
+    });
+    it('Bidder Buys on ASK price, then should not be able to remove BID', async function () {
+      this.mintParamsTuples[5] = ['0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199'];
+      this.mintParamsTuples[6] = [5];
+      this.mintParamsTuples[7] = 0;
+      this.mintParamsTuples[8] = convertToBigNumber(10);
+      this.mintParamsTuples[9] = convertToBigNumber(5);
+      this.mintParamsTuples[11] = parseInt(Date.now() + 86400);
+
+      console.log(this.mintParamsAuction)
+      console.log(this.mintParamsTuples)
+      // mints token
+      let mintTx = await this.mediaFacet
+        .connect(this.alice)
+        .mintToken(this.mintParamsTuples);
+      mintTx = await mintTx.wait(); // 0ms, as tx is already confirmed
+      const event = mintTx.events.find(
+        (event) => event.event === 'TokenCounter',
+      );
+      const [_tokenCounter] = event.args;
+      expect(_tokenCounter.toString()).to.equals('1');
+      console.log('token is minted')
+      // approve tokens before making request
+      await approveTokens(
+        this.marhabaToken,
+        this.bob,
+        this.marketFacet.address,
+        convertToBigNumber(1000),
+      );
+      // fetch balances
+      let beforebalances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'collabs', address: this.mintParamsAuction[5][0] },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      // tokens will be tranferred directly to ASKER (won't go in escrow) due to setting bid of ASK PRICE
+      await setBid(this.mediaFacet, this.bob, _tokenCounter, [
+        this.erc721FactoryFacet.address,
+        this.alice.address,
+        this.mintParamsTuples[3], // quantity of the tokens being bid
+        convertToBigNumber(10), // amount of ERC20 token being used to bid
+        this.marhabaToken.address, // Address to the ERC20 token being used to bid,
+        this.bob.address, // bidder address
+        this.bob.address, // recipient address
+        this.mintParamsAuction[7],
+      ]);
+      console.log('Bid is placed')
+      // fetch balances after BID transaction
+      let afterbalances = await getBalance(this.marhabaToken, [
+        { name: 'alice', address: this.alice.address },
+        { name: 'bob', address: this.bob.address },
+        { name: 'collabs', address: this.mintParamsAuction[5][0] },
+        { name: 'admin', address: this.admin.address },
+      ]);
+      console.log('afterbalances ', afterbalances)
+      expect(_tokenCounter.toString()).to.equals('1');
+      expect(afterbalances.alice).to.equals('1009.7755');
+      expect(afterbalances.bob).to.equals('990.0');
+      expect(afterbalances.collabs).to.equals('0.0');
+      expect(afterbalances.admin).to.equals('0.2');
+      // funding market(escrow contract) => to mock that contract(escorw) has already many tokens as escrow
+      // after funding, then removeBid will be called to check whether it still allows to remove bid after BID is successfull
+      await this.marhabaToken.transfer(
+        this.marketFacet.address,
+        convertToBigNumber(50),
+      );
+      // should revert with error below in "expect" because Bid is successful(means token is bought) above and bidder should have been removed
+      await expect(
+        this.mediaFacet.connect(this.bob).removeBid(_tokenCounter, this.erc721FactoryFacet.address),
+      ).to.be.revertedWith('Market: Only bidder can remove the bid');
     });
 
     it('It should Mint NFT for user', async function() {
@@ -606,7 +822,7 @@ describe('marketContract', async function() {
           [
             this.erc1155FactoryFacet.address,
             this.bob.address,
-            convertToBigNumber(1),
+            convertToBigNumber(2),
             convertToBigNumber(2),
             1,
             this.marhabaToken.address,

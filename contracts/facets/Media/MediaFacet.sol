@@ -58,7 +58,7 @@ contract MediaFacet is IMedia {
         ms.diamondAddress = _diamondAddress;
     }
 
-    function mintToken(MediaData memory data)
+    function mintToken(MintAndSaleTokenData memory data)
         external
         override
         returns (uint256)
@@ -115,7 +115,6 @@ contract MediaFacet is IMedia {
         MediaInfo memory newToken = MediaInfo(
             ms._tokenCounter,
             msg.sender,
-            msg.sender,
             data.uri,
             data.title,
             _isFungible
@@ -155,13 +154,108 @@ contract MediaFacet is IMedia {
         );
         IMarket(ms.diamondAddress)._setAsk(ms._tokenCounter, data._tokenAddress, msg.sender, _ask);
 
-        // fire events
         emitMintEvents(_isFungible, data);
 
         return ms._tokenCounter;
     }
 
-    function emitMintEvents(bool _isFungible, MediaData memory data) internal {
+
+    function mintTokenWithoutSale(MintData memory data)
+        external
+        override
+        returns (uint256)
+    {
+
+        require(
+            data.collaborators.length == data.percentages.length,
+            "Media: Collaborators Info is not correct"
+        );
+        bool _isFungible = data.totalSupply > 1 ? true : false;
+
+        // verify sum of collaborators percentages needs to be less then or equals to 10
+        uint256 sumOfCollabRoyalty = 0;
+        for (uint256 index = 0; index < data.collaborators.length; index++) {
+            sumOfCollabRoyalty = sumOfCollabRoyalty + (data.percentages[index]);
+        }
+        require(
+            sumOfCollabRoyalty <= 10,
+            "Media: Sum of Collaborators Percentages can be maximum 10"
+        );
+
+        // Calculate hash of the Token
+        bytes32 tokenHash = keccak256(
+            abi.encodePacked(data.uri, data.title, data.totalSupply)
+        );
+        
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+        // Check if Token with same data exists
+        require(
+            ms._tokenHashToTokenID[tokenHash] == 0,
+            "Media: Token With Same Data Already Exist!"
+        );
+
+        ms._tokenCounter++;
+
+        // Store the hash
+        ms._tokenHashToTokenID[tokenHash] = ms._tokenCounter;
+
+        // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
+        if (_isFungible) {
+            ERC1155FactoryFacet(ms.diamondAddress).mint(
+                ms._tokenCounter,
+                msg.sender,
+                data.totalSupply
+            );
+        } else {
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
+            
+        }
+        ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
+        ms.nftToCreators[data._tokenAddress][ms._tokenCounter] = msg.sender;
+
+        MediaInfo memory newToken = MediaInfo(
+            ms._tokenCounter,
+            msg.sender,
+            data.uri,
+            data.title,
+            _isFungible
+        );
+
+        // Hold token info
+        ms.tokenIDToToken[data._tokenAddress][msg.sender][ms._tokenCounter] = newToken;
+
+        // add collabs, percentages and sum of percentage
+        IMarket.Collaborators memory newTokenColab = IMarket.Collaborators(
+            data.collaborators,
+            data.percentages,
+            sumOfCollabRoyalty == 0 ? true : false
+        );
+
+        // route to market contract
+        IMarket(ms.diamondAddress).setCollaborators(ms._tokenCounter, newTokenColab);
+        IMarket(ms.diamondAddress).setRoyaltyPoints(
+            ms._tokenCounter,
+            data.royaltyPoints
+        );
+        emit MintToken(
+            ms._tokenCounter,
+            _isFungible,
+            data.uri,
+            data.title,
+            data.totalSupply,
+            data.royaltyPoints,
+            data.collaborators,
+            data.percentages
+        );
+
+        emit TokenCounter(ms._tokenCounter);
+
+
+        return ms._tokenCounter;
+    }
+
+    function emitMintEvents(bool _isFungible, MintAndSaleTokenData memory data) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         emit MintToken(
@@ -440,7 +534,7 @@ contract MediaFacet is IMedia {
                     msg.sender,
                     _tokenID
                 ) >= _amount,
-                "Media: You Don't have The Tokens!"
+                "Media: You Don't have Enough Tokens!"
             );
         } else {
             require(
@@ -462,7 +556,9 @@ contract MediaFacet is IMedia {
     ) internal {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
-        if (ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._isFungible) {
+        IMedia.MediaInfo memory tokenInfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
+
+        if (tokenInfo._isFungible) {
             ERC1155FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
@@ -479,10 +575,9 @@ contract MediaFacet is IMedia {
         MediaInfo memory tokenInstance = MediaInfo(
             _tokenID,
             _recipient,
-            _recipient,
-            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._uri,
-            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._title,
-            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._isFungible
+            tokenInfo._uri,
+            tokenInfo._title,
+            tokenInfo._isFungible
         );
         ms.tokenIDToToken[_tokenAddress][_recipient][ms._tokenCounter] = tokenInstance;
 
