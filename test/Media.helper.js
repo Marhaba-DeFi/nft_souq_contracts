@@ -91,10 +91,11 @@ async function getBalanceNFT(contract, users) {
  * @param {*} tokenId
  * @returns
  */
-async function endAuction(mediaContract, from, tokenId) {
+async function endAuction(mediaContract, from, tokenId, tokenAddress) {
   // send bid to Media Contract
   return mediaContract.connect(from).endAuction(
     tokenId, // _tokenCounter.toString(),
+    tokenAddress,
     { from: from.address },
   );
 }
@@ -104,10 +105,12 @@ async function endAuction(mediaContract, from, tokenId) {
  * @param {*} tokenId
  * @returns
  */
-async function cancelAuction(mediaContract, from, tokenId) {
+async function cancelAuction(mediaContract, from, tokenId, tokenAddress, owner) {
   // send bid to Media Contract
   return mediaContract.connect(from).cancelAuction(
     tokenId, // _tokenCounter.toString(),
+    tokenAddress,
+    owner,
     { from: from.address },
   );
 }
