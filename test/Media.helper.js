@@ -13,6 +13,20 @@ async function mintTokens(mediaContract, user, params) {
   const tx = await mediaContract.connect(user).mintToken(params);
   return tx;
 }
+
+/**
+ *
+ * @param {*} mediaContract
+ * @param {*} user
+ * @param {*} params
+ * @returns tx
+ */
+ async function mintTokenWithoutSale(mediaContract, user, params) {
+  // mint tokens and return the tx
+  const tx = await mediaContract.connect(user).mintTokenWithoutSale(params);
+  return tx;
+}
+
 /**
  *
  * @param {*} tx
@@ -142,6 +156,7 @@ async function addCurrency(mediaContract, from, tokenAddress) {
 
 module.exports = {
   mintTokens,
+  mintTokenWithoutSale,
   fetchMintEvent,
   approveTokens,
   setBid,
