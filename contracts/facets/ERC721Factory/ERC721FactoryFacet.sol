@@ -6,8 +6,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../ERC721/ERC721Facet.sol";
 import "./LibERC721FactoryStorage.sol";
+import "../../libraries/LibURI.sol";
 
 contract ERC721FactoryFacet is ERC721Facet {
+    using Strings for uint256;
+    event BaseUriChanged(string newBaseURI);
+
     modifier onlyMediaCaller() {
         require(
             msg.sender == s._mediaContract,
@@ -16,19 +20,83 @@ contract ERC721FactoryFacet is ERC721Facet {
         _;
     }
 
+    /**
+     * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+        require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        es._tokenURIs[tokenId] = _tokenURI;
+    }
+
+    function removeTokenUri(uint256 tokenId) external onlyMediaCaller {
+        require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        delete es._tokenURIs[tokenId];
+    }
+
+    /**
+     * @dev Internal function to set the base URI for all token IDs. It is
+     * automatically added as a prefix to the value returned in {tokenURI},
+     * or to the token ID if {tokenURI} is empty.
+     */
+    function _setBaseURI(string memory baseURI_) internal virtual {
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        es._baseURI = baseURI_;
+    }
+
+    /**
+    * @dev Returns the base URI set via {_setBaseURI}. This will be
+    * automatically added as a prefix in {tokenURI} to each token's URI, or
+    * to the token ID if no specific URI is set for that token ID.
+    */
+    function baseURI() public view virtual returns (string memory) {
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        return es._baseURI;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+        string memory _tokenURI = es._tokenURIs[tokenId];
+        string memory base = baseURI();
+
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return LibURI.checkPrefix(base, _tokenURI);
+        }
+        // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
+        return string(abi.encodePacked(base, tokenId.toString()));
+    }
+
     /* 
-    @notice This function is used fot minting 
+    @notice This function is used for minting 
      new NFT in the market.
     @dev 'msg.sender' will pass the '_tokenID' and 
      the respective NFT details.
     */
-    function mint(uint256 _tokenID, address _creator) external onlyMediaCaller {
+    function mint(uint256 _tokenID, address _creator, string memory _tokenURI) external onlyMediaCaller {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
         es.nftToOwners[_tokenID] = _creator;
         es.nftToCreators[_tokenID] = _creator;
         _safeMint(_creator, _tokenID);
         _approve(s._mediaContract, _tokenID);
+        // _tokenUri is optional but will set if nft owner supply the details
+        if ( bytes(_tokenURI).length > 0 )
+        _setTokenURI(_tokenID, _tokenURI);
     }
 
     /*

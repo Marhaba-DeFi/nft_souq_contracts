@@ -104,23 +104,4 @@ interface IMedia {
         returns (bool);
 
     function removeBid(uint256 tokenId, address _tokenAddress) external;
-
-    /**
-     * @notice This method is used to Transfer Token
-     *
-     * @dev This method is used when Owner Wants to directly transfer Token
-     *
-     * @param _tokenID Token ID of the Token To Transfer
-     * @param _recipient Receiver of the Token
-     * @param _amount Number of Tokens To Transfer, In Case of ERC1155 Token
-     *
-     * @return bool Transaction status
-     */
-    function transfer(
-        uint256 _tokenID,
-        address _tokenAddress,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    ) external returns (bool);
 }

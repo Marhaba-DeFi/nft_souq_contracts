@@ -103,10 +103,11 @@ contract MediaFacet is IMedia {
             ERC1155FactoryFacet(ms.diamondAddress).mint(
                 ms._tokenCounter,
                 msg.sender,
-                data.totalSupply
+                data.totalSupply,
+                data.uri
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender, data.uri);
             
         }
         ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
@@ -204,10 +205,11 @@ contract MediaFacet is IMedia {
             ERC1155FactoryFacet(ms.diamondAddress).mint(
                 ms._tokenCounter,
                 msg.sender,
-                data.totalSupply
+                data.totalSupply,
+                data.uri
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender, data.uri);
             
         }
         ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
@@ -514,36 +516,6 @@ contract MediaFacet is IMedia {
         return true;
     }
 
-    /**
-     * @dev See {IMedia}
-     */
-    function transfer(
-        uint256 _tokenID,
-        address _tokenAddress,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    ) external override whenTokenExist(_tokenID, _tokenAddress) returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        MediaInfo memory mediainfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
-        if (mediainfo._isFungible) {
-            require(
-                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(
-                    msg.sender,
-                    _tokenID
-                ) >= _amount,
-                "Media: You Don't have Enough Tokens!"
-            );
-        } else {
-            require(
-                ms.nftToOwners[_tokenAddress][_owner][_tokenID] == msg.sender,
-                "Media: Only Owner Can Transfer!"
-            );
-        }
-
-        _transfer(_tokenID, _tokenAddress, _owner, _recipient, _amount);
-        return true;
-    }
 
     function _transfer(
         uint256 _tokenID,
@@ -557,6 +529,13 @@ contract MediaFacet is IMedia {
         IMedia.MediaInfo memory tokenInfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
 
         if (tokenInfo._isFungible) {
+            require(
+                ERC1155FactoryFacet(_tokenAddress).balanceOf(
+                    msg.sender,
+                    _tokenID
+                ) >= _amount,
+                "Media: You Don't have Enough Tokens!"
+            );
             ERC1155FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
@@ -564,6 +543,10 @@ contract MediaFacet is IMedia {
                 _amount
             );
         } else {
+             require(
+                ms.nftToOwners[_tokenAddress][_owner][_tokenID] == msg.sender,
+                "Media: Only Owner Can Transfer!"
+            );
             ERC721FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
