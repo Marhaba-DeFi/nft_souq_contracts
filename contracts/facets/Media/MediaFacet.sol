@@ -382,7 +382,6 @@ contract MediaFacet is IMedia {
         returns (bool)
     {
         address _owner = msg.sender;
-        // TODO this is done now below, check either token is of type auction or not
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         Iutils.Ask memory _ask = IMarket(ms.diamondAddress)._getTokenAsks(_tokenID, _tokenAddress, _owner);
         Iutils.Bid memory _bid = IMarket(ms.diamondAddress)._getTokenBid(_tokenID, _tokenAddress, _owner);
@@ -477,10 +476,6 @@ contract MediaFacet is IMedia {
             "Media: Only Admin Can Set Commission Percentage!"
         );
         require(
-            _newCommissionPercentage > 0,
-            "Media: Invalid Commission Percentage"
-        );
-        require(
             _newCommissionPercentage <= 100,
             "Media: Commission Percentage Must Be Less Than 100!"
         );
@@ -531,7 +526,7 @@ contract MediaFacet is IMedia {
         if (tokenInfo._isFungible) {
             require(
                 ERC1155FactoryFacet(_tokenAddress).balanceOf(
-                    msg.sender,
+                    _owner,
                     _tokenID
                 ) >= _amount,
                 "Media: You Don't have Enough Tokens!"
@@ -544,8 +539,10 @@ contract MediaFacet is IMedia {
             );
         } else {
              require(
-                ms.nftToOwners[_tokenAddress][_owner][_tokenID] == msg.sender,
-                "Media: Only Owner Can Transfer!"
+                ERC721Facet(_tokenAddress).balanceOf(
+                    _owner
+                ) >= _amount,
+                "Media: You Don't have Enough Tokens!"
             );
             ERC721FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
@@ -594,10 +591,3 @@ contract MediaFacet is IMedia {
         return IMarket(ms.diamondAddress)._getTokenBid(_tokenId, _tokenAddress, _owner);
     }
 }
-
-// --- Review Back
-// variable needs to be change _buyNowPrice, bidAmount e.t.c
-// verification of currentOwner and Owner thing
-// tokenId to token thing
-// verification of getTokensBid
-// share mappings accross the contract as we have now share storage libraries

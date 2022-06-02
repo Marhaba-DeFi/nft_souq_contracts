@@ -11,6 +11,8 @@ library LibERC721FactoryStorage {
     mapping(uint256 => address) nftToCreators;
     // Optional mapping for token URIs
     mapping (uint256 => string) _tokenURIs;
+    string _name;
+    string _symbol;
     // Base URI
     string _baseURI;
   }

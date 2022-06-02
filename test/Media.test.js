@@ -114,11 +114,13 @@ describe('marketContract', async function() {
       
       const erc721Name = 'NFT SOUQ';
       const erc721Symbol = 'NFTSOUQ';
-      await this.erc721FactoryFacet.erc721Init(erc721Name, erc721Symbol);
+      const erc721Uri = 'http://google.com'
+      await this.erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol, erc721Uri);
 
       const erc1155Name = 'NFT SOUQ';
       const erc1155Symbol = 'NFTSOUQ';
-      await this.erc1155FactoryFacet.erc1155FactoryFacetInit(erc1155Name, erc1155Symbol);
+      const erc1155Uri = 'http://opensea.com/abc'
+      await this.erc1155FactoryFacet.erc1155FactoryFacetInit(erc1155Name, erc1155Symbol, erc1155Uri);
 
       await this.marketFacet.marketInit();
 

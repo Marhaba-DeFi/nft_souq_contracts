@@ -22,13 +22,15 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 
     function erc1155FactoryFacetInit(
     string memory name_,
-    string memory symbol_
+    string memory symbol_,
+    string memory baseURI_
     ) external{
      LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
      LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
      require(
       bytes(es.name).length == 0 &&
-      bytes(es.symbol).length == 0,
+      bytes(es.symbol).length == 0 &&
+      bytes(es._baseURI).length ==0,
       "ALREADY_INITIALIZED"
     );
 
@@ -43,6 +45,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 
     es.name = name_;
     es.symbol = symbol_;
+    _setBaseURI(baseURI_);
     }
 
      /**
@@ -57,7 +60,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         es._tokenURIs[tokenId] = _tokenURI;
     }
 
-    function removeTokenUri(uint256 tokenId) external onlyMediaCaller {
+    function removeTokenUrl(uint256 tokenId) external onlyMediaCaller {
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         delete es._tokenURIs[tokenId];
     }
@@ -77,20 +80,20 @@ contract ERC1155FactoryFacet is ERC1155Facet {
     * automatically added as a prefix in {tokenURI} to each token's URI, or
     * to the token ID if no specific URI is set for that token ID.
     */
-    function baseURI() public view virtual returns (string memory) {
+    function baseURL() public view virtual returns (string memory) {
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         return es._baseURI;
     }
 
     function uri(uint id) public view override virtual returns (string memory) {
-        return tokenURI(id);
+        return tokenURL(id);
     }
 
 
-    function tokenURI(uint256 tokenId) internal view virtual returns (string memory) {
+    function tokenURL(uint256 tokenId) internal view virtual returns (string memory) {
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         string memory __tokenURI = es._tokenURIs[tokenId];
-        string memory base = baseURI();
+        string memory base = baseURL();
 
         // If there is no base URI, return the token URI.
         if (bytes(base).length == 0) {
@@ -116,7 +119,9 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         _mint(_owner, _tokenID, _totalSupply, "");
         setApprovalForAll(s._mediaContract, true);
         // _tokenUri is optional but will set if nft owner supply the details
-        if ( bytes(_tokenURI).length > 0 )
+        // 42 is the ipfs hash length that we sent from FE
+        // if length is not 42 means, its url and add it as token url
+        if ( bytes(_tokenURI).length != 42 )
         _setTokenURI(_tokenID, _tokenURI);
     }
 

@@ -20,6 +20,37 @@ contract ERC721FactoryFacet is ERC721Facet {
         _;
     }
 
+       /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     */
+    function erc721FactoryFacetInit(
+    string memory name_,
+    string memory symbol_,
+    string memory baseURI_
+  ) external {
+    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+    LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+    require(
+      bytes(es._name).length == 0 &&
+      bytes(es._symbol).length == 0 &&
+      bytes(es._baseURI).length ==0,
+      "ALREADY_INITIALIZED"
+    );
+
+    require(
+      bytes(name_).length != 0 &&
+      bytes(symbol_).length != 0,
+      "INVALID_PARAMS"
+    );
+
+    require(msg.sender == ds.contractOwner, "Must own the contract.");
+
+    es._name = name_;
+    es._symbol = symbol_;
+    _setBaseURI(baseURI_);
+  }
+
     /**
      * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
      *
@@ -33,7 +64,7 @@ contract ERC721FactoryFacet is ERC721Facet {
         es._tokenURIs[tokenId] = _tokenURI;
     }
 
-    function removeTokenUri(uint256 tokenId) external onlyMediaCaller {
+    function removeTokenUri(uint256 tokenId) external onlyMediaCaller{
         require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
         delete es._tokenURIs[tokenId];
@@ -54,7 +85,7 @@ contract ERC721FactoryFacet is ERC721Facet {
     * automatically added as a prefix in {tokenURI} to each token's URI, or
     * to the token ID if no specific URI is set for that token ID.
     */
-    function baseURI() public view virtual returns (string memory) {
+    function baseURI() internal view virtual returns (string memory) {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
         return es._baseURI;
     }
@@ -95,7 +126,9 @@ contract ERC721FactoryFacet is ERC721Facet {
         _safeMint(_creator, _tokenID);
         _approve(s._mediaContract, _tokenID);
         // _tokenUri is optional but will set if nft owner supply the details
-        if ( bytes(_tokenURI).length > 0 )
+        // 42 is the ipfs hash length that we sent from FE
+        // if length is not 42 means, its url and add it as token url
+        if ( bytes(_tokenURI).length != 42 )
         _setTokenURI(_tokenID, _tokenURI);
     }
 

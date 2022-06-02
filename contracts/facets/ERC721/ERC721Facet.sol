@@ -31,33 +31,6 @@ contract ERC721Facet is Context {
      */
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-    /**
-     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
-     */
-    function erc721Init(
-    string memory name_,
-    string memory symbol_
-  ) external {
-    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
-    LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
-
-    require(
-      bytes(es._name).length == 0 &&
-      bytes(es._symbol).length == 0,
-      "ALREADY_INITIALIZED"
-    );
-
-    require(
-      bytes(name_).length != 0 &&
-      bytes(symbol_).length != 0,
-      "INVALID_PARAMS"
-    );
-
-    require(msg.sender == ds.contractOwner, "Must own the contract.");
-
-    es._name = name_;
-    es._symbol = symbol_;
-  }
 
     /**
      * @dev See {IERC721-balanceOf}.
