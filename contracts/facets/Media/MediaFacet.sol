@@ -114,7 +114,6 @@ contract MediaFacet is IMedia {
 
         MediaInfo memory newToken = MediaInfo(
             ms._tokenCounter,
-            msg.sender,
             data.uri,
             data.title,
             _isFungible
@@ -216,7 +215,6 @@ contract MediaFacet is IMedia {
 
         MediaInfo memory newToken = MediaInfo(
             ms._tokenCounter,
-            msg.sender,
             data.uri,
             data.title,
             _isFungible
@@ -413,7 +411,7 @@ contract MediaFacet is IMedia {
             _ask.askType == Iutils.AskTypes.AUCTION,
             "Media: Invalid Ask Type"
         );
-        address _currentOwner = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
+        address _currentOwner =  ms.nftToOwners[_tokenAddress][_owner][_tokenID]; // ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._currentOwner; //this should be msg.sender, as NFT is already transfer from the owner to the bidder at the bid time.
         require(msg.sender == _currentOwner, "Media: Only Token Owner Can accept Bid");
         address _creator = ms.nftToCreators[_tokenAddress][_tokenID];
         IMarket(ms.diamondAddress).acceptBid(_tokenID, _tokenAddress, _owner, _creator);
@@ -427,7 +425,7 @@ contract MediaFacet is IMedia {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
         require(
-            ms.tokenIDToToken[_tokenAddress][_owner][_tokenID]._currentOwner == msg.sender,
+            ms.nftToOwners[_tokenAddress][_owner][_tokenID] == msg.sender,
             "Can only be called by auction creator or curator"
         );
         IMarket(ms.diamondAddress)._cancelAuction(_tokenID, _tokenAddress, _owner);
@@ -574,15 +572,13 @@ contract MediaFacet is IMedia {
         }
         MediaInfo memory tokenInstance = MediaInfo(
             _tokenID,
-            _recipient,
             tokenInfo._uri,
             tokenInfo._title,
             tokenInfo._isFungible
         );
-        ms.tokenIDToToken[_tokenAddress][_recipient][ms._tokenCounter] = tokenInstance;
+        ms.tokenIDToToken[_tokenAddress][_recipient][_tokenID] = tokenInstance;
 
         ms.nftToOwners[_tokenAddress][_recipient][_tokenID] = _recipient;
-        ms.tokenIDToToken[_tokenAddress][_recipient][_tokenID]._currentOwner = _recipient;
         emit Transfer(_tokenID, _owner, _recipient, _amount);
     }
 

@@ -8,7 +8,6 @@ import "./Iutils.sol";
 interface IMedia {
     struct MediaInfo {
         uint256 _tokenID;
-        address _currentOwner;
         string _uri;
         string _title;
         bool _isFungible;
