@@ -15,6 +15,10 @@ library LibERC1155FactoryStorage {
     string name;
     // token symbol
     string symbol;
+    // Optional mapping for token URIs
+    mapping (uint256 => string) _tokenURIs;
+    // Base URI
+    string _baseURI;
   }
 
   function erc1155FactoryStorage() internal pure returns (ERC1155FactoryStorage storage es) {

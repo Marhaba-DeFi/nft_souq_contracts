@@ -9,7 +9,15 @@ library LibERC721FactoryStorage {
   struct ERC721FactoryStorage {
     mapping(uint256 => address) nftToOwners;
     mapping(uint256 => address) nftToCreators;
+    // Optional mapping for token URIs
+    mapping (uint256 => string) _tokenURIs;
+    string _name;
+    string _symbol;
+    // Base URI
+    string _baseURI;
   }
+
+
 
   function erc721FactoryStorage() internal pure returns (ERC721FactoryStorage storage es) {
     bytes32 position = ERC_721_FACTORY_STORAGE_POSITION;

@@ -103,10 +103,11 @@ contract MediaFacet is IMedia {
             ERC1155FactoryFacet(ms.diamondAddress).mint(
                 ms._tokenCounter,
                 msg.sender,
-                data.totalSupply
+                data.totalSupply,
+                data.uri
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender, data.uri);
             
         }
         ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
@@ -204,10 +205,11 @@ contract MediaFacet is IMedia {
             ERC1155FactoryFacet(ms.diamondAddress).mint(
                 ms._tokenCounter,
                 msg.sender,
-                data.totalSupply
+                data.totalSupply,
+                data.uri
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender);
+            ERC721FactoryFacet(ms.diamondAddress).mint(ms._tokenCounter, msg.sender, data.uri);
             
         }
         ms.nftToOwners[data._tokenAddress][msg.sender][ms._tokenCounter] = msg.sender;
@@ -380,7 +382,6 @@ contract MediaFacet is IMedia {
         returns (bool)
     {
         address _owner = msg.sender;
-        // TODO this is done now below, check either token is of type auction or not
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         Iutils.Ask memory _ask = IMarket(ms.diamondAddress)._getTokenAsks(_tokenID, _tokenAddress, _owner);
         Iutils.Bid memory _bid = IMarket(ms.diamondAddress)._getTokenBid(_tokenID, _tokenAddress, _owner);
@@ -475,10 +476,6 @@ contract MediaFacet is IMedia {
             "Media: Only Admin Can Set Commission Percentage!"
         );
         require(
-            _newCommissionPercentage > 0,
-            "Media: Invalid Commission Percentage"
-        );
-        require(
             _newCommissionPercentage <= 100,
             "Media: Commission Percentage Must Be Less Than 100!"
         );
@@ -514,36 +511,6 @@ contract MediaFacet is IMedia {
         return true;
     }
 
-    /**
-     * @dev See {IMedia}
-     */
-    function transfer(
-        uint256 _tokenID,
-        address _tokenAddress,
-        address _owner,
-        address _recipient,
-        uint256 _amount
-    ) external override whenTokenExist(_tokenID, _tokenAddress) returns (bool) {
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        MediaInfo memory mediainfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
-        if (mediainfo._isFungible) {
-            require(
-                ERC1155FactoryFacet(ms.diamondAddress).balanceOf(
-                    msg.sender,
-                    _tokenID
-                ) >= _amount,
-                "Media: You Don't have Enough Tokens!"
-            );
-        } else {
-            require(
-                ms.nftToOwners[_tokenAddress][_owner][_tokenID] == msg.sender,
-                "Media: Only Owner Can Transfer!"
-            );
-        }
-
-        _transfer(_tokenID, _tokenAddress, _owner, _recipient, _amount);
-        return true;
-    }
 
     function _transfer(
         uint256 _tokenID,
@@ -557,6 +524,13 @@ contract MediaFacet is IMedia {
         IMedia.MediaInfo memory tokenInfo = ms.tokenIDToToken[_tokenAddress][_owner][_tokenID];
 
         if (tokenInfo._isFungible) {
+            require(
+                ERC1155FactoryFacet(_tokenAddress).balanceOf(
+                    _owner,
+                    _tokenID
+                ) >= _amount,
+                "Media: You Don't have Enough Tokens!"
+            );
             ERC1155FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
@@ -564,6 +538,12 @@ contract MediaFacet is IMedia {
                 _amount
             );
         } else {
+             require(
+                ERC721Facet(_tokenAddress).balanceOf(
+                    _owner
+                ) >= _amount,
+                "Media: You Don't have Enough Tokens!"
+            );
             ERC721FactoryFacet(_tokenAddress).transferFrom(
                 _owner,
                 _recipient,
@@ -611,10 +591,3 @@ contract MediaFacet is IMedia {
         return IMarket(ms.diamondAddress)._getTokenBid(_tokenId, _tokenAddress, _owner);
     }
 }
-
-// --- Review Back
-// variable needs to be change _buyNowPrice, bidAmount e.t.c
-// verification of currentOwner and Owner thing
-// tokenId to token thing
-// verification of getTokensBid
-// share mappings accross the contract as we have now share storage libraries
