@@ -58,29 +58,32 @@ interface IMarket {
      */
     function setBid(
         uint256 _tokenID,
+        address _tokenAddress,
+        address _owner, 
         address _bidder,
-        Iutils.Bid calldata bid,
-        address _owner,
+        Iutils.Bid calldata _bid,
         address _creator
-    ) external returns (bool);
+    ) external payable returns (bool);
 
-    function removeBid(uint256 tokenId, address bidder) external;
+    function removeBid(uint256 tokenId, address _tokenAddress, address bidder) external;
 
-    function _setAsk(uint256 tokenId, Iutils.Ask calldata ask) external;
+    function _setAsk(uint256 tokenId, address _tokenAddress, address _owner, Iutils.Ask calldata ask) external;
 
     function endAuction(
-        uint256 _tokenID,
+         uint256 _tokenID,
+        address _tokenAddress,
         address _owner,
         address _creator
     ) external returns (bool);
 
     function acceptBid(
         uint256 _tokenID,
+        address _tokenAddress,
         address _owner,
         address _creator
     ) external returns (bool);
 
-    function _cancelAuction(uint256 _tokenID) external;
+    function _cancelAuction(uint256 _tokenID, address _tokenAddress, address _owner) external;
 
     /**
      * @notice This method is used to Divide the selling amount among Owner, Creator and Collaborators
@@ -104,7 +107,7 @@ interface IMarket {
         external
         returns (bool);
 
-    function _setMinimumBidIncrementPercentage(uint8 _minBidIncrementPercentage)
+    function _setMinimumBidIncrementPercentage(uint8 __minBidIncrementPercentage)
         external
         returns (bool);
 
@@ -140,12 +143,12 @@ interface IMarket {
         view
         returns (bool);
 
-    function _getTokenAsks(uint256 _tokenId)
+    function _getTokenAsks(uint256 _tokenId, address _tokenAddress, address _owner)
         external
         view
         returns (Iutils.Ask memory);
 
-    function _getTokenBid(uint256 _tokenId)
+    function _getTokenBid(uint256 _tokenId, address _tokenAddress, address _owner)
         external
         view
         returns (Iutils.Bid memory);

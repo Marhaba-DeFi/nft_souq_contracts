@@ -1,3 +1,4 @@
+const { ethers } = require('ethers');
 const { convertFromBigNumber } = require('../utils/util');
 
 /**
@@ -12,6 +13,20 @@ async function mintTokens(mediaContract, user, params) {
   const tx = await mediaContract.connect(user).mintToken(params);
   return tx;
 }
+
+/**
+ *
+ * @param {*} mediaContract
+ * @param {*} user
+ * @param {*} params
+ * @returns tx
+ */
+ async function mintTokenWithoutSale(mediaContract, user, params) {
+  // mint tokens and return the tx
+  const tx = await mediaContract.connect(user).mintTokenWithoutSale(params);
+  return tx;
+}
+
 /**
  *
  * @param {*} tx
@@ -42,12 +57,15 @@ async function approveTokens(contract, from, to, amount) {
  * @param {*} tokenId
  * @param {*} bidParams
  */
-async function setBid(mediaContract, from, tokenId, bidParams) {
+async function setBid(mediaContract, from, tokenId, bidParams, isEthers = false) {
   // send bid to Media Contract
+  // console.log('bidParams[3] ', ethers.utils.parseEther(convertFromBigNumber(bidParams[3])))
   return mediaContract.connect(from).setBid(
     tokenId, // _tokenCounter.toString(),
     bidParams,
-    { from: from.address },
+    { from: from.address,
+      value: isEthers ? bidParams[3] : 0
+    },
   );
 }
 /**
@@ -91,10 +109,11 @@ async function getBalanceNFT(contract, users) {
  * @param {*} tokenId
  * @returns
  */
-async function endAuction(mediaContract, from, tokenId) {
+async function endAuction(mediaContract, from, tokenId, tokenAddress) {
   // send bid to Media Contract
   return mediaContract.connect(from).endAuction(
     tokenId, // _tokenCounter.toString(),
+    tokenAddress,
     { from: from.address },
   );
 }
@@ -104,10 +123,12 @@ async function endAuction(mediaContract, from, tokenId) {
  * @param {*} tokenId
  * @returns
  */
-async function cancelAuction(mediaContract, from, tokenId) {
+async function cancelAuction(mediaContract, from, tokenId, tokenAddress, owner) {
   // send bid to Media Contract
   return mediaContract.connect(from).cancelAuction(
     tokenId, // _tokenCounter.toString(),
+    tokenAddress,
+    owner,
     { from: from.address },
   );
 }
@@ -135,6 +156,7 @@ async function addCurrency(mediaContract, from, tokenAddress) {
 
 module.exports = {
   mintTokens,
+  mintTokenWithoutSale,
   fetchMintEvent,
   approveTokens,
   setBid,

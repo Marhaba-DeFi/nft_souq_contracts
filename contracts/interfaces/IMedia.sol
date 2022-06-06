@@ -8,14 +8,13 @@ import "./Iutils.sol";
 interface IMedia {
     struct MediaInfo {
         uint256 _tokenID;
-        address _creator;
-        address _currentOwner;
         string _uri;
         string _title;
         bool _isFungible;
     }
 
-    struct MediaData {
+    struct MintAndSaleTokenData {
+        address _tokenAddress;
         string uri;
         string title;
         uint256 totalSupply;
@@ -27,6 +26,16 @@ interface IMedia {
         uint256 _reserveAmount;
         address currencyAsked;
         uint256 _duration;
+    }
+
+    struct MintData {
+        address _tokenAddress;
+        string uri;
+        string title;
+        uint256 totalSupply;
+        uint8 royaltyPoints;
+        address[] collaborators;
+        uint8[] percentages;
     }
 
     event MintToken(
@@ -59,13 +68,16 @@ interface IMedia {
      *
      * @return uint256 Token Id of the Minted Token
      */
-    function mintToken(MediaData calldata data) external returns (uint256);
+    function mintTokenWithoutSale(MintData calldata data) external returns (uint256);
 
-    function endAuction(uint256 _tokenID) external returns (bool);
+    function mintToken(MintAndSaleTokenData calldata data) external returns (uint256);
 
-    function acceptBid(uint256 _tokenID) external returns (bool);
 
-    function cancelAuction(uint256 _tokenID) external returns (bool);
+    function endAuction(uint256 _tokenID, address _tokenAddress) external returns (bool);
+
+    function acceptBid(uint256 _tokenID, address _tokenAddress, address _owner) external returns (bool);
+
+    function cancelAuction(uint256 _tokenID, address _tokenAddress, address _owner) external returns (bool);
 
     /**
      * @notice This method is used to get details of the Token with ID _tokenID
@@ -74,7 +86,7 @@ interface IMedia {
      *
      * @return Token Structure of the Token
      */
-    function getToken(uint256 _tokenID)
+    function getToken(uint256 _tokenID, address _tokenAddress, address _owner)
         external
         view
         returns (MediaInfo memory);
@@ -88,9 +100,10 @@ interface IMedia {
      */
     function setBid(uint256 _tokenID, Iutils.Bid calldata bid)
         external
+        payable
         returns (bool);
 
-    function removeBid(uint256 tokenId) external;
+    function removeBid(uint256 tokenId, address _tokenAddress) external;
 
     /**
      * @notice This method is used to Transfer Token
@@ -105,6 +118,8 @@ interface IMedia {
      */
     function transfer(
         uint256 _tokenID,
+        address _tokenAddress,
+        address _owner,
         address _recipient,
         uint256 _amount
     ) external returns (bool);

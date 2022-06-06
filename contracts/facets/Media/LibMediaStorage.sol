@@ -16,14 +16,14 @@ library LibMediaStorage {
     // TokenHash => tokenID
     mapping(bytes32 => uint256) _tokenHashToTokenID;
 
-    // tokenID => Owner
-    mapping(uint256 => address) nftToOwners;
+    // tokenAddress - owner - tokenID
+    mapping(address => mapping(address => mapping(uint256 => address))) nftToOwners;
 
-    // tokenID => Creator
-    mapping(uint256 => address) nftToCreators;
+    // tokenAddress - owner - tokenID - tokenQuantity
+    mapping(address => mapping(uint256 => address)) nftToCreators;
 
-    // tokenID => Token
-    mapping(uint256 => IMedia.MediaInfo) tokenIDToToken;
+    // tokenAddress - owner - tokenID - tokenQuantity = MediaInfo
+    mapping(address => mapping(address => mapping(uint256 => IMedia.MediaInfo))) tokenIDToToken;
   }
 
   function mediaStorage() internal pure returns (MediaStorage storage es) {
