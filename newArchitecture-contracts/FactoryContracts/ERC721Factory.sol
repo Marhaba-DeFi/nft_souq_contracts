@@ -7,7 +7,7 @@ import "@openzeppelin/contracts@4.6.0/token/ERC721/extensions/ERC721URIStorage.s
 
 
 contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage {
-    address private mediaContract;
+    address private _mediaContract;
     address public owner;
 
     string public baseURI = "";
@@ -15,17 +15,30 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage {
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
 
-    constructor (string memory _name, string memory _symbol, address _mediaContract) ERC721(_name, _symbol) {
+    constructor (string memory _name, string memory _symbol) ERC721(_name, _symbol) {
         owner = msg.sender;
-        mediaContract = _mediaContract;
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
     }
 
     modifier onlyOwner (){
-        require(msg.sender == owner || msg.sender == mediaContract, "Not the owner");
+        require(msg.sender == owner || msg.sender == _mediaContract, "Not the owner");
         _;
+    }
+
+    function configureMedia(address _mediaContractAddress) external {
+        // TODO: Only Owner Modifier
+        require(
+            _mediaContractAddress != address(0),
+            "ERC721Factory: Invalid Media Contract Address!"
+        );
+        require(
+            _mediaContract == address(0),
+            "ERC721Factory: Media Contract Already Configured!"
+        );
+
+        _mediaContract = _mediaContractAddress;
     }
 
     function _baseURI() internal view override returns (string memory) {
