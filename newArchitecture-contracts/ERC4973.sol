@@ -2,7 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
+import {IERC721Metadata} from "./Interfaces/IERC721Metadata.sol";
 import {IERC4973} from "./Interfaces/IERC4973.sol";
 
 
