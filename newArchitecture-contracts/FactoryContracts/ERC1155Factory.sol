@@ -30,14 +30,9 @@ contract Souq1155 is Pausable, ERC1155 {
     }
 
     function configureMedia(address _mediaContractAddress) external {
-        // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
             "ERC1155Factory: Invalid Media Contract Address!"
-        );
-        require(
-            _mediaContract == address(0),
-            "ERC1155Factory: Media Contract Already Configured!"
         );
 
         _mediaContract = _mediaContractAddress;
@@ -51,7 +46,7 @@ contract Souq1155 is Pausable, ERC1155 {
         return(uris[tokenId]);
     }
 
-    function mint(address _to, uint256 _id, uint256 _copies, string memory _uri)
+    function mint(address _to, string memory _uri, uint256 _id, uint256 _copies )
         public onlyOwner returns(uint256, uint256) {
         _mint(_to, _id, _copies, "");
         setURI(_id, _uri);

@@ -28,14 +28,9 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage {
     }
 
     function configureMedia(address _mediaContractAddress) external {
-        // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
             "ERC721Factory: Invalid Media Contract Address!"
-        );
-        require(
-            _mediaContract == address(0),
-            "ERC721Factory: Media Contract Already Configured!"
         );
 
         _mediaContract = _mediaContractAddress;
