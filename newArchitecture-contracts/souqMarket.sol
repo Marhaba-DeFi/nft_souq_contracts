@@ -72,13 +72,13 @@ contract SouqMarketPlace is EIP712{
     function _verifyBidderOffer(address _nftContAddress, uint256 _tokenID, address _currencyAddress, uint256 _bid, bytes memory _bidderSig, address _bidder) internal view returns (bool) {
 
         bytes32  _bidderOfferHash = hashOffer(_nftContAddress,_tokenID,_currencyAddress,_bid);
-        return (ECDSA.recover(_bidderOfferHash, _signature) == _bidder);
+        return (ECDSA.recover(_bidderOfferHash, _bidderSig) == _bidder);
     }
 
     function _verifySellerOffer(address _nftContAddress, uint256 _tokenID, address _currencyAddress, uint256 _bid, bytes memory _sellerSig, address _seller) internal view returns (bool) {
 
         bytes32  _sellerOfferHash = hashOffer(_nftContAddress,_tokenID,_currencyAddress,_bid);
-        return (ECDSA.recover(_sellerOfferHash, _signature) == _seller);
+        return (ECDSA.recover(_sellerOfferHash, _sellerSig) == _seller);
     }
 
     function acceptBid(
@@ -89,6 +89,7 @@ contract SouqMarketPlace is EIP712{
         address _bidder,
         uint256 _tokenID,
         uint256 _bid,
+        uint256 _copies,
         bytes memory _bidderSig,
         bytes memory _sellerSig
     ) public {
@@ -96,12 +97,12 @@ contract SouqMarketPlace is EIP712{
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-            ERC721 erc721 = ERC721(_collection);
-            erc721.transferFrom(_owner,_winner, _tokenIdAmount[0]);
+            ERC721 erc721 = ERC721(_nftContAddress);
+            erc721.transferFrom(_seller,_bidder, _tokenID);
         }
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
-            ERC1155 erc1155 = ERC1155(_collection);
-            erc1155.safeTransferFrom(_owner,_winner, _tokenIdAmount[0], _tokenIdAmount[1], "");
+            ERC1155 erc1155 = ERC1155(_nftContAddress);
+            erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
         }
     }
 
