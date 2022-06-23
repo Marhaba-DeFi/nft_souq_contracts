@@ -12,6 +12,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 contract SouqMarketPlace is EIP712{
     using SafeMath for uint256;
+    address private _mediaContract;
+    address public owner;
 
     struct Collaborators {
         address[] _collaborators;
@@ -20,12 +22,31 @@ contract SouqMarketPlace is EIP712{
     }
 
     constructor (string memory _name, string memory _version) EIP712 (_name, _version) {
-
+        owner = msg.sender;
     }
 
-    modifier onlyMediaCaller() {
-        require(msg.sender == _mediaContract, "Market: Unauthorized Access!");
+    modifier mediaOrOwner() {
+        require(msg.sender == owner || msg.sender == _mediaContract, "Not media nor owner");
         _;
+    }
+
+    modifier onlyOwner (){
+        require(msg.sender == owner, "Not the owner");
+        _;
+    }
+
+    modifier onlyMedia (){
+        require(msg.sender == _mediaContract, "Not the media contract");
+        _;
+    }
+
+    function configureMedia(address _mediaContractAddress) external onlyOwner {
+        require(
+            _mediaContractAddress != address(0),
+            "ERC721Factory: Invalid Media Contract Address!"
+        );
+
+        _mediaContract = _mediaContractAddress;
     }
 
     // nftContract => tokenID => creator's Royalty Percentage
@@ -44,21 +65,21 @@ contract SouqMarketPlace is EIP712{
         address _nftAddress,
         uint256 _tokenID,
         Collaborators calldata _collaborators
-    ) external override onlyMediaCaller {
+    ) external onlyMedia {
         tokenCollaborators[_nftAddress][_tokenID] = _collaborators;
     }
 
-    /**
-     * @dev See {IMarket}
-     */
-    function setRoyaltyPoints(address _nftAddress, uint256 _tokenID, uint8 _royaltyPoints)
-    external
-    override
-    onlyMediaCaller
-    {
-        tokenRoyaltyPercentage[_nftAddress][_tokenID] = _royaltyPoints;
-        emit RoyaltyUpdated(_tokenID, _royaltyPoints);
-    }
+    // /**
+    //  * @dev See {IMarket}
+    //  */
+    // function setRoyaltyPoints(address _nftAddress, uint256 _tokenID, uint8 _royaltyPoints)
+    // external
+    // override
+    // onlyMediaCaller
+    // {
+    //     tokenRoyaltyPercentage[_nftAddress][_tokenID] = _royaltyPoints;
+    //     emit RoyaltyUpdated(_tokenID, _royaltyPoints);
+    // }
 
     function hashOffer(address nftContAddress, uint256 tokenID, address currencyAddress, uint256 bid ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,address currencyAddress,uint256 bid)"),
@@ -92,7 +113,7 @@ contract SouqMarketPlace is EIP712{
         uint256 _copies,
         bytes memory _bidderSig,
         bytes memory _sellerSig
-    ) public {
+    ) public mediaOrOwner {
         require(_verifyBidderOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 

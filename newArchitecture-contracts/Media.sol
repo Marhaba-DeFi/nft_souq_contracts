@@ -69,6 +69,7 @@ contract Media is Ownable {
         address _bidder,
         uint256 _tokenID,
         uint256 _bid,
+        uint256 _copies,
         bytes memory _bidderSig,
         bytes memory _sellerSig
     ) public {
@@ -80,6 +81,7 @@ contract Media is Ownable {
 			_bidder,
 			_tokenID,
 			_bid,
+            _copies,
 			_bidderSig,
 			_sellerSig
 		);
