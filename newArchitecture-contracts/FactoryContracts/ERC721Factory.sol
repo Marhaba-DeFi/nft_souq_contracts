@@ -21,7 +21,7 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
-        setRoyaltyInfo(owner(), _royaltyFeesInBips);
+        setRoyaltyInfo(msg.sender, _royaltyFeesInBips);
     }
 
     modifier onlyOwner (){
