@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="71a6fa2c-67c0-4170-828b-3cb6a6890d94" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newArchitecture-contracts/souqMarket.sol" beforeDir="false" afterPath="$PROJECT_DIR$/newArchitecture-contracts/souqMarket.sol" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +49,9 @@
       <workItem from="1654744954322" duration="4000" />
       <workItem from="1654761502715" duration="15000" />
       <workItem from="1654761644851" duration="3105000" />
-      <workItem from="1655429249730" duration="12428000" />
+      <workItem from="1655429249730" duration="12619000" />
+      <workItem from="1655625191603" duration="379000" />
+      <workItem from="1655694796132" duration="15000" />
     </task>
     <servers />
   </component>

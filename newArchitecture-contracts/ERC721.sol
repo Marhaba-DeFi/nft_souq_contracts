@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts@4.6.0/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 
-contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
-    address private _mediaContract;
-    address public owner;
+contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, ERC2981 {
 
     string public baseURI = "";
 
@@ -17,25 +16,11 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
     mapping(uint256 => address) public _creators;
 
     constructor (string memory _name, string memory _symbol, uint96 _royaltyFeesInBips) ERC721(_name, _symbol) {
-        owner = msg.sender;
+
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
         setRoyaltyInfo(owner(), _royaltyFeesInBips);
-    }
-
-    modifier onlyOwner (){
-        require(msg.sender == owner || msg.sender == _mediaContract, "Not the owner");
-        _;
-    }
-
-    function configureMedia(address _mediaContractAddress) external onlyOwner {
-        require(
-            _mediaContractAddress != address(0),
-            "ERC721Factory: Invalid Media Contract Address!"
-        );
-
-        _mediaContract = _mediaContractAddress;
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -72,11 +57,11 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
         _setTokenURI(tokenId, _tokenURI);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981, ERC721Enumerable) returns (bool){
-        return super.supportsInterface(interfaceId);
-    }
-
     function setRoyaltyInfo(address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
         _setDefaultRoyalty(_receiver, _royaltyFeesInBips);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981, ERC721Enumerable) returns (bool){
+        return super.supportsInterface(interfaceId);
     }
 }
