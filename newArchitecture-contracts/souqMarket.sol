@@ -45,7 +45,7 @@ contract SouqMarketPlace is EIP712{
             _mediaContractAddress != address(0),
             "ERC721Factory: Invalid Media Contract Address!"
         );
-
+        // do not allow already configured!!!
         _mediaContract = _mediaContractAddress;
     }
 
@@ -81,6 +81,10 @@ contract SouqMarketPlace is EIP712{
     //     emit RoyaltyUpdated(_tokenID, _royaltyPoints);
     // }
 
+    function setApprovedCrypto(address _currencyAddress, bool approving) public onlyOwner {
+        approvedCurrency[_currencyAddress] = approving;
+    }
+
     function hashOffer(address nftContAddress, uint256 tokenID, address currencyAddress, uint256 bid ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,address currencyAddress,uint256 bid)"),
             nftContAddress,
@@ -114,7 +118,14 @@ contract SouqMarketPlace is EIP712{
         bytes memory _bidderSig,
         bytes memory _sellerSig
     ) public mediaOrOwner {
+
+        // Make sure the erc20 currency is approved by the admin
+        require(approvedCurrency[_currencyAddress] == true, "Not an approved cryptocurrency for bidding");
+
+        //Make sure the bidder signiture is valid
         require(_verifyBidderOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
+
+        //Make sure the seller signiture is valid
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
@@ -126,39 +137,4 @@ contract SouqMarketPlace is EIP712{
             erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
         }
     }
-
-//    function acceptBid(
-//        string memory _contractType,
-//        address _collection,
-//        address _winner,
-//        address _erc20Address,
-//        address _owner,
-//        address[] memory _rewardAccounts,
-//        uint256 _bidAmount,
-//        uint256[] memory _tokenIdAmount,
-//        uint256[] memory _shares,
-//        bytes memory _signatureOfBidder,
-//        bytes memory _signedRewardAccounts
-//    ) public {
-//        require(_verify(_collection, _tokenIdAmount[0], _bidAmount, _signatureOfBidder, _winner), "The winner signature is not valid");
-//        require (hasRole(SIGNER_ROLE,ECDSA.recover(keccak256(abi.encodePacked(_rewardAccounts)), _signedRewardAccounts)), "Reward accounts are not valid");
-//        {
-//            uint256 counter = _bidAmount;
-//            ERC20 erc20 = ERC20(_erc20Address);
-//            require(erc20.balanceOf(_winner) >= _bidAmount, "Not enough weth in the winner wallet");
-//            for(uint256 i = 0; i< _shares.length ; i++ ){
-//                require(counter >= _shares[i], "The shares are greater than bid amount");
-//                counter = counter - _shares[i];
-//                erc20.transferFrom(_winner, _rewardAccounts[i], _shares[i]);
-//            }
-//        }
-//        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-//            ERC721 erc721 = ERC721(_collection);
-//            erc721.transferFrom(_owner,_winner, _tokenIdAmount[0]);
-//        }
-//        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
-//            ERC1155 erc1155 = ERC1155(_collection);
-//            erc1155.safeTransferFrom(_owner,_winner, _tokenIdAmount[0], _tokenIdAmount[1], "");
-//        }
-//    }
 }
