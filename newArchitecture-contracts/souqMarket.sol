@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.6.0/token/common/ERC2981.sol";
+
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -129,6 +131,8 @@ contract SouqMarketPlace is EIP712{
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+            ERC2981 erc2981 = ERC2981(_nftContAddress);
+            uint256 royalityPercentage = erc2981.royaltyInfo(_tokenID, 100);
             ERC721 erc721 = ERC721(_nftContAddress);
             erc721.transferFrom(_seller,_bidder, _tokenID);
         }
@@ -137,4 +141,11 @@ contract SouqMarketPlace is EIP712{
             erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
         }
     }
+
+    function cryptoDistributor(address _currencyAddress, address _payer, address _payee, uint256 _royality) internal view returns (bool) {
+        
+        ERC20 erc20 = ERC20(_currencyAddress);
+
+    }
+
 }
