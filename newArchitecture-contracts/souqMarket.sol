@@ -19,8 +19,7 @@ contract SouqMarketPlace is EIP712{
 
     struct Collaborators {
         address[] _collaborators;
-        uint8[] _percentages;
-        bool _receiveCollabShare;
+        uint96[] _collabFraction;
     }
 
     constructor (string memory _name, string memory _version) EIP712 (_name, _version) {
@@ -131,8 +130,7 @@ contract SouqMarketPlace is EIP712{
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-            ERC2981 erc2981 = ERC2981(_nftContAddress);
-            uint256 royalityPercentage = erc2981.royaltyInfo(_tokenID, 100);
+            cryptoDistributor(_currencyAddress, _nftContAddress,_bidder,_seller, _bid, _tokenID );
             ERC721 erc721 = ERC721(_nftContAddress);
             erc721.transferFrom(_seller,_bidder, _tokenID);
         }
@@ -142,10 +140,23 @@ contract SouqMarketPlace is EIP712{
         }
     }
 
-    function cryptoDistributor(address _currencyAddress, address _payer, address _payee, uint256 _royality) internal view returns (bool) {
+    function cryptoDistributor(address _currencyAddress, address _nftContAddress, address _payer, address _payee, uint256 amount, uint256 _tokenID) internal view returns (bool) {
         
+        ERC2981 erc2981 = ERC2981(_nftContAddress);
         ERC20 erc20 = ERC20(_currencyAddress);
+        require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
+        erc20.transferFrom(_payer, erc2981.royaltyInfo(_tokenID, amount)[0], erc2981.royaltyInfo(_tokenID, amount)[1]);
+        uint256 remained = amount - royalityShare;
 
+        Collaborators storage _collab = tokenCollaborators[_nftContAddress];
+
+        for(uint256 i = 0; i< _collab._collaborators.length ; i++ ){
+            uint256 collabShare = (remained * _collab._collabFraction[i]) / 10000;
+            remained = remained - collabShare;
+            erc20.transferFrom(_payer, _collab._collaborators[i], collabShare);
+        }
+        erc20.transferFrom(_payer, payee, remained);
+        return true;
     }
 
 }
