@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts@4.6.0/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts@4.6.0/utils/cryptography/draft-EIP712.sol";
+import "@openzeppelin/contracts@4.6.0/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts@4.6.0/token/common/ERC2981.sol";
 
 
@@ -66,7 +66,7 @@ contract SouqMarketPlace is EIP712{
         address _nftAddress,
         uint256 _tokenID,
         Collaborators calldata _collaborators
-    ) external onlyMedia {
+    ) external mediaOrOwner {
         tokenCollaborators[_nftAddress][_tokenID] = _collaborators;
     }
 
@@ -130,32 +130,34 @@ contract SouqMarketPlace is EIP712{
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-            cryptoDistributor(_currencyAddress, _nftContAddress,_bidder,_seller, _bid, _tokenID );
+            cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, _bid, _tokenID );
             ERC721 erc721 = ERC721(_nftContAddress);
             erc721.transferFrom(_seller,_bidder, _tokenID);
         }
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+            cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, _bid, _tokenID );
             ERC1155 erc1155 = ERC1155(_nftContAddress);
             erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
         }
     }
 
-    function cryptoDistributor(address _currencyAddress, address _nftContAddress, address _payer, address _payee, uint256 amount, uint256 _tokenID) internal view returns (bool) {
+    function cryptoDistributor(address _currencyAddress, address _nftContAddress, address _payer, address _payee, uint256 amount, uint256 _tokenID) internal returns (bool) {
         
         ERC2981 erc2981 = ERC2981(_nftContAddress);
         ERC20 erc20 = ERC20(_currencyAddress);
         require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
-        erc20.transferFrom(_payer, erc2981.royaltyInfo(_tokenID, amount)[0], erc2981.royaltyInfo(_tokenID, amount)[1]);
-        uint256 remained = amount - royalityShare;
+        (address royalityAddress, uint256 royalityFee) = erc2981.royaltyInfo(_tokenID, amount);
+        erc20.transferFrom(_payer, royalityAddress, royalityFee);
+        uint256 remained = amount - royalityFee;
 
-        Collaborators storage _collab = tokenCollaborators[_nftContAddress];
+        Collaborators storage _collab = tokenCollaborators[_nftContAddress][_tokenID];
 
         for(uint256 i = 0; i< _collab._collaborators.length ; i++ ){
             uint256 collabShare = (remained * _collab._collabFraction[i]) / 10000;
             remained = remained - collabShare;
             erc20.transferFrom(_payer, _collab._collaborators[i], collabShare);
         }
-        erc20.transferFrom(_payer, payee, remained);
+        erc20.transferFrom(_payer, _payee, remained);
         return true;
     }
 
