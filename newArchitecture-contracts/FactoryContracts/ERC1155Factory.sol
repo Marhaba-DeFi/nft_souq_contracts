@@ -1,27 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-import "./ERC1155.sol";
+import "../ERC1155.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
-contract Souq1155 is Pausable, ERC1155 {
-    
+contract Souq1155 is Pausable, ERC1155, ERC2981 {
     address private _mediaContract;
     address public owner;
+    string public baseURI = "";
+    uint96 royaltyFeesInBips;
+    address royaltyAddress;
 
-    mapping(uint256 => address) nftToCreators;
-    mapping(uint256 => string) private uris;
+
+    // Mapping from token ID to creator address
+    mapping(uint256 => address) public _creators;
+    mapping (uint256 => string) tokenURIs;
 
     constructor(
         string memory _name, 
-        string memory _symbol
-    ) ERC1155(name, symbol) {
+        string memory _symbol,
+        uint96 _royaltyFeesInBips,
+        address _royaltyReciever
+    ) ERC1155(_name, _symbol) {
         owner = msg.sender;
-        bytes memory name = bytes(_name); // Uses memory
-        bytes memory symbol = bytes(_symbol);
-        require( name.length != 0 && symbol.length != 0, "ERC1155: Choose a name and symbol");
+        bytes memory name_ = bytes(_name); // Uses memory
+        bytes memory symbol_ = bytes(_symbol);
+        require( name_.length != 0 && symbol_.length != 0, "ERC1155: Choose a name and symbol");
+        setRoyaltyInfo(_royaltyReciever, _royaltyFeesInBips);
     }
 
     modifier onlyOwner (){
@@ -29,28 +35,54 @@ contract Souq1155 is Pausable, ERC1155 {
         _;
     }
 
-    function configureMedia(address _mediaContractAddress) external {
+    function configureMedia(address _mediaContractAddress) external onlyOwner{
+        // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
             "ERC1155Factory: Invalid Media Contract Address!"
+        );
+        require(
+            _mediaContract == address(0),
+            "ERC1155Factory: Media Contract Already Configured!"
         );
 
         _mediaContract = _mediaContractAddress;
     }
 
-    function setURI(uint256 tokenId, string memory newuri) public onlyOwner {
-        uris[tokenId] = newuri;
+    function _baseURI() internal view returns (string memory) {
+        return baseURI;
     }
 
-    function uri(uint256 tokenId) override public view returns (string memory) {
-        return(uris[tokenId]);
+    function _name() internal view virtual returns (string memory) {
+        return name;
     }
 
-    function mint(address _to, string memory _uri, uint256 _id, uint256 _copies )
+    function _symbol() internal view virtual returns (string memory) {
+        return symbol;
+    }
+
+    function _setBaseURI(string memory _baseuri)  internal virtual {
+        baseURI = _baseuri;
+    }
+
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner {
+        tokenURIs[tokenId] = _tokenURI;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function mint(address _to, uint256 _id, uint256 _copies, string memory _tokenURI, uint96 _royalty)
         public onlyOwner returns(uint256, uint256) {
         _mint(_to, _id, _copies, "");
-        setURI(_id, _uri);
-		nftToCreators[_id] = _to;
+        setTokenURI(_id, _tokenURI);
+        setTokenRoyaltyInfo(_id, _to, _royalty);
+		_creators[_id] = _to;
         return(_id, _copies);
     }
 
@@ -59,11 +91,27 @@ contract Souq1155 is Pausable, ERC1155 {
         return true;
     }
 
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-        public
-        onlyOwner
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        internal
+        whenNotPaused
+        override
     {
-        _mintBatch(to, ids, amounts, data);
-        //TODO: create mapping for nft Creators
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
+
+    function setRoyaltyInfo(address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
+        _setDefaultRoyalty(_receiver, _royaltyFeesInBips);
+    }
+
+    function setTokenRoyaltyInfo(uint256 _tokenId,address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
+        _setTokenRoyalty(_tokenId, _receiver, _royaltyFeesInBips);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981) returns (bool) {
+        return
+            interfaceId == type(IERC1155).interfaceId ||
+            interfaceId == type(IERC1155MetadataURI).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
 }
