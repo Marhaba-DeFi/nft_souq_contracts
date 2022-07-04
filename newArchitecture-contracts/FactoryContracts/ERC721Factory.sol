@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.6.0/token/common/ERC2981.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts@4.6.0/token/ERC721/extensions/ERC721URIStorage.sol";
 
 
 contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
@@ -21,11 +21,21 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
-        setRoyaltyInfo(msg.sender, _royaltyFeesInBips);
+        _setDefaultRoyalty(msg.sender, _royaltyFeesInBips);
+    }
+
+    modifier mediaOrOwner() {
+        require(msg.sender == owner || msg.sender == _mediaContract, "Not media nor owner");
+        _;
     }
 
     modifier onlyOwner (){
-        require(msg.sender == owner || msg.sender == _mediaContract, "Not the owner");
+        require(msg.sender == owner, "Not the owner");
+        _;
+    }
+
+    modifier onlyMedia (){
+        require(msg.sender == _mediaContract, "Not the media contract");
         _;
     }
 
@@ -42,14 +52,15 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
         return baseURI;
     }
 
-    function setBaseURI(string memory _baseuri)  public onlyOwner  {
+    function setBaseURI(string memory _baseuri)  public mediaOrOwner  {
         baseURI = _baseuri;
     }
 
-    function safeMint(address _to, string memory _uri, uint256 _id) public onlyOwner {
+    function safeMint(address _to, string memory _uri, uint256 _id, address royaltyReceiver, uint96 _tokenRoyaltyInBips) public mediaOrOwner {
         _safeMint(_to, _id);
         _setTokenURI(_id, _uri);
         _creators[_id] = _to ;
+        _setTokenRoyalty(_id, royaltyReceiver, _tokenRoyaltyInBips);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC721, ERC721Enumerable) {
@@ -74,9 +85,5 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981, ERC721Enumerable) returns (bool){
         return super.supportsInterface(interfaceId);
-    }
-
-    function setRoyaltyInfo(address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
-        _setDefaultRoyalty(_receiver, _royaltyFeesInBips);
     }
 }

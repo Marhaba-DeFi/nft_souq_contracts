@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.6.0/token/common/ERC2981.sol";
+
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -17,8 +19,7 @@ contract SouqMarketPlace is EIP712{
 
     struct Collaborators {
         address[] _collaborators;
-        uint8[] _percentages;
-        bool _receiveCollabShare;
+        uint96[] _collabFraction;
     }
 
     constructor (string memory _name, string memory _version) EIP712 (_name, _version) {
@@ -45,7 +46,7 @@ contract SouqMarketPlace is EIP712{
             _mediaContractAddress != address(0),
             "ERC721Factory: Invalid Media Contract Address!"
         );
-
+        // do not allow already configured!!!
         _mediaContract = _mediaContractAddress;
     }
 
@@ -81,6 +82,10 @@ contract SouqMarketPlace is EIP712{
     //     emit RoyaltyUpdated(_tokenID, _royaltyPoints);
     // }
 
+    function setApprovedCrypto(address _currencyAddress, bool approving) public onlyOwner {
+        approvedCurrency[_currencyAddress] = approving;
+    }
+
     function hashOffer(address nftContAddress, uint256 tokenID, address currencyAddress, uint256 bid ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,address currencyAddress,uint256 bid)"),
             nftContAddress,
@@ -114,10 +119,18 @@ contract SouqMarketPlace is EIP712{
         bytes memory _bidderSig,
         bytes memory _sellerSig
     ) public mediaOrOwner {
+
+        // Make sure the erc20 currency is approved by the admin
+        require(approvedCurrency[_currencyAddress] == true, "Not an approved cryptocurrency for bidding");
+
+        //Make sure the bidder signiture is valid
         require(_verifyBidderOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
+
+        //Make sure the seller signiture is valid
         require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+            cryptoDistributor(_currencyAddress, _nftContAddress,_bidder,_seller, _bid, _tokenID );
             ERC721 erc721 = ERC721(_nftContAddress);
             erc721.transferFrom(_seller,_bidder, _tokenID);
         }
@@ -127,38 +140,23 @@ contract SouqMarketPlace is EIP712{
         }
     }
 
-//    function acceptBid(
-//        string memory _contractType,
-//        address _collection,
-//        address _winner,
-//        address _erc20Address,
-//        address _owner,
-//        address[] memory _rewardAccounts,
-//        uint256 _bidAmount,
-//        uint256[] memory _tokenIdAmount,
-//        uint256[] memory _shares,
-//        bytes memory _signatureOfBidder,
-//        bytes memory _signedRewardAccounts
-//    ) public {
-//        require(_verify(_collection, _tokenIdAmount[0], _bidAmount, _signatureOfBidder, _winner), "The winner signature is not valid");
-//        require (hasRole(SIGNER_ROLE,ECDSA.recover(keccak256(abi.encodePacked(_rewardAccounts)), _signedRewardAccounts)), "Reward accounts are not valid");
-//        {
-//            uint256 counter = _bidAmount;
-//            ERC20 erc20 = ERC20(_erc20Address);
-//            require(erc20.balanceOf(_winner) >= _bidAmount, "Not enough weth in the winner wallet");
-//            for(uint256 i = 0; i< _shares.length ; i++ ){
-//                require(counter >= _shares[i], "The shares are greater than bid amount");
-//                counter = counter - _shares[i];
-//                erc20.transferFrom(_winner, _rewardAccounts[i], _shares[i]);
-//            }
-//        }
-//        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-//            ERC721 erc721 = ERC721(_collection);
-//            erc721.transferFrom(_owner,_winner, _tokenIdAmount[0]);
-//        }
-//        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
-//            ERC1155 erc1155 = ERC1155(_collection);
-//            erc1155.safeTransferFrom(_owner,_winner, _tokenIdAmount[0], _tokenIdAmount[1], "");
-//        }
-//    }
+    function cryptoDistributor(address _currencyAddress, address _nftContAddress, address _payer, address _payee, uint256 amount, uint256 _tokenID) internal view returns (bool) {
+        
+        ERC2981 erc2981 = ERC2981(_nftContAddress);
+        ERC20 erc20 = ERC20(_currencyAddress);
+        require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
+        erc20.transferFrom(_payer, erc2981.royaltyInfo(_tokenID, amount)[0], erc2981.royaltyInfo(_tokenID, amount)[1]);
+        uint256 remained = amount - royalityShare;
+
+        Collaborators storage _collab = tokenCollaborators[_nftContAddress];
+
+        for(uint256 i = 0; i< _collab._collaborators.length ; i++ ){
+            uint256 collabShare = (remained * _collab._collabFraction[i]) / 10000;
+            remained = remained - collabShare;
+            erc20.transferFrom(_payer, _collab._collaborators[i], collabShare);
+        }
+        erc20.transferFrom(_payer, payee, remained);
+        return true;
+    }
+
 }
