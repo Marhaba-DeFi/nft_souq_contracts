@@ -27,7 +27,7 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         bytes memory name_ = bytes(_name); // Uses memory
         bytes memory symbol_ = bytes(_symbol);
         require( name_.length != 0 && symbol_.length != 0, "ERC1155: Choose a name and symbol");
-        setRoyaltyInfo(_royaltyReciever, _royaltyFeesInBips);
+        _setDefaultRoyalty(_royaltyReciever, _royaltyFeesInBips);
     }
 
     modifier onlyOwner (){
@@ -97,10 +97,6 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         override
     {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-    }
-
-    function setRoyaltyInfo(address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
-        _setDefaultRoyalty(_receiver, _royaltyFeesInBips);
     }
 
     function setTokenRoyaltyInfo(uint256 _tokenId,address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
