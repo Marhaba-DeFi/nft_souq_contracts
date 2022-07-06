@@ -34,7 +34,9 @@ contract Media is Ownable {
             string memory _contractType,
             address _collection,
             uint256 _copies,
-            string memory _uri
+            string memory _uri,
+            address _royaltyReceiver,
+            uint96 _tokenRoyaltyInBips
         )
         external
         returns (uint256)
@@ -47,14 +49,18 @@ contract Media is Ownable {
                 _to,
 				_uri,
                 _id,
-                _copies
+                _copies,
+                _royaltyReceiver,
+                _tokenRoyaltyInBips
                 
             );
         } else {
             SouqERC721(_collection).safeMint(
                 _to, 
                 _uri, 
-                _id
+                _id,
+                _royaltyReceiver,
+                _tokenRoyaltyInBips
             );
         }
 
@@ -66,7 +72,7 @@ contract Media is Ownable {
       function _setCollaborators (address _nftAddress, uint256 _tokenID, Collaborators calldata _collaborators) public {
 
         require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
-        setCollaborators(_nftAddress, _tokenID, _collaborators);
+        SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators);
       
       }
 
@@ -74,12 +80,12 @@ contract Media is Ownable {
 
     function approveMarketFor721 (address _nftAddress) public {
 
-        SouqERC721(_nftAddress).setApproveForAll (marketContract, true);
+        SouqERC721(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
     function approveMarketFor1155 (address _nftAddress) public {
 
-        Souq1155(_nftAddress).setApproveForAll (marketContract, true);
+        Souq1155(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
 	//AcceptBid() 

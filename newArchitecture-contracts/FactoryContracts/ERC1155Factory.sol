@@ -71,11 +71,11 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         _unpause();
     }
 
-    function mint(address _to, uint256 _id, uint256 _copies, string memory _tokenURI, uint96 _royalty)
+    function mint(address _to, string memory _tokenURI, uint256 _id, uint256 _copies, address royaltyReceiver, uint96 _tokenRoyaltyInBips)
         public onlyOwner returns(uint256, uint256) {
         _mint(_to, _id, _copies, "");
         setTokenURI(_id, _tokenURI);
-        setTokenRoyaltyInfo(_id, _to, _royalty);
+        setTokenRoyaltyInfo(_id, royaltyReceiver, _tokenRoyaltyInBips);
 		_creators[_id] = _to;
         return(_id, _copies);
     }
