@@ -15,12 +15,12 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
 
-    constructor (string memory _name, string memory _symbol, uint96 _royaltyFeesInBips) ERC721(_name, _symbol) {
+    constructor (string memory _name, string memory _symbol, address royaltyReceiver, uint96 _royaltyFeesInBips) ERC721(_name, _symbol) {
         owner = msg.sender;
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
-        _setDefaultRoyalty(msg.sender, _royaltyFeesInBips);
+        _setDefaultRoyalty(royaltyReceiver, _royaltyFeesInBips);
     }
 
     modifier mediaOrOwner() {
