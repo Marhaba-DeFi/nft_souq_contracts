@@ -18,8 +18,8 @@ contract SouqMarketPlace is EIP712{
     address public owner;
 
     struct Collaborators {
-        address[] _collaborators;
-        uint96[] _collabFraction;
+        address[] collaborators;
+        uint96[] collabFraction;
     }
 
     constructor (string memory _name, string memory _version) EIP712 (_name, _version) {
@@ -65,9 +65,15 @@ contract SouqMarketPlace is EIP712{
     function setCollaborators(
         address _nftAddress,
         uint256 _tokenID,
-        Collaborators calldata _collaborators
+        address[] calldata _collaborators,  
+        uint96[] calldata _collabFraction
     ) external mediaOrOwner {
-        tokenCollaborators[_nftAddress][_tokenID] = _collaborators;
+
+        Collaborators memory collabStruct;
+        collabStruct.collaborators = _collaborators;
+        collabStruct.collabFraction = _collabFraction;
+
+        tokenCollaborators[_nftAddress][_tokenID] = collabStruct;
     }
 
     // /**
@@ -90,6 +96,7 @@ contract SouqMarketPlace is EIP712{
         return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,uint256 copies,address currencyAddress,uint256 bid)"),
             nftContAddress,
             tokenID,
+            copies,
             currencyAddress,
             bid
             )));
@@ -152,13 +159,12 @@ contract SouqMarketPlace is EIP712{
 
         Collaborators storage _collab = tokenCollaborators[_nftContAddress][_tokenID];
 
-        for(uint256 i = 0; i< _collab._collaborators.length ; i++ ){
-            uint256 collabShare = (remained * _collab._collabFraction[i]) / 10000;
+        for(uint256 i = 0; i< _collab.collaborators.length ; i++ ){
+            uint256 collabShare = (remained * _collab.collabFraction[i]) / 10000;
             remained = remained - collabShare;
-            erc20.transferFrom(_payer, _collab._collaborators[i], collabShare);
+            erc20.transferFrom(_payer, _collab.collaborators[i], collabShare);
         }
         erc20.transferFrom(_payer, _payee, remained);
         return true;
     }
-
 }

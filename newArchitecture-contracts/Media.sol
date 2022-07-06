@@ -69,10 +69,10 @@ contract Media is Ownable {
 
 	//SetCollaborators() to set collaborators in marketplace contract
 
-      function _setCollaborators (address _nftAddress, uint256 _tokenID, Collaborators calldata _collaborators) public {
+      function _setCollaborators (address _nftAddress, uint256 _tokenID, address[] calldata _collaborators,  uint96[] calldata _collabFraction) public {
 
         require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
-        SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators);
+        SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators, _collabFraction);
       
       }
 
