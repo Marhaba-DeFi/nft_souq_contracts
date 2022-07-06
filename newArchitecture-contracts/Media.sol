@@ -66,7 +66,7 @@ contract Media is Ownable {
       function _setCollaborators (address _nftAddress, uint256 _tokenID, Collaborators calldata _collaborators) public {
 
         require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
-        setCollaborators(_nftAddress, _tokenID, _collaborators);
+        SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators);
       
       }
 
