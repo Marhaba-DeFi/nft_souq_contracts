@@ -10,8 +10,6 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
     address private _mediaContract;
     address public owner;
 
-    string public baseURI = "";
-
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
 
@@ -45,14 +43,6 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981 {
         );
 
         _mediaContract = _mediaContractAddress;
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    function setBaseURI(string memory _baseuri)  public mediaOrOwner  {
-        baseURI = _baseuri;
     }
 
     function safeMint(address _to, string memory _uri, uint256 _id, address royaltyReceiver, uint96 _tokenRoyaltyInBips) public mediaOrOwner {

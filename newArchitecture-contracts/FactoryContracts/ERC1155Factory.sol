@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 contract Souq1155 is Pausable, ERC1155, ERC2981 {
     address private _mediaContract;
     address public owner;
-    string public baseURI = "";
     uint96 royaltyFeesInBips;
     address royaltyAddress;
 
@@ -49,10 +48,6 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         _mediaContract = _mediaContractAddress;
     }
 
-    function _baseURI() internal view returns (string memory) {
-        return baseURI;
-    }
-
     function _name() internal view virtual returns (string memory) {
         return name;
     }
@@ -61,12 +56,11 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         return symbol;
     }
 
-    function _setBaseURI(string memory _baseuri)  internal virtual {
-        baseURI = _baseuri;
-    }
-
     function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner {
         tokenURIs[tokenId] = _tokenURI;
+    }
+	function uri(uint256 tokenId) override public view returns (string memory) {
+        return(tokenURIs[tokenId]);
     }
 
     function pause() public onlyOwner {
