@@ -74,12 +74,12 @@ contract Media is Ownable {
 
     function approveMarketFor721 (address _nftAddress) public {
 
-        SouqERC721(_nftAddress).setApproveForAll (marketContract, true);
+        SouqERC721(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
     function approveMarketFor1155 (address _nftAddress) public {
 
-        Souq1155(_nftAddress).setApproveForAll (marketContract, true);
+        Souq1155(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
 	//AcceptBid() 
