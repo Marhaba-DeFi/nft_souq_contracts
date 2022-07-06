@@ -86,8 +86,8 @@ contract SouqMarketPlace is EIP712{
         approvedCurrency[_currencyAddress] = approving;
     }
 
-    function hashOffer(address nftContAddress, uint256 tokenID, address currencyAddress, uint256 bid ) internal view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,address currencyAddress,uint256 bid)"),
+    function hashOffer(address nftContAddress, uint256 tokenID, uint256 copies, address currencyAddress, uint256 bid ) internal view returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(keccak256("Bid(address nftContAddress,uint256 tokenID,uint256 copies,address currencyAddress,uint256 bid)"),
             nftContAddress,
             tokenID,
             currencyAddress,
@@ -95,15 +95,15 @@ contract SouqMarketPlace is EIP712{
             )));
     }
 
-    function _verifyBidderOffer(address _nftContAddress, uint256 _tokenID, address _currencyAddress, uint256 _bid, bytes memory _bidderSig, address _bidder) internal view returns (bool) {
+    function _verifyBidderOffer(address _nftContAddress, uint256 _tokenID, uint256 _copies, address _currencyAddress, uint256 _bid, bytes memory _bidderSig, address _bidder) internal view returns (bool) {
 
-        bytes32  _bidderOfferHash = hashOffer(_nftContAddress,_tokenID,_currencyAddress,_bid);
+        bytes32  _bidderOfferHash = hashOffer(_nftContAddress,_tokenID,_copies,_currencyAddress,_bid);
         return (ECDSA.recover(_bidderOfferHash, _bidderSig) == _bidder);
     }
 
-    function _verifySellerOffer(address _nftContAddress, uint256 _tokenID, address _currencyAddress, uint256 _bid, bytes memory _sellerSig, address _seller) internal view returns (bool) {
+    function _verifySellerOffer(address _nftContAddress, uint256 _tokenID, uint256 _copies, address _currencyAddress, uint256 _bid, bytes memory _sellerSig, address _seller) internal view returns (bool) {
 
-        bytes32  _sellerOfferHash = hashOffer(_nftContAddress,_tokenID,_currencyAddress,_bid);
+        bytes32  _sellerOfferHash = hashOffer(_nftContAddress,_tokenID,_copies,_currencyAddress,_bid);
         return (ECDSA.recover(_sellerOfferHash, _sellerSig) == _seller);
     }
 
@@ -124,10 +124,10 @@ contract SouqMarketPlace is EIP712{
         require(approvedCurrency[_currencyAddress] == true, "Not an approved cryptocurrency for bidding");
 
         //Make sure the bidder signiture is valid
-        require(_verifyBidderOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
+        require(_verifyBidderOffer(_nftContAddress, _tokenID, _copies,  _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
 
         //Make sure the seller signiture is valid
-        require(_verifySellerOffer(_nftContAddress, _tokenID, _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
+        require(_verifySellerOffer(_nftContAddress, _tokenID, _copies,  _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
             cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, _bid, _tokenID );

@@ -14,6 +14,11 @@ contract Media is Ownable {
 
 	address marketContract;
 
+    struct Collaborators {
+        address[] _collaborators;
+        uint96[] _collabFraction;
+    }
+
 	function configureMarketPlace(address _marketContract) external onlyOwner {
         require(
             _marketContract != address(0),
@@ -58,7 +63,24 @@ contract Media is Ownable {
 
 	//SetCollaborators() to set collaborators in marketplace contract
 
+      function _setCollaborators (address _nftAddress, uint256 _tokenID, Collaborators calldata _collaborators) public {
+
+        require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
+        setCollaborators(_nftAddress, _tokenID, _collaborators);
+      
+      }
+
 	//Authorise marketplace contract for all NFT tokens and ERC20 tokens
+
+    function approveMarketFor721 (address _nftAddress) public {
+
+        SouqERC721(_nftAddress).setApproveForAll (marketContract, true);
+    }
+
+    function approveMarketFor1155 (address _nftAddress) public {
+
+        Souq1155(_nftAddress).setApproveForAll (marketContract, true);
+    }
 
 	//AcceptBid() 
 	function acceptBid(
