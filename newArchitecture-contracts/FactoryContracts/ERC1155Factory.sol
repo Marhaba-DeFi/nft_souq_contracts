@@ -17,24 +17,27 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
     mapping (uint256 => string) tokenURIs;
 
     constructor(
-        string memory _name, 
-        string memory _symbol,
+        string memory name_, 
+        string memory symbol_,
         uint96 _royaltyFeesInBips,
         address _royaltyReciever
-    ) ERC1155(_name, _symbol) {
+    ) ERC1155(name_, symbol_) 
+	{
         owner = msg.sender;
-        bytes memory name_ = bytes(_name); // Uses memory
-        bytes memory symbol_ = bytes(_symbol);
-        require( name_.length != 0 && symbol_.length != 0, "ERC1155: Choose a name and symbol");
+        bytes memory validateName = bytes(name_); // Uses memory
+        bytes memory validateSymbol = bytes(symbol_);
+        require( validateName.length != 0 && validateSymbol.length != 0, "ERC1155: Choose a name and symbol");
         _setDefaultRoyalty(_royaltyReciever, _royaltyFeesInBips);
     }
 
-    modifier onlyOwner (){
+    modifier onlyOwner ()
+	{
         require(msg.sender == owner || msg.sender == _mediaContract, "Not the owner");
         _;
     }
 
-    function configureMedia(address _mediaContractAddress) external onlyOwner{
+    function configureMedia(address _mediaContractAddress) external onlyOwner
+	{
         // TODO: Only Owner Modifier
         require(
             _mediaContractAddress != address(0),
@@ -48,18 +51,22 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         _mediaContract = _mediaContractAddress;
     }
 
-    function _name() internal view virtual returns (string memory) {
+    function _name() internal view virtual returns (string memory) 
+	{
         return name;
     }
 
-    function _symbol() internal view virtual returns (string memory) {
+    function _symbol() internal view virtual returns (string memory) 
+	{
         return symbol;
     }
 
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner {
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner 
+	{
         tokenURIs[tokenId] = _tokenURI;
     }
-	function uri(uint256 tokenId) override public view returns (string memory) {
+	function uri(uint256 tokenId) override public view returns (string memory) 
+	{
         return(tokenURIs[tokenId]);
     }
 
@@ -72,7 +79,8 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
     }
 
     function mint(address _to, string memory _tokenURI, uint256 _id, uint256 _copies, address royaltyReceiver, uint96 _tokenRoyaltyInBips)
-        public onlyOwner returns(uint256, uint256) {
+        public onlyOwner returns(uint256, uint256) 
+	{
         _mint(_to, _id, _copies, "");
         setTokenURI(_id, _tokenURI);
         setTokenRoyaltyInfo(_id, royaltyReceiver, _tokenRoyaltyInBips);
@@ -80,24 +88,53 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         return(_id, _copies);
     }
 
-    function transfer(address _owner, address _reciever, uint256 _tokenId, uint256 _copies) external returns (bool){
+    function burn(address _from, uint256 _tokenId, uint256 _amount) external onlyOwner  
+	{
+        _burn(_from, _tokenId, _amount);
+        delete _creators[_tokenId];
+    }
+
+    function transfer(
+		address _owner, 
+		address _reciever, 
+		uint256 _tokenId, 
+		uint256 _copies
+	) external returns (bool)
+	{
         safeTransferFrom(_owner, _reciever, _tokenId, _copies, "");
         return true;
     }
 
-    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+    function _beforeTokenTransfer(
+		address operator, 
+		address from, 
+		address to, 
+		uint256[] memory ids, 
+		uint256[] memory amounts, 
+		bytes memory data
+	)
         internal
-        whenNotPaused
         override
     {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
-    function setTokenRoyaltyInfo(uint256 _tokenId,address _receiver, uint96 _royaltyFeesInBips) public onlyOwner {
+    function setTokenRoyaltyInfo(
+		uint256 _tokenId,
+		address _receiver, 
+		uint96 _royaltyFeesInBips
+	) public onlyOwner 
+	{
         _setTokenRoyalty(_tokenId, _receiver, _royaltyFeesInBips);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) 
+		public 
+		view 
+		virtual 
+		override(ERC1155, ERC2981) 
+		returns (bool) 
+	{
         return
             interfaceId == type(IERC1155).interfaceId ||
             interfaceId == type(IERC1155MetadataURI).interfaceId ||

@@ -19,7 +19,8 @@ contract Media is Ownable {
         uint96[] _collabFraction;
     }
 
-	function configureMarketPlace(address _marketContract) external onlyOwner {
+	function configureMarketPlace(address _marketContract) external onlyOwner 
+	{
         require(
             _marketContract != address(0),
             "Media Contract: Invalid MarketPlace Contract Address!"
@@ -69,22 +70,28 @@ contract Media is Ownable {
 
 	//SetCollaborators() to set collaborators in marketplace contract
 
-      function _setCollaborators (address _nftAddress, uint256 _tokenID, address[] calldata _collaborators,  uint96[] calldata _collabFraction) public {
-
+	function _setCollaborators (
+		address _nftAddress, 
+		uint256 _tokenID, 
+		address[] calldata _collaborators,  
+		uint96[] calldata _collabFraction
+		) 
+		public 
+	{
         require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
         SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators, _collabFraction);
       
-      }
+    }
 
 	//Authorise marketplace contract for all NFT tokens and ERC20 tokens
 
-    function approveMarketFor721 (address _nftAddress) public {
-
+    function approveMarketFor721 (address _nftAddress) public 
+	{
         SouqERC721(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
-    function approveMarketFor1155 (address _nftAddress) public {
-
+    function approveMarketFor1155 (address _nftAddress) public 
+	{
         Souq1155(_nftAddress).setApprovalForAll(marketContract, true);
     }
 
@@ -100,7 +107,8 @@ contract Media is Ownable {
         uint256 _copies,
         bytes memory _bidderSig,
         bytes memory _sellerSig
-    ) public {
+    ) public 
+	{
 		SouqMarketPlace(marketContract).acceptBid(
 			_contractType,
 			_nftContAddress,
