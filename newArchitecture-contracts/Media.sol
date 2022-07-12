@@ -29,6 +29,16 @@ contract Media is Ownable {
         marketContract = _marketContract;
     }
 
+    function pauseSouq721(address _nftAddress) public onlyOwner
+    {
+        SouqERC721(_nftAddress).pause();
+    }
+
+    function pauseSouq1155(address _nftAddress) public onlyOwner
+    {
+        Souq1155(_nftAddress).pause();
+    }
+
     function mintToken(
             address _to,
             uint256 _id,
@@ -69,6 +79,7 @@ contract Media is Ownable {
     }
 
 	//SetCollaborators() to set collaborators in marketplace contract
+    //TODO: research on how to set the collaborators for 1155. 
 
 	function _setCollaborators (
 		address _nftAddress, 
@@ -78,7 +89,7 @@ contract Media is Ownable {
 		) 
 		public 
 	{
-        require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender, "Only token owner could call this function");
+        require(SouqERC721(_nftAddress).ownerOf(_tokenID) == msg.sender || Souq1155(_nftAddress).balanceOf(msg.sender, _tokenID) != 0, "Only token owner could call this function");
         SouqMarketPlace(marketContract).setCollaborators(_nftAddress, _tokenID, _collaborators, _collabFraction);
       
     }
