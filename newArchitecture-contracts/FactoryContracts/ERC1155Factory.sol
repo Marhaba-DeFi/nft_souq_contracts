@@ -61,10 +61,14 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         return symbol;
     }
 
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyOwner 
+/**
+* @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
+ */
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) internal 
 	{
         tokenURIs[tokenId] = _tokenURI;
     }
+
 	function uri(uint256 tokenId) override public view returns (string memory) 
 	{
         return(tokenURIs[tokenId]);
@@ -90,8 +94,9 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
 
     function burn(address _from, uint256 _tokenId, uint256 _amount) external onlyOwner  
 	{
+        require(balanceOf(msg.sender, _tokenId) != 0, "ERC1155: Not the owner of this token");
+        require(balanceOf(msg.sender, _tokenId) >= _amount, "ERC1155: Not enough quantity to burn");
         _burn(_from, _tokenId, _amount);
-        delete _creators[_tokenId];
     }
 
     function transfer(
@@ -101,6 +106,7 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
 		uint256 _copies
 	) external returns (bool)
 	{
+        require(balanceOf(_owner, _tokenId) >= _copies, "ERC1155: Not enough copies");
         safeTransferFrom(_owner, _reciever, _tokenId, _copies, "");
         return true;
     }
