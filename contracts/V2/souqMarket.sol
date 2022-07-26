@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts@4.6.0/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts@4.6.0/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts@4.6.0/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts@4.6.0/utils/cryptography/draft-EIP712.sol";
-import "@openzeppelin/contracts@4.6.0/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts@4.6.0/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts@4.6.0/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract SouqMarketPlace is EIP712{
