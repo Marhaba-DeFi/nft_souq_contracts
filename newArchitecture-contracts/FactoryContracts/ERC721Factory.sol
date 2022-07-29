@@ -81,6 +81,8 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Paus
 
     /**
     * @dev This function is used fot minting.
+	* Mapping of Creators to Token Id
+	* Set Royalty. If Royalty is not provided, then _tokenRoyaltyInBips should be zero. 
     */
     function safeMint(
 		address _to, 

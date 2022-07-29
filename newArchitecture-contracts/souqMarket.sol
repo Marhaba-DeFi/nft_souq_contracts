@@ -15,6 +15,11 @@ contract SouqMarketPlace is EIP712{
     address private _mediaContract;
     address public owner;
 
+    address private _adminAddress;
+
+    // To store commission percentage for each mint
+    uint8 private _adminCommissionPercentage;
+
     struct Collaborators {
         address[] collaborators;
         uint96[] collabFraction;
@@ -64,9 +69,54 @@ contract SouqMarketPlace is EIP712{
     // Approved erc20 tokens only accessible by the admin of souq
     mapping(address => bool) private approvedCurrency;
 
-    /**
-     * @dev See {IMarket}
-     */
+    function setAdminAddress(address _newAdminAddress)
+        external
+        onlyOwner
+        returns (bool)
+    {
+        require(
+            _newAdminAddress != address(0),
+            "Market: Invalid Admin Address!"
+        );
+        require(
+            _adminAddress == address(0),
+            "Market: Admin Already Configured!"
+        );
+
+        _adminAddress = _newAdminAddress;
+        //emit AdminUpdated(_adminAddress);
+        return true;
+    }
+
+    function getAdminAddress()
+        external
+        view
+        onlyOwner
+        returns (address)
+    {
+        return _adminAddress;
+    }
+
+    function setCommissionPercentage(uint8 _commissionPercentage)
+        external
+        mediaOrOwner
+        returns (bool)
+    {
+        _adminCommissionPercentage = _commissionPercentage;
+        // emit CommissionUpdated(_adminCommissionPercentage);
+        return true;
+    }
+
+    function getCommissionPercentage()
+        external
+        view
+        mediaOrOwner
+        returns (uint8)
+    {
+        return _adminCommissionPercentage;
+    }
+
+
     function setCollaborators(
         address _nftAddress,
         uint256 _tokenID,
@@ -81,18 +131,6 @@ contract SouqMarketPlace is EIP712{
 
         tokenCollaborators[_nftAddress][_tokenID] = collabStruct;
     }
-
-    // /**
-    //  * @dev See {IMarket}
-    //  */
-    // function setRoyaltyPoints(address _nftAddress, uint256 _tokenID, uint8 _royaltyPoints)
-    // external
-    // override
-    // onlyMediaCaller
-    // {
-    //     tokenRoyaltyPercentage[_nftAddress][_tokenID] = _royaltyPoints;
-    //     emit RoyaltyUpdated(_tokenID, _royaltyPoints);
-    // }
 
     function setApprovedCrypto(
 		address _currencyAddress, 
@@ -193,6 +231,7 @@ contract SouqMarketPlace is EIP712{
         ERC2981 erc2981 = ERC2981(_nftContAddress);
         ERC20 erc20 = ERC20(_currencyAddress);
         require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
+        /** TODO: cut Admin fee */
         (address royalityAddress, uint256 royalityFee) = erc2981.royaltyInfo(_tokenID, amount);
         erc20.transferFrom(_payer, royalityAddress, royalityFee);
         uint256 remained = amount - royalityFee;

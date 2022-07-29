@@ -43,7 +43,7 @@ contract Media is Ownable {
             address _to,
             uint256 _id,
             string memory _contractType,
-            address _collection,
+            address _tokenContract,
             uint256 _copies,
             string memory _uri,
             address _royaltyReceiver,
@@ -56,7 +56,7 @@ contract Media is Ownable {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            Souq1155(_collection).mint(
+            Souq1155(_tokenContract).mint(
                 _to,
 				_uri,
                 _id,
@@ -66,7 +66,7 @@ contract Media is Ownable {
                 
             );
         } else {
-            SouqERC721(_collection).safeMint(
+            SouqERC721(_tokenContract).safeMint(
                 _to, 
                 _uri, 
                 _id,
@@ -96,14 +96,41 @@ contract Media is Ownable {
 
 	//Authorise marketplace contract for all NFT tokens and ERC20 tokens
 
-    function approveMarketFor721 (address _nftAddress) public 
+    function approveMarketFor721 (address _nftAddress, uint256 tokenId) public 
 	{
-        SouqERC721(_nftAddress).setApprovalForAll(marketContract, true);
+        SouqERC721(_nftAddress).approve(marketContract, tokenId);
     }
 
     function approveMarketFor1155 (address _nftAddress) public 
 	{
         Souq1155(_nftAddress).setApprovalForAll(marketContract, true);
+    }
+
+    function getAdminCommissionPercentage() external view returns (uint256) {
+        return SouqMarketPlace(marketContract).getCommissionPercentage();
+    }
+
+    function setCommissionPercentage(uint8 _newCommissionPercentage)
+        external
+        returns (bool)
+    {
+        require(
+            msg.sender == SouqMarketPlace(marketContract).getAdminAddress(),
+            "Media: Only Admin Can Set Commission Percentage!"
+        );
+        require(
+            _newCommissionPercentage > 0,
+            "Media: Invalid Commission Percentage"
+        );
+        require(
+            _newCommissionPercentage <= 100,
+            "Media: Commission Percentage Must Be Less Than 100!"
+        );
+
+        SouqMarketPlace(marketContract).setCommissionPercentage(
+            _newCommissionPercentage
+        );
+        return true;
     }
 
 	//AcceptBid() 

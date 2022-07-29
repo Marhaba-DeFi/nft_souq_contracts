@@ -82,6 +82,11 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         _unpause();
     }
 
+	/**
+    * @dev This function is used fot minting.
+	* Mapping of Creators to Token Id
+	* Set Royalty. If Royalty is not provided, then _tokenRoyaltyInBips should be zero. 
+    */
     function mint(address _to, string memory _tokenURI, uint256 _id, uint256 _copies, address royaltyReceiver, uint96 _tokenRoyaltyInBips)
         public onlyOwner returns(uint256, uint256) 
 	{
