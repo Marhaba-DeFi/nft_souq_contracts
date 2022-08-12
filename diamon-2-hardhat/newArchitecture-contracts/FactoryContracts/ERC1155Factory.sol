@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Souq1155 is Pausable, ERC1155, ERC2981 {
+contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
     uint96 royaltyFeesInBips;
     address royaltyAddress;
 
@@ -20,34 +20,29 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
         string memory symbol_,
         uint96 _royaltyFeesInBips,
         address _royaltyReciever
-    ) ERC1155(name_, symbol_) 
-	{
+    ) ERC1155(name_, symbol_) {
         bytes memory validateName = bytes(name_); // Uses memory
         bytes memory validateSymbol = bytes(symbol_);
         require( validateName.length != 0 && validateSymbol.length != 0, "ERC1155: Choose a name and symbol");
         _setDefaultRoyalty(_royaltyReciever, _royaltyFeesInBips);
     }
 
-    function _name() internal view virtual returns (string memory) 
-	{
+    function _name() internal view virtual returns (string memory) {
         return name;
     }
 
-    function _symbol() internal view virtual returns (string memory) 
-	{
+    function _symbol() internal view virtual returns (string memory) {
         return symbol;
     }
 
 /**
 * @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
  */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal 
-	{
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal {
         tokenURIs[tokenId] = _tokenURI;
     }
 
-	function uri(uint256 tokenId) override public view returns (string memory) 
-	{
+	function uri(uint256 tokenId) override public view returns (string memory) {
         return(tokenURIs[tokenId]);
     }
 
@@ -81,7 +76,7 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
 		) public onlyOwner returns(uint256, uint256) {
         _mint(creator, tokenId, copies, "");
         _setTokenURI(tokenId, tokenURI);
-        setTokenRoyaltyInfo(tokenId, royaltyReceiver, tokenRoyaltyInBips);
+        _setTokenRoyaltyInfo(tokenId, royaltyReceiver, tokenRoyaltyInBips);
 		_creators[tokenId] = creator;
         return(tokenId, copies);
     }
@@ -96,8 +91,10 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens of token type `id`.
 	 */
-    function burn(address _from, uint256 _tokenId, uint256 _amount) external onlyOwner  
-	{
+    function burn(address _from, 
+        uint256 _tokenId, 
+        uint256 _amount
+    ) external onlyOwner {
         require(balanceOf(msg.sender, _tokenId) != 0, "ERC1155: Not the owner of this token");
         require(balanceOf(msg.sender, _tokenId) >= _amount, "ERC1155: Not enough quantity to burn");
         _burn(_from, _tokenId, _amount);
@@ -116,13 +113,12 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
      */
     function transfer(
 		address _from, 
-		address _reciever, 
+		address _to, 
 		uint256 _tokenId, 
 		uint256 _copies
-	) external returns (bool)
-	{
+	) external returns (bool) {
         require(balanceOf(_from, _tokenId) >= _copies, "ERC1155: Not enough copies");
-        safeTransferFrom(_from, _reciever, _tokenId, _copies, "");
+        safeTransferFrom(_from, _to, _tokenId, _copies, "");
         return true;
     }
 
@@ -130,8 +126,7 @@ contract Souq1155 is Pausable, ERC1155, ERC2981 {
 		uint256 _tokenId,
 		address _receiver, 
 		uint96 _royaltyFeesInBips
-	) public onlyOwner 
-	{
+	) public onlyOwner {
         _setTokenRoyalty(_tokenId, _receiver, _royaltyFeesInBips);
     }
 

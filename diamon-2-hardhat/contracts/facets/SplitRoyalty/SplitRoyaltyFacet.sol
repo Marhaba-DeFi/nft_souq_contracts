@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 
 import "./LibSplitRoyaltyStorage.sol";
 import "../../libraries/LibURI.sol";
-import {ISplitRoyalty} from "../../interfaces/ISplitRoyalty.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
