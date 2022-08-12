@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (token/common/ERC2981.sol)
 
+pragma solidity ^0.8.0;
+
 import "./LibSplitRoyaltyStorage.sol";
 import "../../libraries/LibURI.sol";
-
-pragma solidity ^0.8.0;
+import {ISplitRoyalty} from "../../interfaces/ISplitRoyalty.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -25,11 +26,9 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * _Available since v4.5._
  */
 
-contract splitRoyalty is ERC165 {
+contract splitRoyalty is ERC165, ISplitRoyalty {
 
 	using Strings for uint256;
-
-    es.RoyaltyInfo private _defaultRoyaltyInfo;
 
     // /**
     //  * @dev See {IERC165-supportsInterface}.
@@ -38,11 +37,16 @@ contract splitRoyalty is ERC165 {
     //     return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     // }
 
+	function splitRoyaltyInit(
+    ) private {
+        LibSplitRoyaltyStorage.SplitRoyaltyStorage storage es = LibSplitRoyaltyStorage.splitRoyaltyStorage(); 
+    }
+
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public view virtual returns (address[] memory , uint256[] memory ) {
 		LibSplitRoyaltyStorage.SplitRoyaltyStorage storage es = LibSplitRoyaltyStorage.splitRoyaltyStorage();
         es.RoyaltyInfo memory royalty = _tokenRoyaltyInfo[_tokenId];
         if (royalty.receiver[0] == address(0)) {
-            royalty = _defaultRoyaltyInfo;
+            royalty = es._defaultRoyaltyInfo;
         }
         uint256[] memory royaltyAmount;
         for(uint i=0; i <= royalty.receiver.length; i++){
@@ -68,7 +72,10 @@ contract splitRoyalty is ERC165 {
      * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
-    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal virtual {
+    function _setDefaultRoyalty(
+		address[] memory receiver, 
+		uint96[] memory feeNumerator
+		) internal virtual {
         require(receiver[0] != address(0), "ERC2981: invalid receiver");
         require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
@@ -82,7 +89,7 @@ contract splitRoyalty is ERC165 {
         address[] memory participants;
         participants=receiver;
         feeFractions = feeNumerator;  
-        _defaultRoyaltyInfo = es.RoyaltyInfo(participants, feeFractions); 
+        es._defaultRoyaltyInfo = es.RoyaltyInfo(participants, feeFractions); 
     }
 
     /**
