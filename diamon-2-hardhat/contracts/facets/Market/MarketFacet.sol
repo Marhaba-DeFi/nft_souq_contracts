@@ -41,10 +41,12 @@ contract MarketFacet is EIP712 {
         string memory name_,
         string memory version_
     ) external {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         eip712FacetInit(name_, version_);
-        setAdminAddress(msg.sender);
+        setAdminAddress(ds.contractOwner);
     }
 
+//TODO: Check whether we need to configure admin address for market place contract or not
     function setAdminAddress(
 		address adminAddress_
 	) public mediaOrOwner {

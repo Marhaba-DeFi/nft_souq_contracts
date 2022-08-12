@@ -139,6 +139,18 @@ contract ERC721Facet is Context {
     }
 
     /**
+     * @dev See {IERC721-setApprovalForAll}.
+     */
+    function setApprovalForAll(address operator, bool approved)
+        public
+        virtual 
+    {
+        // require(_msgSender() != operator, 'ERC1155: setting approval status for self');
+        s._operatorApprovals[_msgSender()][operator] = approved;
+        emit ApprovalForAll(_msgSender(), operator, approved);
+    }
+
+    /**
      * @dev See {IERC721-getApproved}.
      */
     function getApproved(uint256 tokenId)
