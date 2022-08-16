@@ -27,3 +27,4 @@ module.exports = {
     }
   }
 }
+// /** @type import('hardhat/config').HardhatUserConfig */

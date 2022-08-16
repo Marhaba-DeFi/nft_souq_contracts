@@ -11,7 +11,7 @@ import "../Market/MarketFacet.sol";
 
 contract MediaFacet {
 
-    function mediaInit(
+    function mediaFacetInit(
         address _diamondAddress
     ) external {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
@@ -29,15 +29,15 @@ contract MediaFacet {
         ms.diamondAddress = _diamondAddress;
     }
 
-    function mintToken(
+    function mintTokenMedia(
         address _to,
         uint256 _id,
         string memory _contractType,
         address _tokenContract,
         uint256 _copies,
         string memory _uri,
-        address _royaltyReceiver,
-        uint96 _tokenRoyaltyInBips
+        address[] calldata _royaltyReceivers,
+        uint96[] calldata _tokenRoyaltyInBips
     ) external returns (uint256)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
@@ -46,17 +46,21 @@ contract MediaFacet {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            ERC1155FactoryFacet(ms.diamondAddress).mint(
+            ERC1155FactoryFacet(ms.diamondAddress).mint1155(
                 _id,
                 _to,
                 _copies,
-				_uri  
+				_uri,
+                _royaltyReceivers,
+                _tokenRoyaltyInBips  
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint(
+            ERC721FactoryFacet(ms.diamondAddress).mint721(
                 _id,
                 _to, 
-                _uri
+                _uri,
+                _royaltyReceivers,
+                _tokenRoyaltyInBips 
             );
         }
         return _id;
@@ -65,7 +69,7 @@ contract MediaFacet {
     //SetCollaborators() to set collaborators in marketplace contract
     //TODO: research on how to set the collaborators for 1155. 
 
-	function _setCollaborators (
+	function _setCollaboratorsMedia (
 		address _nftAddress, 
 		uint256 _tokenID, 
 		address[] calldata _collaborators,  
@@ -74,7 +78,7 @@ contract MediaFacet {
 		public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender || ERC1155FactoryFacet(_nftAddress).balanceOf(msg.sender, _tokenID) != 0, "Only token owner could call this function");
+        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender || ERC1155FactoryFacet(_nftAddress).balanceOf1155(msg.sender, _tokenID) != 0, "Only token owner could call this function");
         MarketFacet(ms.diamondAddress).setCollaborators(
             _nftAddress,
             _tokenID,
@@ -85,26 +89,26 @@ contract MediaFacet {
 
     //Authorise marketplace contract for all NFT tokens and ERC20 tokens
 
-    function approveMarketFor721 (address _nftAddress, uint256 tokenID) public 
+    function approveMarketFor721Media (address _nftAddress, uint256 tokenID) public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        ERC721FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
+        ERC721FactoryFacet(ms.diamondAddress).setApprovalForAll721(ms.diamondAddress, true);
     }
 
-    function approveMarketFor1155 (address _nftAddress) public 
+    function approveMarketFor1155Media (address _nftAddress) public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
+        ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll1155(ms.diamondAddress, true);
     }
 
-    function getAdminCommissionPercentage() external view returns (uint96) {
+    function getAdminCommissionPercentageMedia() external view returns (uint96) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         return MarketFacet(ms.diamondAddress).getCommissionPercentage();
     }
 
 
 //TODO: Check whether we need upper thershold for comission percentage 
-    function setCommissionPercentage(uint96 _newCommissionPercentage)
+    function setCommissionPercentageMedia(uint96 _newCommissionPercentage)
         external
         returns (bool)
     {
@@ -129,7 +133,7 @@ contract MediaFacet {
     }
 
     //AcceptBid() 
-	function acceptBid(
+	function acceptBidMedia(
         string memory _contractType,
         address _nftContAddress,
         address _currencyAddress,

@@ -17,7 +17,7 @@ import "../../libraries/LibURI.sol";
 contract ERC721FactoryFacet is ERC721Facet {
     using Strings for uint256;
 
-    modifier onlyMediaCaller() {
+    modifier onlyMediaCaller721() {
         require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
         _;
     }
@@ -50,7 +50,7 @@ contract ERC721FactoryFacet is ERC721Facet {
      *
      * - `tokenId` must exist.
      */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+    function _setTokenURI721(uint256 tokenId, string memory _tokenURI) internal virtual {
         require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
         es._tokenURIs[tokenId] = _tokenURI;
@@ -78,19 +78,19 @@ contract ERC721FactoryFacet is ERC721Facet {
 	 * @dev internal setTokenRoyalty() to set the rolayty at token level. 
 	 */
     
-    function mint(
+    function mint721(
         uint256 tokenId,
         address creator,
         string memory _tokenURI,
 		address [] memory royaltyReceiver,
 		uint96 [] memory tokenRoyaltyInBips
-    ) external onlyMediaCaller {
+    ) external onlyMediaCaller721 {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
         es.nftToOwners[tokenId] = creator;
         es.nftToCreators[tokenId] = creator;
         _safeMint(creator, tokenId);
-		_setTokenURI(tokenId, _tokenURI);
+		_setTokenURI721(tokenId, _tokenURI);
 		//setTokenRoyalty
     }
 
@@ -101,10 +101,10 @@ contract ERC721FactoryFacet is ERC721Facet {
      *
      * - `tokenId` must exist.
 	 */
-	function burn(uint256 tokenId) external {
+	function burn721(uint256 tokenId) external {
 		LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-        _burn(tokenId);
+        _burn721(tokenId);
 		delete es.nftToCreators[tokenId];
     }
 }
