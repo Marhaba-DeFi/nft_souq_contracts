@@ -18,6 +18,11 @@ import "../../libraries/LibURI.sol";
 contract ERC1155FactoryFacet is ERC1155Facet {
     using Strings for uint256;
 
+	modifier onlyMediaCaller() {
+        require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
+        _;
+    }
+
     function erc1155FactoryFacetInit(string memory name_, string memory symbol_) external {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
@@ -25,6 +30,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 
         require(bytes(name_).length != 0 && bytes(symbol_).length != 0, "INVALID_PARAMS");
 
+		require(msg.sender == ds.contractOwner, "Must own the contract.");
         es.name = name_;
         es.symbol = symbol_;
     }
@@ -54,16 +60,19 @@ contract ERC1155FactoryFacet is ERC1155Facet {
      * @dev internal setTokenRoyalty() to set the rolayty at token level.
      */
     function mint(
-        uint256 _tokenID,
-        address _creator,
-        uint256 _totalSupply,
-        string memory _tokenURI
-    ) external {
+        uint256 tokenId,
+        address creator,
+        uint256 totalSupply,
+        string memory tokenURI,
+		address [] memory royaltyReceiver,
+		uint96 [] memory tokenRoyaltyInBips
+
+    ) external  onlyMediaCaller {
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
-        es.nftToOwners[_tokenID] = _creator;
-        es.nftToCreators[_tokenID] = _creator;
-        _mint(_creator, _tokenID, _totalSupply, "");
-        _setTokenURI(_tokenID, _tokenURI);
+        es.nftToOwners[tokenId] = creator;
+        es.nftToCreators[tokenId] = creator;
+        _mint(creator, tokenId, totalSupply, "");
+        _setTokenURI(tokenId, tokenURI);
         //setTokenRoyalty
     }
 

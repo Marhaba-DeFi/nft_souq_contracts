@@ -70,7 +70,7 @@ contract ERC721FactoryFacet is ERC721Facet {
 	 * @notice This function is used for minting new NFT in the market.
      * @param tokenId tokenId
 	 * @param creator address of the owner and creator of the NFT
-	 * @param tokenURI tokenURI
+	 * @param _tokenURI tokenURI
 	 * @param royaltyReceiver an array of address that will recieve royalty. Max upto 5.
 	 * @param tokenRoyaltyInBips an array of royalty percentages. It should match the number of reciever addresses. Max upto 5.
 	 * @dev safemint() for minting the tokens.
@@ -79,16 +79,18 @@ contract ERC721FactoryFacet is ERC721Facet {
 	 */
     
     function mint(
-        uint256 _tokenID,
-        address _creator,
-        string memory _tokenURI
+        uint256 tokenId,
+        address creator,
+        string memory _tokenURI,
+		address [] memory royaltyReceiver,
+		uint96 [] memory tokenRoyaltyInBips
     ) external onlyMediaCaller {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-        es.nftToOwners[_tokenID] = _creator;
-        es.nftToCreators[_tokenID] = _creator;
-        _safeMint(_creator, _tokenID);
-		_setTokenURI(_tokenID, _tokenURI);
+        es.nftToOwners[tokenId] = creator;
+        es.nftToCreators[tokenId] = creator;
+        _safeMint(creator, tokenId);
+		_setTokenURI(tokenId, _tokenURI);
 		//setTokenRoyalty
     }
 

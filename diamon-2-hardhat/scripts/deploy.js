@@ -26,7 +26,7 @@ async function main() {
 
   // add facets to the souq NFT diamond
   const facetNames = [
-    // 'ERC721FactoryFacet',
+    'ERC721FactoryFacet',
     'ERC1155FactoryFacet',
     // 'MarketFacet',
     // 'MediaFacet',
@@ -54,6 +54,13 @@ async function main() {
   );
   await diamondCutFacet.diamondCut(cut, hre.ethers.constants.AddressZero, '0x');
 
+  const erc721FactoryFacet = await hre.ethers.getContractAt(
+    'ERC721FactoryFacet',
+    souqNFTDiamond.address,
+  );
+  await erc721FactoryFacet.erc721Init(erc721Name, erc721Symbol);
+  console.log('erc721FactoryFacet initialized');
+
   const erc1155FactoryFacet = await hre.ethers.getContractAt(
     'ERC1155FactoryFacet',
     souqNFTDiamond.address,
@@ -67,8 +74,8 @@ async function main() {
   updateContractAddresses(
     {
       souqNFTDiamond: souqNFTDiamond.address,
-    //   erc721FactoryFacet: facetsAdresses[0],
-      erc1155FactoryFacet: facetsAdresses[0],
+      erc721FactoryFacet: facetsAdresses[0],
+      erc1155FactoryFacet: facetsAdresses[1],
     //   marketFacet: facetsAdresses[2],
     //   mediaFacet: facetsAdresses[3],
     },
