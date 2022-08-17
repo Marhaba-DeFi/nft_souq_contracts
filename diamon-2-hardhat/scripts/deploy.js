@@ -14,6 +14,7 @@ async function main() {
 
   const signers = await hre.ethers.getSigners();
   const signer = signers[0];
+  console.log("signer is", signer.address)
 
   // deploying the souq NFT diamond
     const souqNFTDiamondFactory = await hre.ethers.getContractFactory(
@@ -21,6 +22,7 @@ async function main() {
     );
     const souqNFTDiamond = await souqNFTDiamondFactory.deploy(signer.address);
     await souqNFTDiamond.deployed();
+    const address = souqNFTDiamond.address
     console.log('souqNFTDiamond deployed to: ', souqNFTDiamond.address);
 
   // add facets to the souq NFT diamond
@@ -96,7 +98,19 @@ async function main() {
   const marketAddress = await marketFacet.getAddress();
   console.log('Media IS initialized with address', marketAddress );
 
-  //Media Contract deployment
+  //Minting token from 1155 contract
+  const token721 = await mediaFacet.mintTokenMedia(
+    signer.address,
+    0,
+    "ERC721",
+    address,
+    1,
+    "12345",
+    [signer.address],
+    [100]
+  );
+
+  console.log("Owner of token721", await erc721FactoryFacet.ownerOf(0))
 
   // const mediaFacet = await hre.ethers.getContractAt(
   //   'MediaFacet',

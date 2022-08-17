@@ -35,7 +35,7 @@ contract ERC721Facet is Context {
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf721(address owner)
+    function balanceOf(address owner)
         public
         view
         virtual
@@ -138,17 +138,6 @@ contract ERC721Facet is Context {
         _approve(to, tokenId);
     }
 
-    /**
-     * @dev See {IERC721-setApprovalForAll}.
-     */
-    function setApprovalForAll721(address operator, bool approved)
-        public
-        virtual 
-    {
-        // require(_msgSender() != operator, 'ERC1155: setting approval status for self');
-        s._operatorApprovals[_msgSender()][operator] = approved;
-        emit ApprovalForAll(_msgSender(), operator, approved);
-    }
 
     /**
      * @dev See {IERC721-getApproved}.
@@ -190,18 +179,18 @@ contract ERC721Facet is Context {
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom721(
+    function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId
     ) public virtual {
-        safeTransferFrom721(from, to, tokenId, "");
+        safeTransferFrom(from, to, tokenId, "");
     }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom721(
+    function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId,
@@ -307,7 +296,7 @@ contract ERC721Facet is Context {
         uint256 tokenId,
         bytes memory _data
     ) internal virtual {
-        _mint721(to, tokenId);
+        _mint(to, tokenId);
         require(
             _checkOnERC721Received(address(0), to, tokenId, _data),
             "ERC721: transfer to non ERC721Receiver implementer"
@@ -326,11 +315,11 @@ contract ERC721Facet is Context {
      *
      * Emits a {Transfer} event.
      */
-    function _mint721(address to, uint256 tokenId) internal virtual {
+    function _mint(address to, uint256 tokenId) internal virtual {
         require(to != address(0), "ERC721: mint to the zero address");
         require(!_exists(tokenId), "ERC721: token already minted");
 
-        _beforeTokenTransfer721(address(0), to, tokenId);
+        _beforeTokenTransfer(address(0), to, tokenId);
 
         LibERC721Storage.ERC721Storage storage es = LibERC721Storage.erc721Storage();
 
@@ -350,10 +339,10 @@ contract ERC721Facet is Context {
      *
      * Emits a {Transfer} event.
      */
-    function _burn721(uint256 tokenId) internal virtual {
+    function _burn(uint256 tokenId) internal virtual {
         address owner = ERC721Facet.ownerOf(tokenId);
 
-        _beforeTokenTransfer721(owner, address(0), tokenId);
+        _beforeTokenTransfer(owner, address(0), tokenId);
 
         // Clear approvals
         _approve(address(0), tokenId);
@@ -388,7 +377,7 @@ contract ERC721Facet is Context {
         );
         require(to != address(0), "ERC721: transfer to the zero address");
 
-        _beforeTokenTransfer721(from, to, tokenId);
+        _beforeTokenTransfer(from, to, tokenId);
 
         // Clear approvals from the previous owner
         _approve(address(0), tokenId);
@@ -469,7 +458,7 @@ contract ERC721Facet is Context {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer721(
+    function _beforeTokenTransfer(
         address from,
         address to,
         uint256 tokenId

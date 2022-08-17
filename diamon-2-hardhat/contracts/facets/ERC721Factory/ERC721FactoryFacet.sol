@@ -17,7 +17,7 @@ import "../../libraries/LibURI.sol";
 contract ERC721FactoryFacet is ERC721Facet {
     using Strings for uint256;
 
-    modifier onlyMediaCaller721() {
+    modifier onlyMediaCaller() {
         require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
         _;
     }
@@ -78,13 +78,13 @@ contract ERC721FactoryFacet is ERC721Facet {
 	 * @dev internal setTokenRoyalty() to set the rolayty at token level. 
 	 */
     
-    function mint721(
+    function mint(
         uint256 tokenId,
         address creator,
         string memory _tokenURI,
 		address [] memory royaltyReceiver,
 		uint96 [] memory tokenRoyaltyInBips
-    ) external onlyMediaCaller721 {
+    ) external onlyMediaCaller {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
         es.nftToOwners[tokenId] = creator;
@@ -101,10 +101,10 @@ contract ERC721FactoryFacet is ERC721Facet {
      *
      * - `tokenId` must exist.
 	 */
-	function burn721(uint256 tokenId) external {
+	function burn(uint256 tokenId) external {
 		LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-        _burn721(tokenId);
+        _burn(tokenId);
 		delete es.nftToCreators[tokenId];
     }
 }

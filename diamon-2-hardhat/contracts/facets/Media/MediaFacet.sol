@@ -10,6 +10,7 @@ import "../EIP712/EIP712Facet.sol";
 import "../Market/MarketFacet.sol";
 
 contract MediaFacet {
+    AppStorage internal s;
 
     function mediaFacetInit(
         address _diamondAddress
@@ -27,6 +28,7 @@ contract MediaFacet {
         require(msg.sender == ds.contractOwner, "Must own the contract.");
 
         ms.diamondAddress = _diamondAddress;
+        s._mediaContract = _diamondAddress;
     }
 
     function mintTokenMedia(
@@ -46,7 +48,7 @@ contract MediaFacet {
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
         if (_isFungible) {
-            ERC1155FactoryFacet(ms.diamondAddress).mint1155(
+            ERC1155FactoryFacet(ms.diamondAddress).mint(
                 _id,
                 _to,
                 _copies,
@@ -55,7 +57,7 @@ contract MediaFacet {
                 _tokenRoyaltyInBips  
             );
         } else {
-            ERC721FactoryFacet(ms.diamondAddress).mint721(
+            ERC721FactoryFacet(ms.diamondAddress).mint(
                 _id,
                 _to, 
                 _uri,
@@ -78,7 +80,7 @@ contract MediaFacet {
 		public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender || ERC1155FactoryFacet(_nftAddress).balanceOf1155(msg.sender, _tokenID) != 0, "Only token owner could call this function");
+        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender || ERC1155FactoryFacet(_nftAddress).balanceOf(msg.sender, _tokenID) != 0, "Only token owner could call this function");
         MarketFacet(ms.diamondAddress).setCollaborators(
             _nftAddress,
             _tokenID,
@@ -89,16 +91,10 @@ contract MediaFacet {
 
     //Authorise marketplace contract for all NFT tokens and ERC20 tokens
 
-    function approveMarketFor721Media (address _nftAddress, uint256 tokenID) public 
+    function approveMarketForAllMedia () public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        ERC721FactoryFacet(ms.diamondAddress).setApprovalForAll721(ms.diamondAddress, true);
-    }
-
-    function approveMarketFor1155Media (address _nftAddress) public 
-	{
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll1155(ms.diamondAddress, true);
+        ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
     }
 
     function getAdminCommissionPercentageMedia() external view returns (uint96) {

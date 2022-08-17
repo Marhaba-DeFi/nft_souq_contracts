@@ -18,7 +18,7 @@ import "../../libraries/LibURI.sol";
 contract ERC1155FactoryFacet is ERC1155Facet {
     using Strings for uint256;
 
-	modifier onlyMediaCaller1155() {
+	modifier onlyMediaCaller() {
         require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
         _;
     }
@@ -59,7 +59,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
      * @dev internal setTokenURI() to set the token URI for the minted token
      * @dev internal setTokenRoyalty() to set the rolayty at token level.
      */
-    function mint1155(
+    function mint(
         uint256 tokenId,
         address creator,
         uint256 totalSupply,
@@ -67,11 +67,11 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 		address [] memory royaltyReceiver,
 		uint96 [] memory tokenRoyaltyInBips
 
-    ) external  onlyMediaCaller1155 {
+    ) external  onlyMediaCaller {
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         es.nftToOwners[tokenId] = creator;
         es.nftToCreators[tokenId] = creator;
-        _mint1155(creator, tokenId, totalSupply, "");
+        _mint(creator, tokenId, totalSupply, "");
         _setTokenURI1155(tokenId, tokenURI);
         //setTokenRoyalty
     }
@@ -95,7 +95,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         uint256 _amount
     ) external returns (bool) {
         require(_to != address(0x0), "ERC1155Factory: _to must be non-zero.");
-        safeTransferFrom1155(_from, _to, _tokenID, _amount, "");
+        safeTransferFrom(_from, _to, _tokenID, _amount, "");
         return true;
     }
 
@@ -109,8 +109,8 @@ contract ERC1155FactoryFacet is ERC1155Facet {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens of token type `id`.
 	 */
-	function burn1155(address from, uint256 tokenId, uint256 amount) external  
+	function burn(address from, uint256 tokenId, uint256 amount) external  
 	{
-        _burn1155(from, tokenId, amount);
+        _burn(from, tokenId, amount);
     }
 }
