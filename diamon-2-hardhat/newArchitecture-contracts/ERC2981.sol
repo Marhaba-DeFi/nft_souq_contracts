@@ -32,6 +32,8 @@ contract ERC2981 is ERC165 {
     RoyaltyInfo private _defaultRoyaltyInfo;
     mapping(uint256 => RoyaltyInfo) private _tokenRoyaltyInfo;
 
+	uint256[] private royaltyAmount;
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */
@@ -39,13 +41,8 @@ contract ERC2981 is ERC165 {
         return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    uint256[] private royaltyAmount;
-
     function initializeRoyaltyAmount() internal {
-        for(uint i=0; i < royaltyAmount.length; i++){
-            delete royaltyAmount[i];
-            royaltyAmount.pop();
-        }
+        delete royaltyAmount;
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
@@ -54,7 +51,7 @@ contract ERC2981 is ERC165 {
             royalty = _defaultRoyaltyInfo;
         }
         
-        initializeRoyaltyAmount();
+        initializeRoyaltyAmount(); // royaltyAmount should be an empty array
         for(uint i=0; i < royalty.royaltyFraction.length; i++){
             royaltyAmount.push((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
             // royaltyAmount.push(5);
