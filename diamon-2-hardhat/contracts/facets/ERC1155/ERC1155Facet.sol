@@ -63,7 +63,7 @@ contract ERC1155Facet is Context {
      *
      * - `account` cannot be the zero address.
      */
-    function balanceOf1155(address account, uint256 id)
+    function balanceOf(address account, uint256 id)
         public
         view
         virtual
@@ -101,7 +101,7 @@ contract ERC1155Facet is Context {
         uint256[] memory batchBalances = new uint256[](accounts.length);
 
         for (uint256 i = 0; i < accounts.length; ++i) {
-            batchBalances[i] = balanceOf1155(accounts[i], ids[i]);
+            batchBalances[i] = balanceOf(accounts[i], ids[i]);
         }
 
         return batchBalances;
@@ -110,7 +110,7 @@ contract ERC1155Facet is Context {
     /**
      * @dev See {IERC1155-setApprovalForAll}.
      */
-    function setApprovalForAll1155(address operator, bool approved)
+    function setApprovalForAll(address operator, bool approved)
         public
         virtual
         
@@ -124,7 +124,7 @@ contract ERC1155Facet is Context {
     /**
      * @dev See {IERC1155-safeTransferFrom}.
      */
-    function safeTransferFrom1155(
+    function safeTransferFrom(
         address from,
         address to,
         uint256 id,
@@ -174,7 +174,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(
+        _beforeTokenTransfer(
             operator,
             from,
             to,
@@ -224,7 +224,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(operator, from, to, ids, amounts, data);
+        _beforeTokenTransfer(operator, from, to, ids, amounts, data);
 
         LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
 
@@ -290,7 +290,7 @@ contract ERC1155Facet is Context {
      * - If `account` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155Received} and return the
      * acceptance magic value.
      */
-    function _mint1155(
+    function _mint(
         address account,
         uint256 id,
         uint256 amount,
@@ -300,7 +300,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(
+        _beforeTokenTransfer(
             operator,
             address(0),
             account,
@@ -347,7 +347,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(operator, address(0), to, ids, amounts, data);
+        _beforeTokenTransfer(operator, address(0), to, ids, amounts, data);
 
         for (uint256 i = 0; i < ids.length; i++) {
             LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
@@ -374,7 +374,7 @@ contract ERC1155Facet is Context {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens of token type `id`.
      */
-    function _burn1155(
+    function _burn(
         address account,
         uint256 id,
         uint256 amount
@@ -383,7 +383,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(
+        _beforeTokenTransfer(
             operator,
             account,
             address(0),
@@ -426,7 +426,7 @@ contract ERC1155Facet is Context {
 
         address operator = _msgSender();
 
-        _beforeTokenTransfer1155(operator, account, address(0), ids, amounts, "");
+        _beforeTokenTransfer(operator, account, address(0), ids, amounts, "");
 
         LibERC1155Storage.ERC1155Storage storage es = LibERC1155Storage.erc1155Storage();
 
@@ -467,7 +467,7 @@ contract ERC1155Facet is Context {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer1155(
+    function _beforeTokenTransfer(
         address operator,
         address from,
         address to,
