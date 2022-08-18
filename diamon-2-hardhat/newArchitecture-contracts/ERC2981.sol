@@ -22,33 +22,44 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * _Available since v4.5._
  */
 
-contract splitRoyalty is ERC165 {
+contract ERC2981 is ERC165 {
 
     struct RoyaltyInfo {
         address[] receiver;
         uint96[] royaltyFraction;
     }
-    // royalty per NFT
 
     RoyaltyInfo private _defaultRoyaltyInfo;
     mapping(uint256 => RoyaltyInfo) private _tokenRoyaltyInfo;
 
-    // /**
-    //  * @dev See {IERC165-supportsInterface}.
-    //  */
-    // function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
-    //     return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
-    // }
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
+    }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public view virtual returns (address[] memory , uint256[] memory ) {
+    uint256[] private royaltyAmount;
+
+    function initializeRoyaltyAmount() internal {
+        for(uint i=0; i < royaltyAmount.length; i++){
+            delete royaltyAmount[i];
+            royaltyAmount.pop();
+        }
+    }
+
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
         RoyaltyInfo memory royalty = _tokenRoyaltyInfo[_tokenId];
         if (royalty.receiver[0] == address(0)) {
             royalty = _defaultRoyaltyInfo;
         }
-        uint256[] memory royaltyAmount;
-        for(uint i=0; i <= royalty.receiver.length; i++){
-            royaltyAmount[i] = (_salePrice * royalty.royaltyFraction[i]) / _feeDenominator();
+        
+        initializeRoyaltyAmount();
+        for(uint i=0; i < royalty.royaltyFraction.length; i++){
+            royaltyAmount.push((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
+            // royaltyAmount.push(5);
         }
+    
         return (royalty.receiver, royaltyAmount);
     }
 
@@ -69,12 +80,12 @@ contract splitRoyalty is ERC165 {
      * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
-    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) public {
+    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal virtual {
         require(receiver[0] != address(0), "ERC2981: invalid receiver");
         require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
         uint totalFeeNumerator=0;
-        for(uint i ; i < feeNumerator.length; i++){
+        for(uint i=0 ; i < feeNumerator.length; i++){
             totalFeeNumerator += feeNumerator[i];
         }
         require(totalFeeNumerator <= _feeDenominator(), "ERC2981: royalty fee will exceed salePrice");
@@ -88,7 +99,7 @@ contract splitRoyalty is ERC165 {
     /**
      * @dev Removes default royalty information.
      */
-    function _deleteDefaultRoyalty() public {
+    function _deleteDefaultRoyalty() internal virtual {
         delete _defaultRoyaltyInfo;
     }
 
@@ -104,12 +115,12 @@ contract splitRoyalty is ERC165 {
         uint256 tokenId,
         address[] memory receiver,
         uint96[] memory feeNumerator
-    ) public {
+    ) internal virtual{
         require(receiver[0] != address(0), "ERC2981: invalid receiver");
         require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
         uint totalFeeNumerator=0;
-        for(uint i ; i < feeNumerator.length; i++){
+        for(uint i=0 ; i < feeNumerator.length; i++){
             totalFeeNumerator += feeNumerator[i];
         }
         require(totalFeeNumerator <= _feeDenominator(), "ERC2981: royalty fee will exceed salePrice");
@@ -124,7 +135,7 @@ contract splitRoyalty is ERC165 {
     /**
      * @dev Resets royalty information for the token id back to the global default.
      */
-    function _resetTokenRoyalty(uint256 tokenId) public {
+    function _resetTokenRoyalty(uint256 tokenId) internal virtual {
         delete _tokenRoyaltyInfo[tokenId];
     }
 }
