@@ -105,6 +105,20 @@ contract MarketFacet is EIP712 {
         es.tokenCollaborators[_nftAddress][_tokenID] = collabStruct;
     }
 
+    function getCollaborators(
+        address _nftAddress,
+        uint256 _tokenID
+    ) external view mediaOrOwner returns (Collaborators memory) 
+	{
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        //LibMarketStorage.Collaborators memory collabStruct ;
+
+        Collaborators memory collabStructReturn;
+        collabStructReturn.collaborators = es.tokenCollaborators[_nftAddress][_tokenID].collaborators;
+        collabStructReturn.collabFraction = es.tokenCollaborators[_nftAddress][_tokenID].collabFraction;
+        return(collabStructReturn);
+    }
+
     function hashOffer(
         address nftContAddress, 
         uint256 tokenID, 

@@ -6,7 +6,7 @@
       "contentHash": "d4352bbefdaa4d42916cdcb9a0c36247",
       "sourceName": "contracts/Diamond.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -45,7 +45,7 @@
       "contentHash": "c2cdd27f70d790d32ca8d9bb5c26e300",
       "sourceName": "contracts/libraries/LibDiamond.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -84,7 +84,7 @@
       "contentHash": "9308968804d59060a503ced37f8a8006",
       "sourceName": "contracts/facets/DiamondCutFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -121,7 +121,7 @@
       "contentHash": "5fda0cdb57800ebbc2a11c0e1cd979dc",
       "sourceName": "contracts/facets/DiamondLoupeFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -159,7 +159,7 @@
       "contentHash": "3ecfa87738e59d567e6c44c1708b9a7d",
       "sourceName": "contracts/facets/OwnershipFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -196,7 +196,7 @@
       "contentHash": "0e7db055ce108f9da7bb6686a00287c0",
       "sourceName": "@openzeppelin/contracts/utils/introspection/ERC165.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -232,7 +232,7 @@
       "contentHash": "707e073af69d132ebdc36f0b766ed4d2",
       "sourceName": "contracts/interfaces/IDiamondCut.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -266,7 +266,7 @@
       "contentHash": "a471cd6a18e337530aa0fb37a1dd2294",
       "sourceName": "contracts/interfaces/IDiamondLoupe.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -300,7 +300,7 @@
       "contentHash": "65e379207bc221335d0eedfe7b077af6",
       "sourceName": "contracts/interfaces/IERC173.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -334,7 +334,7 @@
       "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
       "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -368,7 +368,7 @@
       "contentHash": "f8f9ee2c76e1678bfead7a3fad131934",
       "sourceName": "contracts/interfaces/IERC165.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -402,7 +402,7 @@
       "contentHash": "df41d0e3b1dc15c10f01cba1a4bad9df",
       "sourceName": "contracts/upgradeInitializers/DiamondInit.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -442,7 +442,7 @@
       "contentHash": "1bc06682adcbd1f417f2c1bc32492443",
       "sourceName": "contracts/facets/Media/MediaFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -484,7 +484,7 @@
       "contentHash": "62d4b53858f9e3c5b7f1e7d75b0f50bf",
       "sourceName": "contracts/facets/ERC1155Factory/ERC1155FactoryFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -524,7 +524,7 @@
       "contentHash": "95228e0e0f81d791dd3d8891c3127b8a",
       "sourceName": "contracts/facets/ERC721Factory/ERC721FactoryFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -563,7 +563,7 @@
       "contentHash": "58a347d11919edd1c9b045bd852463de",
       "sourceName": "contracts/facets/Media/LibMediaStorage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -597,7 +597,7 @@
       "contentHash": "f2013dfe351b748ec9caeff6ee9a3e87",
       "sourceName": "contracts/libraries/LibAppStorage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -629,7 +629,7 @@
       "contentHash": "6b4556918464a3d0804fa9db40a1e1cc",
       "sourceName": "contracts/facets/EIP712/EIP712Facet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -666,7 +666,7 @@
       "contentHash": "41816ee94bcd18d4ae12eb2a45c8c00f",
       "sourceName": "contracts/facets/Market/MarketFacet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -714,7 +714,7 @@
       "contentHash": "5b2f10418d095fdee300861e38b599f7",
       "sourceName": "contracts/facets/ERC1155/ERC1155Facet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -755,7 +755,7 @@
       "contentHash": "e436cea06129be2c73cda4b1acc848b5",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -791,7 +791,7 @@
       "contentHash": "cf46906c4035f51639a22265066a9e78",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -825,7 +825,7 @@
       "contentHash": "fdf15efe99e2d00209ba1ae98f69e29d",
       "sourceName": "contracts/facets/ERC1155Factory/LibERC1155FactoryStorage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -859,7 +859,7 @@
       "contentHash": "1c682cbb89aef2b95279396aa5244f3d",
       "sourceName": "contracts/libraries/LibURI.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -893,7 +893,7 @@
       "contentHash": "9f8822b72fe2702979e40160cb6d9636",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -929,7 +929,7 @@
       "contentHash": "c476b3895a94798b88a4bb97399e6dfe",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -963,7 +963,7 @@
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -997,7 +997,7 @@
       "contentHash": "6b6c505226835581628aa5af2ade8161",
       "sourceName": "contracts/facets/ERC1155/LibERC1155Storage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1031,7 +1031,7 @@
       "contentHash": "b8398af93b1cb459eee8f110a34cb442",
       "sourceName": "contracts/facets/ERC721/ERC721Facet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1073,7 +1073,7 @@
       "contentHash": "b45361264adf8e9fe68a2611a26e2ed6",
       "sourceName": "contracts/facets/ERC721Factory/LibERC721FactoryStorage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1107,7 +1107,7 @@
       "contentHash": "c22d4395e33763de693fd440c6fd10e1",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1141,7 +1141,7 @@
       "contentHash": "65c2f22399f0176cdffef3d17440f354",
       "sourceName": "contracts/facets/ERC721/LibERC721Storage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1175,7 +1175,7 @@
       "contentHash": "1dfb7cf7c7e2edae73403d50a59cc967",
       "sourceName": "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1211,7 +1211,7 @@
       "contentHash": "2d1f2e8b71961f2cec222b8c6e2f889a",
       "sourceName": "contracts/facets/EIP712/LibEIP712Storage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1245,7 +1245,7 @@
       "contentHash": "79ff1a7eb801a525aa315fb7a679eede",
       "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1287,7 +1287,7 @@
       "contentHash": "9be05ac5a08ad0370e3cc36665ca490c",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1328,7 +1328,7 @@
       "contentHash": "2337f0279507b5edf14a07067adf0d05",
       "sourceName": "@openzeppelin/contracts/utils/math/SafeMath.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1362,7 +1362,7 @@
       "contentHash": "af7bd64e1cfefbf6cb07f2adc1a25392",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1400,7 +1400,7 @@
       "contentHash": "f995d6f70022823e60e85f41959c801d",
       "sourceName": "@openzeppelin/contracts/token/common/ERC2981.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1437,7 +1437,7 @@
       "contentHash": "6ea867debd894e8f2553474ee4f7f7ae",
       "sourceName": "contracts/facets/Market/LibMarketStorage.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1471,7 +1471,7 @@
       "contentHash": "ec99d946db3685a3630554aa6055bd7f",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1507,7 +1507,7 @@
       "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
       "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1543,7 +1543,7 @@
       "contentHash": "d5a8f6e07ca38ec384856cfe9f08a867",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1579,7 +1579,7 @@
       "contentHash": "9148c2e10c4efb12c71a7f080da5559b",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1615,7 +1615,7 @@
       "contentHash": "ad7c2d0af148c8f9f097d65deeb4da6b",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1649,7 +1649,7 @@
       "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1685,7 +1685,7 @@
       "contentHash": "608566bc5327454ba54e487e7c226ff6",
       "sourceName": "@openzeppelin/contracts/interfaces/IERC2981.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1721,7 +1721,7 @@
       "contentHash": "554c0cf6078ee50cd5b5276da565fa2c",
       "sourceName": "contracts/facets/Test1Facet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -1755,7 +1755,7 @@
       "contentHash": "de378098a7ee8e5d17f38f329b335739",
       "sourceName": "contracts/facets/Test2Facet.sol",
       "solcConfig": {
-        "version": "0.8.10",
+        "version": "0.8.6",
         "settings": {
           "optimizer": {
             "enabled": false,

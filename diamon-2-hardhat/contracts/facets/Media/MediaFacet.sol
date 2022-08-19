@@ -71,7 +71,7 @@ contract MediaFacet {
     //SetCollaborators() to set collaborators in marketplace contract
     //TODO: research on how to set the collaborators for 1155. 
 
-	function _setCollaboratorsMedia (
+	function setCollaboratorsMedia (
 		address _nftAddress, 
 		uint256 _tokenID, 
 		address[] calldata _collaborators,  
@@ -87,6 +87,27 @@ contract MediaFacet {
             _collaborators,
             _collabFraction
         );
+    }
+
+    function setApprovedCryptoMedia (
+        address _currencyAddress, 
+		bool approving
+    ) 
+    public 
+	{
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        require(msg.sender == MarketFacet(ms.diamondAddress).getAdminAddress() , "Media: Caller is not the admin of market place contract");
+        MarketFacet(ms.diamondAddress).setApprovedCrypto(
+            _currencyAddress, 
+            approving
+        );
+    }
+
+    function getApprovedCryptoMedia (
+        address _currencyAddress
+	) view public returns(bool) {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        return(MarketFacet(ms.diamondAddress).getApprovedCrypto(_currencyAddress));
     }
 
     //Authorise marketplace contract for all NFT tokens and ERC20 tokens
