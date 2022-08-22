@@ -12,9 +12,44 @@ async function main() {
   const wethAddress = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
   const adminCommissionPercentage = '1';
 
+  //Address of the bidder and owner of whoile erc20 at first
   const signers = await hre.ethers.getSigners();
   const signer = signers[0];
-  console.log("signer is", signer.address)
+  console.log("signer 0 is", signer.address)
+
+  // Address of the minter and owner of nft token
+  const signer1 = signers[1];
+  console.log("signer 1 is", signer1.address)
+
+  // Royality address1 for nft
+  const signer2 = signers[2];
+  console.log("signer 2 is", signer2.address)
+
+  // Royality address2 for nft
+  const signer3 = signers[3];
+  console.log("signer 3 is", signer3.address)
+
+  // Contributer address1 for nft
+  const signer4 = signers[4];
+  console.log("signer 4 is", signer4.address)
+
+  // Contributer address2 for nft
+  const signer5 = signers[5];
+  console.log("signer 5 is", signer5.address)
+
+//// Minting erc20 mock token
+
+  const ERC20Mock = await hre.ethers.getContractFactory(
+    'ERC20Mock',
+  );
+  const erc20Mock = await ERC20Mock.deploy("MARHABA", "MRHB", 1_000_000);
+  await erc20Mock.deployed();
+  const erc20Address = erc20Mock.address
+  console.log('Mock erc20 is deployed to: ', erc20Address);
+  console.log('The balance of signer0 is: ',  parseInt(await erc20Mock.balanceOf(signer.address)))
+
+///////////////////////////////////////
+
 
   // deploying the souq NFT diamond
     const souqNFTDiamondFactory = await hre.ethers.getContractFactory(
@@ -106,12 +141,59 @@ async function main() {
     address,
     1,
     "12345",
-    [signer.address],
-    [100]
+    [signer2.address, signer3.address],
+    [50, 50]
   );
 
-  console.log("Owner of token721", await erc721FactoryFacet.ownerOf(0))
+  await mediaFacet.mintTokenMedia(
+    signer1.address,
+    1,
+    "ERC721",
+    address,
+    1,
+    "12345",
+    [signer2.address, signer3.address],
+    [50, 50]
+  );
 
+  console.log("Owner of 721 token 0", await erc721FactoryFacet.ownerOf(0))
+
+  console.log("Owner of 721 token 1", await erc721FactoryFacet.ownerOf(1))
+
+  await mediaFacet.connect(signer).setCollaboratorsMedia(
+    souqNFTDiamond.address,
+    0,
+    [signer4.address, signer5.address],
+    [100,100]
+    );
+
+    await mediaFacet.connect(signer1).setCollaboratorsMedia(
+      souqNFTDiamond.address,
+      1,
+      [signer2.address, signer3.address],
+      [100,100]
+      );
+
+     const collabTarget = await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 0); 
+
+  console.log("Collaborators are ",  collabTarget["collaborators"] ) 
+  console.log("Collaborators are ", await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 1)) 
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   // const mediaFacet = await hre.ethers.getContractAt(
   //   'MediaFacet',
   //   souqNFTDiamond.address,

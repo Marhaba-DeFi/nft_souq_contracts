@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+// import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 
 import "./LibMarketStorage.sol";
 import "../../libraries/LibAppStorage.sol";
 import "../../libraries/LibDiamond.sol";
 import "../EIP712/EIP712Facet.sol";
+import "../../../newArchitecture-contracts/ERC2981.sol";
 
 contract MarketFacet is EIP712 {
     AppStorage internal s;
@@ -108,12 +109,12 @@ contract MarketFacet is EIP712 {
     function getCollaborators(
         address _nftAddress,
         uint256 _tokenID
-    ) external view mediaOrOwner returns (Collaborators memory) 
+    ) external view mediaOrOwner returns (LibMarketStorage.Collaborators memory) 
 	{
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
-        //LibMarketStorage.Collaborators memory collabStruct ;
+        LibMarketStorage.Collaborators memory collabStructReturn ;
 
-        Collaborators memory collabStructReturn;
+        //Collaborators memory collabStructReturn;
         collabStructReturn.collaborators = es.tokenCollaborators[_nftAddress][_tokenID].collaborators;
         collabStructReturn.collabFraction = es.tokenCollaborators[_nftAddress][_tokenID].collabFraction;
         return(collabStructReturn);
@@ -184,13 +185,17 @@ contract MarketFacet is EIP712 {
 		address _payer,
 		uint256 amount,
         uint256 _tokenID
-	) internal returns (uint256) 
+	) public returns (uint256) 
 	{
         ERC2981 erc2981 = ERC2981(_nftContAddress);
         ERC20 erc20 = ERC20(_currencyAddress);
-        (address royalityAddress, uint256 royalityFee) = erc2981.royaltyInfo(_tokenID, amount);
-        erc20.transferFrom(_payer, royalityAddress, royalityFee);
-        return royalityFee;
+        (address[] memory royalityAddresses, uint256[] memory royalityFees) = erc2981.royaltyInfo(_tokenID, amount);
+        uint256 royalityFeeAccumulator = 0;
+        for(uint256 i = 0; i< royalityAddresses.length ; i++ ){
+            erc20.transferFrom(_payer, royalityAddresses[i], royalityFees[i]);
+            royalityFeeAccumulator = royalityFeeAccumulator + royalityFees[i];
+        }
+        return royalityFeeAccumulator;
     }
 
     function cryptoDistributor(

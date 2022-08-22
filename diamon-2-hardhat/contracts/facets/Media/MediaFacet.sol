@@ -89,6 +89,19 @@ contract MediaFacet {
         );
     }
 
+    function getCollaboratorsMedia(
+        address _nftAddress,
+        uint256 _tokenID
+    ) public view returns (LibMarketStorage.Collaborators memory) 
+	{
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        return(MarketFacet(ms.diamondAddress).getCollaborators(
+            _nftAddress,
+            _tokenID
+        ));
+
+    }
+
     function setApprovedCryptoMedia (
         address _currencyAddress, 
 		bool approving
