@@ -9,35 +9,49 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "../ERC2981.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title ERC721 factory contract
  * @dev This contract inherits from ERC721 openzeppelin contract, openzeppelin ERC721Enumerable, 
  * pausable, ERC721URIStorage and ERC2981 royalty contracts.
  */
-contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Pausable, Ownable {
+contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Pausable, Ownable {
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
 
+	using Counters for Counters.Counter;
+	Counters.Counter private _tokenIdCounter;
+
 	/**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
+     * @notice default royalty is optional. DefaultRoyalty is set, if the flag is true.
      */
     constructor (
 		string memory _name, 
 		string memory _symbol, 
-		address royaltyReceiver, 
-		uint96 _royaltyFeesInBips
+        bool defaultRoyalty,
+		address[] memory royaltyReceiver, 
+		uint96[] memory royaltyFeesInBips
 		) 
 		ERC721(_name, _symbol) {
         bytes memory name = bytes(_name); // Uses memory
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
-        _setDefaultRoyalty(royaltyReceiver, _royaltyFeesInBips);
+        if(defaultRoyalty){
+            // At least one royaltyReceiver is required.
+            require(oyaltyReceiver.length > 0, "No Royalty details provided");
+            // Check on the maximum size over which the for loop will run over.
+            require(oyaltyReceiver.length <= 5, "Too many royalty recievers details");
+            //Check the length of receiver and fees should match
+            require(royaltyReceiver.length == royaltyFeesInBips.length, "Mismatch of Royalty recievers and their fees");
+            _setDefaultRoyalty(royaltyReceiver, royaltyFeesInBips);
+        }
     }
 
 	/**
@@ -55,8 +69,6 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Paus
     }
 
     /**
-	 * @notice This function is used for minting new NFT in the market.
-     * @param tokenId tokenId
 	 * @param creator address of the owner and creator of the NFT
 	 * @param uri tokenURI
 	 * @param royaltyReceiver an array of address that will recieve royalty. Max upto 5.
@@ -68,15 +80,27 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Paus
     function safeMint(
 		address creator, 
 		string memory uri, 
-		uint256 tokenId, 
-		address royaltyReceiver, 
-		uint96 tokenRoyaltyInBips
+        bool tokenRoyalty,
+		address[] memory royaltyReceiver, 
+		uint96[] memory tokenRoyaltyInBips
 	) 
 		public onlyOwner whenNotPaused {
+		uint256 tokenId = _tokenIdCounter.current();
         _safeMint(creator, tokenId);
         _setTokenURI(tokenId, uri);
         _creators[tokenId] = creator ;
-        _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
+        //If Author royalty is set to true
+        if(tokenRoyalty){
+            // At least one royaltyReceiver is required.
+            require(royaltyReceiver.length > 0, "No Royalty details provided");
+            // Check on the maximum size over which the for loop will run over.
+            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
+            //Check the length of receiver and fees should match
+            require(royaltyReceiver.length == tokenRoyaltyInBips.length, "Mismatch of Royalty recievers and their fees");
+            _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
+        }
+        //Increment tokenId
+		_tokenIdCounter.increment();
     }
 
     function _beforeTokenTransfer(
@@ -105,12 +129,6 @@ contract SouqERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Paus
 		returns (string memory)
     {
         return super.tokenURI(tokenId);
-    }
-
-    function setTokenURI(uint256 tokenId, string memory _tokenURI)  public {
-        require(msg.sender == _creators[tokenId], "ERC721: Not the creator of this token");
-        require(msg.sender ==  ERC721.ownerOf(tokenId), "ERC721: Not the owner of this token");
-        _setTokenURI(tokenId, _tokenURI);
     }
 
     function supportsInterface(bytes4 interfaceId) 

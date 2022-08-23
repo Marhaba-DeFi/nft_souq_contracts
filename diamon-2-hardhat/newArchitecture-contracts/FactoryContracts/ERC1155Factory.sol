@@ -3,37 +3,51 @@ pragma solidity ^0.8.2;
 
 import "../ERC1155.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "../ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
-    uint96 royaltyFeesInBips;
-    address royaltyAddress;
+contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
 
+    using Counters for Counters.Counter;
+	Counters.Counter private _tokenIdCounter;
 
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
     mapping (uint256 => string) tokenURIs;
-
+    
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
+     * @notice default royalty is optional. DefaultRoyalty is set, if the flag is true.
+     */
     constructor(
         string memory name_, 
         string memory symbol_,
-        uint96 _royaltyFeesInBips,
-        address _royaltyReciever
+        bool defaultRoyalty,
+        address[] memory royaltyReceiver, 
+		uint96[] memory royaltyFeesInBips
     ) ERC1155(name_, symbol_) {
         bytes memory validateName = bytes(name_); // Uses memory
         bytes memory validateSymbol = bytes(symbol_);
         require( validateName.length != 0 && validateSymbol.length != 0, "ERC1155: Choose a name and symbol");
-        _setDefaultRoyalty(_royaltyReciever, _royaltyFeesInBips);
+        if(defaultRoyalty){
+            // At least one royaltyReceiver is required.
+            require(royaltyReceiver.length > 0, "No Royalty details provided");
+            // Check on the maximum size over which the for loop will run over.
+            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
+            //Check the length of receiver and fees should match
+            require(royaltyReceiver.length == royaltyFeesInBips.length, "Mismatch of Royalty recievers and their fees");
+            _setDefaultRoyalty(royaltyReceiver, royaltyFeesInBips);
+        }
     }
 
-    function _name() internal view virtual returns (string memory) {
-        return name;
-    }
+    // function _name() internal view virtual returns (string memory) {
+    //     return name;
+    // }
 
-    function _symbol() internal view virtual returns (string memory) {
-        return symbol;
-    }
+    // function _symbol() internal view virtual returns (string memory) {
+    //     return symbol;
+    // }
 
 /**
 * @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
@@ -56,7 +70,6 @@ contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
 
 	/**
      * @notice This function is used for minting new NFT in the market.
-     * @param tokenId tokenId
      * @param creator address of the owner and creator of the NFT
      * @param tokenURI tokenURI
      * @param copies copies of the NFT to be minted
@@ -68,18 +81,29 @@ contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
      */
     function mint(
 			address creator, 
-			string memory tokenURI, 
-			uint256 tokenId, 
+			string memory tokenURI,  
 			uint256 copies, 
-			address royaltyReceiver, 
-			uint96 tokenRoyaltyInBips
+            bool tokenRoyalty,
+			address[] memory royaltyReceiver, 
+		    uint96[] memory tokenRoyaltyInBips
 		) public onlyOwner returns(uint256, uint256) {
-        _mint(creator, tokenId, copies, "");
-        _setTokenURI(tokenId, tokenURI);
-        _setTokenRoyaltyInfo(tokenId, royaltyReceiver, tokenRoyaltyInBips);
-		_creators[tokenId] = creator;
-        return(tokenId, copies);
-    }
+            uint256 tokenId = _tokenIdCounter.current();
+            _mint(creator, tokenId, copies, "");
+            _setTokenURI(tokenId, tokenURI);
+            //If Author royalty is set to true
+            if(tokenRoyalty){
+                // At least one royaltyReceiver is required.
+                require(royaltyReceiver.length > 0, "No Royalty details provided");
+                // Check on the maximum size over which the for loop will run over.
+                require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
+                //Check the length of receiver and fees should match
+                require(royaltyReceiver.length == tokenRoyaltyInBips.length, "Mismatch of Royalty recievers and their fees");
+                _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
+            }
+            //Increment tokenId
+            _tokenIdCounter.increment();
+            return(tokenId, copies);
+        }
 
 /**
 	 * @notice This function is used for burning an existing NFT.
@@ -94,7 +118,7 @@ contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
     function burn(address _from, 
         uint256 _tokenId, 
         uint256 _amount
-    ) external onlyOwner {
+    ) external {
         require(balanceOf(msg.sender, _tokenId) != 0, "ERC1155: Not the owner of this token");
         require(balanceOf(msg.sender, _tokenId) >= _amount, "ERC1155: Not enough quantity to burn");
         _burn(_from, _tokenId, _amount);
@@ -120,14 +144,6 @@ contract Souq1155 is Pausable, ERC1155, ERC2981, Ownable {
         require(balanceOf(_from, _tokenId) >= _copies, "ERC1155: Not enough copies");
         safeTransferFrom(_from, _to, _tokenId, _copies, "");
         return true;
-    }
-
-    function setTokenRoyaltyInfo(
-		uint256 _tokenId,
-		address _receiver, 
-		uint96 _royaltyFeesInBips
-	) public onlyOwner {
-        _setTokenRoyalty(_tokenId, _receiver, _royaltyFeesInBips);
     }
 
     function supportsInterface(bytes4 interfaceId) 
