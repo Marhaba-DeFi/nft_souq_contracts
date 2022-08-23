@@ -32,14 +32,14 @@ contract ERC2981 is ERC165 {
     RoyaltyInfo private _defaultRoyaltyInfo;
     mapping(uint256 => RoyaltyInfo) private _tokenRoyaltyInfo;
 
-	uint256[] private royaltyAmount;
-
     /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
         return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    uint256[] private royaltyAmount;
 
     function initializeRoyaltyAmount() internal {
         delete royaltyAmount;
@@ -51,7 +51,7 @@ contract ERC2981 is ERC165 {
             royalty = _defaultRoyaltyInfo;
         }
         
-        initializeRoyaltyAmount(); // royaltyAmount should be an empty array
+        initializeRoyaltyAmount(); // 
         for(uint i=0; i < royalty.royaltyFraction.length; i++){
             royaltyAmount.push((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
             // royaltyAmount.push(5);
@@ -77,7 +77,7 @@ contract ERC2981 is ERC165 {
      * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
-    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal virtual {
+    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal {
         require(receiver[0] != address(0), "ERC2981: invalid receiver");
         require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
@@ -112,7 +112,7 @@ contract ERC2981 is ERC165 {
         uint256 tokenId,
         address[] memory receiver,
         uint96[] memory feeNumerator
-    ) internal virtual{
+    ) internal returns(RoyaltyInfo memory) {
         require(receiver[0] != address(0), "ERC2981: invalid receiver");
         require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
@@ -126,7 +126,7 @@ contract ERC2981 is ERC165 {
         participants=receiver;
         feeFractions = feeNumerator;  
         _tokenRoyaltyInfo[tokenId] = RoyaltyInfo(participants, feeFractions);
-        
+        return(_tokenRoyaltyInfo[tokenId]);
     }
 
     /**
