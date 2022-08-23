@@ -60,7 +60,7 @@ async function main() {
     const address = souqNFTDiamond.address
     console.log('souqNFTDiamond deployed to: ', souqNFTDiamond.address);
 
-  // add facets to the souq NFT diamond
+  ///////////////add facets to the souq NFT diamond
   const facetNames = [
     'MediaFacet',
     'ERC1155FactoryFacet',
@@ -89,17 +89,18 @@ async function main() {
     souqNFTDiamond.address,
   );
   await diamondCutFacet.diamondCut(cut, hre.ethers.constants.AddressZero, '0x');
+  ///////////////
 
-  //Media deployment
-
+  ///////////////Media deployment
   const mediaFacet = await hre.ethers.getContractAt(
     'MediaFacet',
     souqNFTDiamond.address,
   );
   await mediaFacet.mediaFacetInit(souqNFTDiamond.address);
   console.log('Media is initialized');
+  ///////////////
 
-//token deployment
+///////////////token deployment
   const erc1155FactoryFacet = await hre.ethers.getContractAt(
     'ERC1155FactoryFacet',
     souqNFTDiamond.address,
@@ -117,9 +118,10 @@ async function main() {
   const erc721Symbol = 'NFT721SOUQ';
   await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol);
   console.log('erc721FactoryFacet initialized');
+  ///////////////
 
-  //Market deployment
 
+  ///////////////Market deployment
   const marketFacet = await hre.ethers.getContractAt(
     'MarketFacet',
     souqNFTDiamond.address,
@@ -132,8 +134,9 @@ async function main() {
 
   const marketAddress = await marketFacet.getAddress();
   console.log('Media IS initialized with address', marketAddress );
+  ///////////////
 
-  //Minting token from 1155 contract
+  ///////////////Minting token from 721 contract
   const token721 = await mediaFacet.mintTokenMedia(
     signer.address,
     0,
@@ -157,9 +160,28 @@ async function main() {
   );
 
   console.log("Owner of 721 token 0", await erc721FactoryFacet.ownerOf(0))
-
   console.log("Owner of 721 token 1", await erc721FactoryFacet.ownerOf(1))
+  ///////////////
 
+  ///////////////checking toekn exists or not from media
+  console.log("Token number 0 of 721 exists: ", await mediaFacet.istokenIdExistMedia(0,"ERC721"));
+  ///////////////
+
+  ///////////////set approved erc20 tokens from media
+  await mediaFacet.connect(signer).setApprovedCryptoMedia(
+    erc20Address,
+    true
+    );
+
+  console.log("Mock token is approved: ", await mediaFacet.getApprovedCryptoMedia(erc20Address));
+  ///////////////
+
+  ///////////////set platform commission fee from media
+  await mediaFacet.connect(signer).setCommissionPercentageMedia(250);
+  console.log("Platform commission fee: ", parseInt(await mediaFacet.getAdminCommissionPercentageMedia()));
+  ///////////////
+
+  /////////////// set collabortors from media
   await mediaFacet.connect(signer).setCollaboratorsMedia(
     souqNFTDiamond.address,
     0,
@@ -167,32 +189,22 @@ async function main() {
     [100,100]
     );
 
-    await mediaFacet.connect(signer1).setCollaboratorsMedia(
-      souqNFTDiamond.address,
-      1,
-      [signer2.address, signer3.address],
-      [100,100]
-      );
+  await mediaFacet.connect(signer1).setCollaboratorsMedia(
+    souqNFTDiamond.address,
+    1,
+    [signer2.address, signer3.address],
+    [100,100]
+    );
 
-     const collabTarget = await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 0); 
+  const collabTarget0 = await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 0); 
+  const collabTarget1 = await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 1); 
 
-  console.log("Collaborators are ",  collabTarget["collaborators"] ) 
-  console.log("Collaborators are ", await mediaFacet.getCollaboratorsMedia(souqNFTDiamond.address, 1)) 
+  console.log("Collaborators of token0 are ",  collabTarget0["collaborators"] ) 
+  console.log("Shares of token0 are ", (collabTarget0["collabFraction"])) 
+  ///////////////
 
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
   
   // const mediaFacet = await hre.ethers.getContractAt(
   //   'MediaFacet',

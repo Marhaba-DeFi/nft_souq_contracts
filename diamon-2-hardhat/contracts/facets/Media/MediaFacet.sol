@@ -162,6 +162,33 @@ contract MediaFacet {
         return true;
     }
 
+    function istokenIdExistMedia(
+        uint256 _tokenID,
+        string memory _contractType
+    ) external view returns (bool)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))){
+            return(ERC721FactoryFacet(ms.diamondAddress)._tokenExists(_tokenID));
+        } 
+    }
+
+    function burnTokenMedia(
+        uint256 _tokenID,
+        string memory _contractType,
+        uint256 amount
+    ) external
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))){
+            ERC721FactoryFacet(ms.diamondAddress).burn(_tokenID);
+        } 
+
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))){
+            ERC1155FactoryFacet(ms.diamondAddress).burn(msg.sender,_tokenID,amount);
+        } 
+    }
+
     //AcceptBid() 
 	function acceptBidMedia(
         string memory _contractType,
@@ -190,7 +217,5 @@ contract MediaFacet {
 			_sellerSig
 		);
 	}
-
-
 
 }

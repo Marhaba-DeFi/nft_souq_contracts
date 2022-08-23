@@ -28,3 +28,22 @@
 //   }
 // }
 // /** @type import('hardhat/config').HardhatUserConfig */
+require('@nomiclabs/hardhat-waffle');
+
+const INFURA_URL = "https://eth-rinkeby.alchemyapi.io/v2/VHQ8cHpIDV1h944x5EYfDX16vO8eYc-6";
+const alchemy_url = "https://eth-goerli.g.alchemy.com/v2/gTtgWv_cVcaJnZtsOhwp_dcXBUxRl3hI"
+const PRIVATE_KEY = "0x6e6dfc1c884234152040ad146f8733b79cd95128ac7de5dbf90566d86bdb2c54";
+module.exports = {
+  solidity: "0.8.10",
+  networks: {
+    goerli: {
+      url:alchemy_url,
+      accounts: [PRIVATE_KEY]
+    },
+    rinkeby:{
+      url:INFURA_URL,
+      accounts: [PRIVATE_KEY],
+      gas: 6000000,
+    }
+  }
+};
