@@ -23,7 +23,6 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  */
 
 contract ERC2981 is ERC165 {
-
     struct RoyaltyInfo {
         address[] receiver;
         uint96[] royaltyFraction;
@@ -45,18 +44,18 @@ contract ERC2981 is ERC165 {
         delete royaltyAmount;
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public virtual returns (address[] memory, uint256[] memory) {
         RoyaltyInfo memory royalty = _tokenRoyaltyInfo[_tokenId];
         if (royalty.receiver[0] == address(0)) {
             royalty = _defaultRoyaltyInfo;
         }
-        
-        initializeRoyaltyAmount(); // 
-        for(uint i=0; i < royalty.royaltyFraction.length; i++){
+
+        initializeRoyaltyAmount(); //
+        for (uint256 i = 0; i < royalty.royaltyFraction.length; i++) {
             royaltyAmount.push((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
             // royaltyAmount.push(5);
         }
-    
+
         return (royalty.receiver, royaltyAmount);
     }
 
@@ -84,16 +83,16 @@ contract ERC2981 is ERC165 {
         require(receiver.length <= 5, "Too many royalty recievers details");
         //Check the length of receiver and fees should match
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty recievers and their fees");
-        uint totalFeeNumerator=0;
-        for(uint i=0 ; i < feeNumerator.length; i++){
+        uint256 totalFeeNumerator = 0;
+        for (uint256 i = 0; i < feeNumerator.length; i++) {
             totalFeeNumerator += feeNumerator[i];
         }
         require(totalFeeNumerator <= _feeDenominator(), "ERC2981: royalty fee will exceed salePrice");
         uint96[] memory feeFractions;
         address[] memory participants;
-        participants=receiver;
-        feeFractions = feeNumerator;  
-        _defaultRoyaltyInfo = RoyaltyInfo(participants, feeFractions); 
+        participants = receiver;
+        feeFractions = feeNumerator;
+        _defaultRoyaltyInfo = RoyaltyInfo(participants, feeFractions);
     }
 
     /**
@@ -122,15 +121,15 @@ contract ERC2981 is ERC165 {
         require(receiver.length <= 5, "Too many royalty recievers details");
         //Check the length of receiver and fees should match
         require(receiver.length == feeNumerator.length, "Mismatch of Royalty recievers and their fees");
-        uint totalFeeNumerator=0;
-        for(uint i=0 ; i < feeNumerator.length; i++){
+        uint256 totalFeeNumerator = 0;
+        for (uint256 i = 0; i < feeNumerator.length; i++) {
             totalFeeNumerator += feeNumerator[i];
         }
         require(totalFeeNumerator <= _feeDenominator(), "ERC2981: royalty fee will exceed salePrice");
         uint96[] memory feeFractions;
         address[] memory participants;
-        participants=receiver;
-        feeFractions = feeNumerator;  
+        participants = receiver;
+        feeFractions = feeNumerator;
         _tokenRoyaltyInfo[tokenId] = RoyaltyInfo(participants, feeFractions);
         // return(_tokenRoyaltyInfo[tokenId]);
     }
