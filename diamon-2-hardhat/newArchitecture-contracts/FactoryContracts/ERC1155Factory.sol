@@ -43,11 +43,19 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
     }
 
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(newAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(newAddresses.length <= 5, "Too many userss to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++)
             whitelist[newAddresses[i]] = true;
     }
 
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(currentAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(currentAddresses.length <= 5, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++)
             delete whitelist[currentAddresses[i]];
     }
