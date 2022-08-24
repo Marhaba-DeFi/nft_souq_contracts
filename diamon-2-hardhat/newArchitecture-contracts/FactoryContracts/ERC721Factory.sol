@@ -47,12 +47,6 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
         if(defaultRoyalty){
-            // At least one royaltyReceiver is required.
-            require(royaltyReceiver.length > 0, "No Royalty details provided");
-            // Check on the maximum size over which the for loop will run over.
-            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
-            //Check the length of receiver and fees should match
-            require(royaltyReceiver.length == royaltyFeesInBips.length, "Mismatch of Royalty recievers and their fees");
             _setDefaultRoyalty(royaltyReceiver, royaltyFeesInBips);
         }
     }
@@ -99,12 +93,6 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
         _creators[tokenId] = creator ;
         //If Author royalty is set to true
         if(tokenRoyalty){
-            // At least one royaltyReceiver is required.
-            require(royaltyReceiver.length > 0, "No Royalty details provided");
-            // Check on the maximum size over which the for loop will run over.
-            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
-            //Check the length of receiver and fees should match
-            require(royaltyReceiver.length == tokenRoyaltyInBips.length, "Mismatch of Royalty recievers and their fees");
             _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
         }
         //Increment tokenId

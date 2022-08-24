@@ -12,6 +12,9 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
     using Counters for Counters.Counter;
 	Counters.Counter private _tokenIdCounter;
 
+    bool public whitelistEnabled = false;
+    mapping(address => bool) public whitelist;
+
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
     mapping (uint256 => string) tokenURIs;
@@ -31,27 +34,27 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         bytes memory validateSymbol = bytes(symbol_);
         require( validateName.length != 0 && validateSymbol.length != 0, "ERC1155: Choose a name and symbol");
         if(defaultRoyalty){
-            // At least one royaltyReceiver is required.
-            require(royaltyReceiver.length > 0, "No Royalty details provided");
-            // Check on the maximum size over which the for loop will run over.
-            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
-            //Check the length of receiver and fees should match
-            require(royaltyReceiver.length == royaltyFeesInBips.length, "Mismatch of Royalty recievers and their fees");
             _setDefaultRoyalty(royaltyReceiver, royaltyFeesInBips);
         }
     }
 
-    // function _name() internal view virtual returns (string memory) {
-    //     return name;
-    // }
+    function setWhitelistEnabled(bool _state) public onlyOwner {
+        whitelistEnabled = _state;
+    }
 
-    // function _symbol() internal view virtual returns (string memory) {
-    //     return symbol;
-    // }
+    function setWhitelist(address[] calldata newAddresses) public onlyOwner {
+        for (uint256 i = 0; i < newAddresses.length; i++)
+            whitelist[newAddresses[i]] = true;
+    }
 
-/**
-* @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
- */
+    function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
+        for (uint256 i = 0; i < currentAddresses.length; i++)
+            delete whitelist[currentAddresses[i]];
+    }
+
+    /**
+    * @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
+    */
     function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal {
         tokenURIs[tokenId] = _tokenURI;
     }
@@ -60,13 +63,6 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         return(tokenURIs[tokenId]);
     }
 
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
 
 	/**
      * @notice This function is used for minting new NFT in the market.
@@ -86,18 +82,18 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
             bool tokenRoyalty,
 			address[] memory royaltyReceiver, 
 		    uint96[] memory tokenRoyaltyInBips
-		) public onlyOwner returns(uint256, uint256) {
+		) public returns(uint256, uint256) {
+            if(whitelistEnabled == false) {
+                require(msg.sender == owner(), "Address not whitelisted");
+            }
+            if(whitelistEnabled == true) {
+                require(whitelist[_msgSender()], "Address not whitelisted");
+            }
             uint256 tokenId = _tokenIdCounter.current();
             _mint(creator, tokenId, copies, "");
             _setTokenURI(tokenId, tokenURI);
             //If Author royalty is set to true
             if(tokenRoyalty){
-                // At least one royaltyReceiver is required.
-                require(royaltyReceiver.length > 0, "No Royalty details provided");
-                // Check on the maximum size over which the for loop will run over.
-                require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
-                //Check the length of receiver and fees should match
-                require(royaltyReceiver.length == tokenRoyaltyInBips.length, "Mismatch of Royalty recievers and their fees");
                 _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
             }
             //Increment tokenId
