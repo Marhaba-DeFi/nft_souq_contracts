@@ -210,10 +210,12 @@ async function main() {
   );
   const erc721Mock = await ERC721Mock.deploy("TestNFT", "TNFT",true,[signer1.address],[1000]);
   await erc721Mock.deployed();
-  await erc721Mock.safeMint(signer1.address,0);
+  await erc721Mock.safeMint(signer1.address,0,false,[signer1.address],[0]);
   const erc721Address = erc721Mock.address
-  console.log('Mock erc20 is deployed to: ', erc721Mock);
-  console.log('The balance of signer0 is: ',  parseInt(await erc721Mock.balanceOf(signer1.address)))
+  console.log('The balance of signer1 is: ',  parseInt(await erc721Mock.balanceOf(signer1.address)))
+
+  await erc721Mock.connect(signer1).setApprovalForAll(address, true);
+  console.log('Media is approved for all mock 721 tokens: ',  await erc721Mock.isApprovedForAll(signer1.address, address))
 
 ///////////////////////////////////////
 

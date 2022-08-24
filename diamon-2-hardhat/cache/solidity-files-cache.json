@@ -1859,8 +1859,8 @@
       ]
     },
     "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Mocks/ERC721Mock.sol": {
-      "lastModificationDate": 1661360236795,
-      "contentHash": "ea3ddb003b67428d135563a1ca945ac1",
+      "lastModificationDate": 1661372212616,
+      "contentHash": "f910e39f26ebd61b597f7aeb6ff6ee6c",
       "sourceName": "contracts/Mocks/ERC721Mock.sol",
       "solcConfig": {
         "version": "0.8.6",

@@ -23,9 +23,8 @@ contract ERC721Mock is ERC721, ERC2981 {
     }
     function safeMint(
 		address creator, 
-		string memory uri, 
-        bool tokenRoyalty,
         uint256 tokenId,
+        bool tokenRoyalty,
 		address[] memory royaltyReceiver, 
 		uint96[] memory tokenRoyaltyInBips
 	) public {
