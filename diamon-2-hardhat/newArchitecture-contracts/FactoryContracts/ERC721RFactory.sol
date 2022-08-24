@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "../ERC721A.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -19,7 +18,9 @@ contract ERC721RFactory is ERC721A, Ownable {
     address public refundAddress;
     address public refundERC20;
     uint256 public maxUserMintAmount;
-    bytes32 public merkleRoot;
+    bool public whitelistEnabled = false;
+
+    mapping(address => bool) public whitelist;
 
     mapping(uint256 => bool) public hasRefunded; // users can search if the NFT has been refunded
     mapping(uint256 => bool) public isOwnerMint; // if the NFT was freely minted by owner
@@ -47,16 +48,15 @@ contract ERC721RFactory is ERC721A, Ownable {
         toggleRefundCountdown();
     }
 
-    function preSaleMint(uint256 quantity, bytes32[] calldata proof)
+    function preSaleMint(uint256 quantity)
         external
         payable
     {
         require(presaleActive, "Presale is not active");
         require(msg.value == quantity * mintPrice, "Value");
-        require(
-            _isAllowlisted(msg.sender, proof, merkleRoot),
-            "Not on allow list"
-        );
+        if(whitelistEnabled == true) {
+            require(whitelist[_msgSender()], "Address not whitelisted");
+        }
         require(
             _numberMinted(msg.sender) + quantity <= maxUserMintAmount,
             "Max amount"
@@ -134,10 +134,7 @@ contract ERC721RFactory is ERC721A, Ownable {
         refundAddress = _refundAddress;
     }
 
-    function setMerkleRoot(bytes32 _root) external onlyOwner {
-        merkleRoot = _root;
-    }
-
+    
     function setBaseURI(string memory uri) external onlyOwner {
         baseURI = uri;
     }
@@ -154,15 +151,17 @@ contract ERC721RFactory is ERC721A, Ownable {
         publicSaleActive = !publicSaleActive;
     }
 
-    function _leaf(address _account) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_account));
+    function setWhitelistEnabled(bool _state) public onlyOwner {
+        whitelistEnabled = _state;
     }
 
-    function _isAllowlisted(
-        address _account,
-        bytes32[] calldata _proof,
-        bytes32 _root
-    ) internal pure returns (bool) {
-        return MerkleProof.verify(_proof, _root, _leaf(_account));
+    function setWhitelist(address[] calldata newAddresses) public onlyOwner {
+        for (uint256 i = 0; i < newAddresses.length; i++)
+            whitelist[newAddresses[i]] = true;
+    }
+
+    function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
+        for (uint256 i = 0; i < currentAddresses.length; i++)
+            delete whitelist[currentAddresses[i]];
     }
 }
