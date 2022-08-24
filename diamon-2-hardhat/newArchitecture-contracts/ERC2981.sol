@@ -78,9 +78,12 @@ contract ERC2981 is ERC165 {
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
     function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal {
-        require(receiver[0] != address(0), "ERC2981: invalid receiver");
-        require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
-        require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
+        // At least one royaltyReceiver is required.
+        require(receiver.length > 0, "No Royalty details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(receiver.length <= 5, "Too many royalty recievers details");
+        //Check the length of receiver and fees should match
+        require(receiver.length == feeNumerator.length, "Mismatch of Royalty recievers and their fees");
         uint totalFeeNumerator=0;
         for(uint i=0 ; i < feeNumerator.length; i++){
             totalFeeNumerator += feeNumerator[i];
@@ -112,10 +115,13 @@ contract ERC2981 is ERC165 {
         uint256 tokenId,
         address[] memory receiver,
         uint96[] memory feeNumerator
-    ) internal returns(RoyaltyInfo memory) {
-        require(receiver[0] != address(0), "ERC2981: invalid receiver");
-        require(receiver.length <= 5, "Royalty recievers cannot be more than 5");
-        require(receiver.length == feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
+    ) internal {
+        // At least one royaltyReceiver is required.
+        require(receiver.length > 0, "No Royalty details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(receiver.length <= 5, "Too many royalty recievers details");
+        //Check the length of receiver and fees should match
+        require(receiver.length == feeNumerator.length, "Mismatch of Royalty recievers and their fees");
         uint totalFeeNumerator=0;
         for(uint i=0 ; i < feeNumerator.length; i++){
             totalFeeNumerator += feeNumerator[i];
@@ -126,7 +132,7 @@ contract ERC2981 is ERC165 {
         participants=receiver;
         feeFractions = feeNumerator;  
         _tokenRoyaltyInfo[tokenId] = RoyaltyInfo(participants, feeFractions);
-        return(_tokenRoyaltyInfo[tokenId]);
+        // return(_tokenRoyaltyInfo[tokenId]);
     }
 
     /**

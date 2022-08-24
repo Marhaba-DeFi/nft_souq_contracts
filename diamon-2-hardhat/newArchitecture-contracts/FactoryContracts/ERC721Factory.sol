@@ -10,7 +10,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../ERC2981.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -21,12 +20,16 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @dev This contract inherits from ERC721 openzeppelin contract, openzeppelin ERC721Enumerable, 
  * pausable, ERC721URIStorage and ERC2981 royalty contracts.
  */
-contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Pausable, Ownable {
+contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, Ownable {
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
 
 	using Counters for Counters.Counter;
 	Counters.Counter private _tokenIdCounter;
+
+    bool public whitelistEnabled = false;
+
+    mapping(address => bool) public whitelist;
 
 	/**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
@@ -44,28 +47,30 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, P
         bytes memory symbol = bytes(_symbol);
         require( name.length != 0 && symbol.length != 0, "ERC721: Choose a name and symbol");
         if(defaultRoyalty){
-            // At least one royaltyReceiver is required.
-            require(oyaltyReceiver.length > 0, "No Royalty details provided");
-            // Check on the maximum size over which the for loop will run over.
-            require(oyaltyReceiver.length <= 5, "Too many royalty recievers details");
-            //Check the length of receiver and fees should match
-            require(royaltyReceiver.length == royaltyFeesInBips.length, "Mismatch of Royalty recievers and their fees");
             _setDefaultRoyalty(royaltyReceiver, royaltyFeesInBips);
         }
     }
 
-	/**
-	* @dev pause function to pause minting. 
-	 */
-	function pause() public onlyOwner {
-        _pause();
+	function setWhitelistEnabled(bool _state) public onlyOwner {
+        whitelistEnabled = _state;
     }
 
-	/**
-	* @dev unpause function to resume minting. 
-	 */
-    function unpause() public onlyOwner {
-        _unpause();
+    function setWhitelist(address[] calldata newAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(newAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(newAddresses.length <= 5, "Too many userss to whitelist");
+        for (uint256 i = 0; i < newAddresses.length; i++)
+            whitelist[newAddresses[i]] = true;
+    }
+
+    function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(currentAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        for (uint256 i = 0; i < currentAddresses.length; i++)
+            delete whitelist[currentAddresses[i]];
     }
 
     /**
@@ -83,24 +88,23 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, P
         bool tokenRoyalty,
 		address[] memory royaltyReceiver, 
 		uint96[] memory tokenRoyaltyInBips
-	) 
-		public onlyOwner whenNotPaused {
-		uint256 tokenId = _tokenIdCounter.current();
+	) public {
+        if(whitelistEnabled == false) {
+            require(msg.sender == owner(), "Address not whitelisted");
+        }
+        if(whitelistEnabled == true) {
+            require(whitelist[_msgSender()], "Address not whitelisted");
+        }
+        uint256 tokenId = _tokenIdCounter.current();
         _safeMint(creator, tokenId);
         _setTokenURI(tokenId, uri);
         _creators[tokenId] = creator ;
         //If Author royalty is set to true
         if(tokenRoyalty){
-            // At least one royaltyReceiver is required.
-            require(royaltyReceiver.length > 0, "No Royalty details provided");
-            // Check on the maximum size over which the for loop will run over.
-            require(royaltyReceiver.length <= 5, "Too many royalty recievers details");
-            //Check the length of receiver and fees should match
-            require(royaltyReceiver.length == tokenRoyaltyInBips.length, "Mismatch of Royalty recievers and their fees");
             _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);
         }
         //Increment tokenId
-		_tokenIdCounter.increment();
+        _tokenIdCounter.increment();
     }
 
     function _beforeTokenTransfer(
