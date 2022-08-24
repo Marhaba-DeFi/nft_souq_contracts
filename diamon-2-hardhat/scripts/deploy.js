@@ -203,7 +203,19 @@ async function main() {
   console.log("Shares of token0 are ", (collabTarget0["collabFraction"])) 
   ///////////////
 
-  
+  //// Minting erc721 mock token
+
+  const ERC721Mock = await hre.ethers.getContractFactory(
+    'ERC721Mock',
+  );
+  const erc721Mock = await ERC721Mock.deploy("TestNFT", "TNFT",true,[signer1.address],[1000]);
+  await erc721Mock.deployed();
+  await erc721Mock.safeMint(signer1.address,0);
+  const erc721Address = erc721Mock.address
+  console.log('Mock erc20 is deployed to: ', erc721Mock);
+  console.log('The balance of signer0 is: ',  parseInt(await erc721Mock.balanceOf(signer1.address)))
+
+///////////////////////////////////////
 
   
   // const mediaFacet = await hre.ethers.getContractAt(
