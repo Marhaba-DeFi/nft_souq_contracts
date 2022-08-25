@@ -15,6 +15,8 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./LibERC1155FactoryStorage.sol";
 import "../../libraries/LibURI.sol";
 
+
+
 contract ERC1155FactoryFacet is ERC1155Facet {
     using Strings for uint256;
 
@@ -64,16 +66,22 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         address creator,
         uint256 totalSupply,
         string memory tokenURI,
+        bool tokenRoyalty,
 		address [] memory royaltyReceiver,
 		uint96 [] memory tokenRoyaltyInBips
 
     ) external  onlyMediaCaller {
+        if(tokenRoyalty){
+            require(royaltyReceiver.length == tokenRoyaltyInBips.length, "ERC1155: the length of royalty addresses is not equal to the length of shares");
+            require(royaltyReceiver.length <= 5, "ERC1155: too many royalty addresses has been set");
+            //_setTokenRoyalty(tokenId,royaltyReceiver,tokenRoyaltyInBips);
+        }
+
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
         es.nftToOwners[tokenId] = creator;
         es.nftToCreators[tokenId] = creator;
         _mint(creator, tokenId, totalSupply, "");
         _setTokenURI1155(tokenId, tokenURI);
-        //setTokenRoyalty
     }
 
     /**
@@ -112,5 +120,56 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 	function burn(address from, uint256 tokenId, uint256 amount) external  
 	{
         _burn(from, tokenId, amount);
+    }
+
+    /**
+     * @dev The denominator with which to interpret the fee set in {_setTokenRoyalty} and {_setDefaultRoyalty} as a
+     * fraction of the sale price. Defaults to 10000 so fees are expressed in basis points, but may be customized by an
+     * override.
+     */
+    function _feeDenominator1155() internal pure virtual returns (uint96) {
+        return 10000;
+    }
+
+    /**
+     * @dev Sets the royalty information that all ids in this contract will default to.
+     *
+     * Requirements:
+     *
+     * - `receiver` cannot be the zero address.
+     * - `feeNumerator` cannot be greater than the fee denominator.
+     */
+    function _setTokenRoyalty1155(
+        uint256 tokenId,
+        address[] memory _receivers,
+        uint96[] memory _feeNumerator
+    ) internal virtual {
+        require(_receivers[0] != address(0), "ERC1155 royalty: invalid receiver");
+        require(_receivers.length <= 5, "ERC1155 royalty: Royalty recievers cannot be more than 5");
+        require(_receivers.length == _feeNumerator.length, "ERC1155 royalty: Mismatch of Royalty Recxiever address and their share");
+        uint totalFeeNumerator=0;
+        for(uint i ; i < _feeNumerator.length; i++){
+            totalFeeNumerator += _feeNumerator[i];
+        }
+        require(totalFeeNumerator <= _feeDenominator1155(), "ERC1155 royalty: royalty fee will exceed salePrice");
+        
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+        LibERC1155FactoryStorage.RoyaltyInfo memory royaltyInfo ;
+        royaltyInfo.receiver = _receivers;
+        royaltyInfo.royaltyFraction = _feeNumerator;
+        es._tokenRoyaltyInfo[tokenId] = royaltyInfo; 
+    }
+
+    function royaltyInfo1155(uint256 _tokenID, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
+		LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+
+        address[] memory receivers = es._tokenRoyaltyInfo[_tokenID].receiver;
+        uint96[] memory fractions = es._tokenRoyaltyInfo[_tokenID].royaltyFraction;
+        uint256[] memory royaltyAmount = new uint256[](fractions.length);
+
+        for(uint i=0; i < fractions.length; i++){
+            royaltyAmount[i] = (_salePrice * fractions[i]) / _feeDenominator1155();
+        }
+        return (receivers, royaltyAmount);
     }
 }

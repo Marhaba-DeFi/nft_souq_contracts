@@ -141,27 +141,35 @@ async function main() {
     signer.address,
     0,
     "ERC721",
-    address,
     1,
     "12345",
+    true,
     [signer2.address, signer3.address],
-    [50, 50]
+    [500, 500]
   );
 
   await mediaFacet.mintTokenMedia(
     signer1.address,
     1,
     "ERC721",
-    address,
     1,
     "12345",
-    [signer2.address, signer3.address],
-    [50, 50]
+    true,
+    [signer2.address],
+    [50]
   );
 
   console.log("Owner of 721 token 0", await erc721FactoryFacet.ownerOf(0))
   console.log("Owner of 721 token 1", await erc721FactoryFacet.ownerOf(1))
   ///////////////
+
+  //////royalty check for 1 eth
+  const r = await erc721FactoryFacet.royaltyInfo721(0, ethers.utils.parseEther('1.0'))
+   console.log("royality address of tokenId 1 is : ", r[0])
+   console.log("royality share for first account 1 eth is  : ", ethers.utils.formatEther(r[1][0]))
+   console.log("royality share for second account 1 eth is  : ", ethers.utils.formatEther(r[1][1]))
+
+   ///////////////
 
   ///////////////checking toekn exists or not from media
   console.log("Token number 0 of 721 exists: ", await mediaFacet.istokenIdExistMedia(0,"ERC721"));
@@ -202,6 +210,7 @@ async function main() {
   console.log("Collaborators of token0 are ",  collabTarget0["collaborators"] ) 
   console.log("Shares of token0 are ", (collabTarget0["collabFraction"])) 
   ///////////////
+
 
   //// Minting erc721 mock token
 

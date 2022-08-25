@@ -56,6 +56,7 @@ contract MediaFacet {
                 _to,
                 _copies,
 				_uri,
+                tokenRoyalty,
                 _royaltyReceivers,
                 _tokenRoyaltyInBips  
             );
@@ -64,6 +65,7 @@ contract MediaFacet {
                 _id,
                 _to, 
                 _uri,
+                tokenRoyalty,
                 _royaltyReceivers,
                 _tokenRoyaltyInBips 
             );
@@ -131,7 +133,7 @@ contract MediaFacet {
 
     function getApprovedCryptoMedia (
         address _currencyAddress
-	) view public returns(bool) {
+	) public view returns(bool) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         return(MarketFacet(ms.diamondAddress).getApprovedCrypto(_currencyAddress));
     }
@@ -178,7 +180,7 @@ contract MediaFacet {
     function istokenIdExistMedia(
         uint256 _tokenID,
         string memory _contractType
-    ) external view returns (bool)
+    ) public view returns (bool)
     {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))){

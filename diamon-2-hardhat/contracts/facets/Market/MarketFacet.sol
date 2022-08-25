@@ -179,7 +179,7 @@ contract MarketFacet is EIP712 {
         return addminShare;
     }
 
-    function royalityFeeDeduction(
+    function royaltyFeeDeduction(
 		address _currencyAddress,
         address _nftContAddress, 
 		address _payer,
@@ -187,15 +187,20 @@ contract MarketFacet is EIP712 {
         uint256 _tokenID
 	) public returns (uint256) 
 	{
-        ERC2981 erc2981 = ERC2981(_nftContAddress);
-        ERC20 erc20 = ERC20(_currencyAddress);
-        (address[] memory royalityAddresses, uint256[] memory royalityFees) = erc2981.royaltyInfo(_tokenID, amount);
-        uint256 royalityFeeAccumulator = 0;
-        for(uint256 i = 0; i< royalityAddresses.length ; i++ ){
-            erc20.transferFrom(_payer, royalityAddresses[i], royalityFees[i]);
-            royalityFeeAccumulator = royalityFeeAccumulator + royalityFees[i];
+        uint256 royaltyFeeAccumulator = 0;
+        //royaltyFeeDeduction function is only appilcable when it is souq native token
+        if(s._mediaContract == _nftContAddress){
+            ERC2981 erc2981 = ERC2981(_nftContAddress);
+            ERC20 erc20 = ERC20(_currencyAddress);
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = erc2981.royaltyInfo(_tokenID, amount);
+            
+            for(uint256 i = 0; i< royaltyAddresses.length ; i++ ){
+                erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+                royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+            }
         }
-        return royalityFeeAccumulator;
+        return royaltyFeeAccumulator;
+        
     }
 
     function cryptoDistributor(
@@ -256,8 +261,10 @@ contract MarketFacet is EIP712 {
         //admin fee should be deducted from amount
         remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
 
-        //royalty fee should be deducted from amount
-        remained = remained - royalityFeeDeduction(_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+        //royalty fee should be deducted from amount only for diamond tokens
+        if(s._mediaContract == _nftContAddress){
+            remained = remained - royaltyFeeDeduction(_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+        }
 
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
             cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
