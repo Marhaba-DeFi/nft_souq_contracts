@@ -77,7 +77,7 @@ contract ERC2981 is ERC165 {
      * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
-    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal {
+    function _setDefaultRoyalty(address[] calldata receiver, uint96[] calldata feeNumerator) internal {
         // At least one royaltyReceiver is required.
         require(receiver.length > 0, "No Royalty details provided");
         // Check on the maximum size over which the for loop will run over.
@@ -113,8 +113,8 @@ contract ERC2981 is ERC165 {
      */
     function _setTokenRoyalty(
         uint256 tokenId,
-        address[] memory receiver,
-        uint96[] memory feeNumerator
+        address[] calldata receiver,
+        uint96[] calldata feeNumerator
     ) internal {
         // At least one royaltyReceiver is required.
         require(receiver.length > 0, "No Royalty details provided");
@@ -132,7 +132,6 @@ contract ERC2981 is ERC165 {
         participants=receiver;
         feeFractions = feeNumerator;  
         _tokenRoyaltyInfo[tokenId] = RoyaltyInfo(participants, feeFractions);
-        // return(_tokenRoyaltyInfo[tokenId]);
     }
 
     /**

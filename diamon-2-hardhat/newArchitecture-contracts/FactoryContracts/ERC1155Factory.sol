@@ -27,8 +27,8 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         string memory name_, 
         string memory symbol_,
         bool defaultRoyalty,
-        address[] memory royaltyReceiver, 
-		uint96[] memory royaltyFeesInBips
+        address[] calldata royaltyReceiver, 
+		uint96[] calldata royaltyFeesInBips
     ) ERC1155(name_, symbol_) {
         bytes memory validateName = bytes(name_); // Uses memory
         bytes memory validateSymbol = bytes(symbol_);
