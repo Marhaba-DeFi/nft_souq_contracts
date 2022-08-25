@@ -16,7 +16,7 @@ contract ERC721RFactory is ERC721A, Ownable {
     uint256 public refundEndTime;
 
     address public refundAddress;
-    address public refundERC20;
+    // address public refundERC20;
     uint256 public maxUserMintAmount;
     bool public whitelistEnabled = false;
 
@@ -33,14 +33,12 @@ contract ERC721RFactory is ERC721A, Ownable {
         uint mintSupply, 
         uint256 mintingPrice, 
         uint256 refundTime, 
-        uint maxMintPerUser, 
-        address currencyAddress
+        uint maxMintPerUser 
     ) ERC721A(name, symbol) {
         bytes memory validateName = bytes(name); // Uses memory
         bytes memory validateSymbol = bytes(symbol);
         require( validateName.length != 0 && validateSymbol.length != 0, "ERC721R: Choose a name and symbol");
         refundAddress = msg.sender;
-        refundERC20 = currencyAddress;
         maxMintSupply = mintSupply;
         mintPrice = mintingPrice;
         refundPeriod = refundTime;
@@ -105,10 +103,9 @@ contract ERC721RFactory is ERC721A, Ownable {
             transferFrom(msg.sender, refundAddress, tokenId);
         }
 
-        ERC20 erc20 = ERC20(refundERC20);
         uint256 refundAmount = tokenIds.length * mintPrice;
-        // Address.sendValue(payable(msg.sender), refundAmount);
-        erc20.transferFrom(address(this), msg.sender, refundAmount);
+        (bool os, ) = payable(msg.sender).call{value: refundAmount}("");
+        require(os);
     }
 
     function getRefundGuaranteeEndTime() public view returns (uint256) {
@@ -121,9 +118,8 @@ contract ERC721RFactory is ERC721A, Ownable {
 
     function withdraw() external onlyOwner {
         require(block.timestamp > refundEndTime, "Refund period not over");
-        uint256 balance = address(this).balance;
-        ERC20 erc20 = ERC20(refundERC20);
-        erc20.transfer(owner(), balance);
+        (bool os, ) = payable(owner()).call{value: address(this).balance}("");
+        require(os);
     }
 
     function _baseURI() internal view override returns (string memory) {

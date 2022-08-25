@@ -39,8 +39,8 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
 		string memory _name, 
 		string memory _symbol, 
         bool defaultRoyalty,
-		address[] memory royaltyReceiver, 
-		uint96[] memory royaltyFeesInBips
+		address[] calldata royaltyReceiver, 
+		uint96[] calldata royaltyFeesInBips
 		) 
 		ERC721(_name, _symbol) {
         bytes memory name = bytes(_name); // Uses memory
