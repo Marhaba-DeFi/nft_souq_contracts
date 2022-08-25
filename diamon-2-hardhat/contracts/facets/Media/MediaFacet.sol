@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 import "../ERC1155Factory/ERC1155FactoryFacet.sol";
 import "../ERC721Factory/ERC721FactoryFacet.sol";
 import "./LibMediaStorage.sol";
@@ -35,9 +37,9 @@ contract MediaFacet {
         address _to,
         uint256 _id,
         string memory _contractType,
-        address _tokenContract,
         uint256 _copies,
         string memory _uri,
+        bool tokenRoyalty,
         address[] calldata _royaltyReceivers,
         uint96[] calldata _tokenRoyaltyInBips
     ) external returns (uint256)
@@ -47,6 +49,7 @@ contract MediaFacet {
         bool _isFungible = keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155"))) ? true : false;
 
         // if token supply is 1 means we need to mint ERC 721 otherwise ERC 1155
+        // TODO: add tokenRoyalty to mint function when it is added to token contract 
         if (_isFungible) {
             ERC1155FactoryFacet(ms.diamondAddress).mint(
                 _id,
@@ -80,13 +83,24 @@ contract MediaFacet {
 		public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender || ERC1155FactoryFacet(_nftAddress).balanceOf(msg.sender, _tokenID) != 0, "Only token owner could call this function");
+
+        if(_nftAddress == ms.diamondAddress){
+        require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender , "Only token owner could call this function");
         MarketFacet(ms.diamondAddress).setCollaborators(
             _nftAddress,
             _tokenID,
             _collaborators,
             _collabFraction
         );
+        } else {
+            require(IERC721(_nftAddress).ownerOf(_tokenID) == msg.sender , "Only token owner could call this function");
+            MarketFacet(ms.diamondAddress).setCollaborators(
+            _nftAddress,
+            _tokenID,
+            _collaborators,
+            _collabFraction
+            );
+        }
     }
 
     function getCollaboratorsMedia(
@@ -99,7 +113,6 @@ contract MediaFacet {
             _nftAddress,
             _tokenID
         ));
-
     }
 
     function setApprovedCryptoMedia (
@@ -162,6 +175,33 @@ contract MediaFacet {
         return true;
     }
 
+    function istokenIdExistMedia(
+        uint256 _tokenID,
+        string memory _contractType
+    ) external view returns (bool)
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))){
+            return(ERC721FactoryFacet(ms.diamondAddress)._tokenExists(_tokenID));
+        } 
+    }
+
+    function burnTokenMedia(
+        uint256 _tokenID,
+        string memory _contractType,
+        uint256 amount
+    ) external
+    {
+        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))){
+            ERC721FactoryFacet(ms.diamondAddress).burn(_tokenID);
+        } 
+
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))){
+            ERC1155FactoryFacet(ms.diamondAddress).burn(msg.sender,_tokenID,amount);
+        } 
+    }
+
     //AcceptBid() 
 	function acceptBidMedia(
         string memory _contractType,
@@ -190,7 +230,5 @@ contract MediaFacet {
 			_sellerSig
 		);
 	}
-
-
 
 }

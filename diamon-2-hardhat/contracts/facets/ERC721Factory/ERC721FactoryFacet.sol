@@ -103,8 +103,17 @@ contract ERC721FactoryFacet is ERC721Facet {
 	 */
 	function burn(uint256 tokenId) external {
 		LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-
         _burn(tokenId);
 		delete es.nftToCreators[tokenId];
+    }
+
+	/**
+	 * @notice This function is used for checking existance of an NFT.
+	 * @dev _tokenExists calls _exists function (which is internal) from ERC721.
+	 * Requirements:
+     *
+	 */
+    function _tokenExists(uint256 tokenId) public view virtual returns(bool) {
+        return(_exists(tokenId));
     }
 }
