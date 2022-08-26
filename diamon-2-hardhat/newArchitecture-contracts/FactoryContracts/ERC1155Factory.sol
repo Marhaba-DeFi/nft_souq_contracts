@@ -13,7 +13,8 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
 	Counters.Counter private _tokenIdCounter;
 
     bool public whitelistEnabled = false;
-    mapping(address => bool) public whitelist;
+    mapping(address => bool) public whitelist; //Addresses that are whitelisted
+    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
@@ -27,8 +28,8 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         string memory name_, 
         string memory symbol_,
         bool defaultRoyalty,
-        address[] calldata royaltyReceiver, 
-		uint96[] calldata royaltyFeesInBips
+        address[] memory royaltyReceiver, 
+		uint96[] memory royaltyFeesInBips
     ) ERC1155(name_, symbol_) {
         bytes memory validateName = bytes(name_); // Uses memory
         bytes memory validateSymbol = bytes(symbol_);
@@ -46,9 +47,12 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length <= 5, "Too many userss to whitelist");
-        for (uint256 i = 0; i < newAddresses.length; i++)
+        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        for (uint256 i = 0; i < newAddresses.length; i++) {
+			require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
+            mapSize++;
+		}
     }
 
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
@@ -56,8 +60,10 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
         require(currentAddresses.length <= 5, "Too many userss to whitelist");
-        for (uint256 i = 0; i < currentAddresses.length; i++)
+        for (uint256 i = 0; i < currentAddresses.length; i++){
             delete whitelist[currentAddresses[i]];
+            mapSize--;
+		}
     }
 
     /**

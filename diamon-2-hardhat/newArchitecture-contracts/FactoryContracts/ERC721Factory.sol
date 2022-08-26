@@ -28,8 +28,8 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
 	Counters.Counter private _tokenIdCounter;
 
     bool public whitelistEnabled = false;
-
-    mapping(address => bool) public whitelist;
+    mapping(address => bool) public whitelist; //Addresses that are whitelisted
+    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
 	/**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
@@ -39,8 +39,8 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
 		string memory _name, 
 		string memory _symbol, 
         bool defaultRoyalty,
-		address[] calldata royaltyReceiver, 
-		uint96[] calldata royaltyFeesInBips
+		address[] memory royaltyReceiver, 
+		uint96[] memory royaltyFeesInBips
 		) 
 		ERC721(_name, _symbol) {
         bytes memory name = bytes(_name); // Uses memory
@@ -55,22 +55,31 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
         whitelistEnabled = _state;
     }
 
+    /**
+	 * @dev set whitelisted users
+	 */
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
-        // At least one royaltyReceiver is required.
+        // At least one newAddresses is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length <= 5, "Too many userss to whitelist");
+        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        require(mapSize < 2000, "Maximum Users already whitelisted");
         for (uint256 i = 0; i < newAddresses.length; i++)
             whitelist[newAddresses[i]] = true;
+            mapSize++;
     }
 
+    /**
+	 * @dev get whitelisted users
+	 */
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
-        // At least one royaltyReceiver is required.
+        // At least one currentAddresses is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 20, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++)
             delete whitelist[currentAddresses[i]];
+            mapSize--;
     }
 
     /**
@@ -93,7 +102,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC721URIStorage, ERC2981, O
             require(msg.sender == owner(), "Address not whitelisted");
         }
         if(whitelistEnabled == true) {
-            require(whitelist[_msgSender()], "Address not whitelisted");
+            require(whitelist[msg.sender], "Address not whitelisted");
         }
         uint256 tokenId = _tokenIdCounter.current();
         _safeMint(creator, tokenId);

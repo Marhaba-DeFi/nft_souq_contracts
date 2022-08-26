@@ -16,11 +16,11 @@ contract ERC721RFactory is ERC721A, Ownable {
     uint256 public refundEndTime;
 
     address public refundAddress;
-    // address public refundERC20;
     uint256 public maxUserMintAmount;
     bool public whitelistEnabled = false;
 
-    mapping(address => bool) public whitelist;
+    mapping(address => bool) public whitelist; //Addresses that are whitelisted
+    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     mapping(uint256 => bool) public hasRefunded; // users can search if the NFT has been refunded
     mapping(uint256 => bool) public isOwnerMint; // if the NFT was freely minted by owner
@@ -53,7 +53,7 @@ contract ERC721RFactory is ERC721A, Ownable {
         require(presaleActive, "Presale is not active");
         require(msg.value == quantity * mintPrice, "Value");
         if(whitelistEnabled == true) {
-            require(whitelist[_msgSender()], "Address not whitelisted");
+            require(whitelist[msg.sender], "Address not whitelisted");
         }
         require(
             _numberMinted(msg.sender) + quantity <= maxUserMintAmount,
@@ -151,21 +151,32 @@ contract ERC721RFactory is ERC721A, Ownable {
         whitelistEnabled = _state;
     }
 
+    /**
+	 * @dev set whitelisted users
+	 */
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length <= 5, "Too many userss to whitelist");
-        for (uint256 i = 0; i < newAddresses.length; i++)
+        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        for (uint256 i = 0; i < newAddresses.length; i++) {
+			require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
+            mapSize++;
+		}
     }
 
+    /**
+	 * @dev remove whitelisted users
+	 */
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
         require(currentAddresses.length <= 5, "Too many userss to whitelist");
-        for (uint256 i = 0; i < currentAddresses.length; i++)
+        for (uint256 i = 0; i < currentAddresses.length; i++){
             delete whitelist[currentAddresses[i]];
+            mapSize--;
+		}
     }
 }

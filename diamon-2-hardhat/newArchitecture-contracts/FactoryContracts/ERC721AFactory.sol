@@ -17,6 +17,7 @@ contract ERC721AFactory is ERC721A, Ownable {
 
     bool public whitelistEnabled = false;
     mapping(address => bool) public whitelist;
+    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
 	constructor(
         string memory name_, 
@@ -41,11 +42,40 @@ contract ERC721AFactory is ERC721A, Ownable {
             require(msg.sender == owner(), "Address not whitelisted");
         }
         if(whitelistEnabled == true) {
-            require(whitelist[_msgSender()], "Address not whitelisted");
+            require(whitelist[msg.sender], "Address not whitelisted");
         }
         _safeMint(_creator, _quantity);
     }
 
+    /**
+	 * @dev set whitelisted users
+	 */
+    function setWhitelist(address[] calldata newAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(newAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        for (uint256 i = 0; i < newAddresses.length; i++) {
+			require(mapSize < 2000, "Maximum Users already whitelisted");
+            whitelist[newAddresses[i]] = true;
+            mapSize++;
+		}
+    }
+
+    /**
+	 * @dev remove whitelisted users
+	 */
+    function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
+        // At least one royaltyReceiver is required.
+        require(currentAddresses.length > 0, "No user details provided");
+        // Check on the maximum size over which the for loop will run over.
+        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        for (uint256 i = 0; i < currentAddresses.length; i++){
+            delete whitelist[currentAddresses[i]];
+            mapSize--;
+		}
+    }
+	
 	/**
 	 * @dev Returns the base URI of the contract
 	 */
