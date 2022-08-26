@@ -12,6 +12,11 @@ import "../EIP712/EIP712Facet.sol";
 import "../Market/MarketFacet.sol";
 
 contract MediaFacet {
+	/**
+	 * @notice All collections minted under souq native contracts interact with MediaFacet.
+	 * @notice All souq native interactions with token contracts and marketplace contract is done via MediaFacet.
+	 */
+
     AppStorage internal s;
 
     function mediaFacetInit(
@@ -33,6 +38,17 @@ contract MediaFacet {
         s._mediaContract = _diamondAddress;
     }
 
+	/**
+	 * @notice This function is used for minting new NFT under Souq native collection.
+     * @param _id tokenId
+	 * @param _to address of the owner and creator of the NFT
+	 * @param _uri tokenURI
+	 * @param tokenRoyalty flag to determine if the author royalty was set.
+	 * @param _royaltyReceivers an array of address that will recieve royalty. Max upto 5.
+	 * @param _tokenRoyaltyInBips an array of royalty percentages. It should match the number of reciever addresses. Max upto 5.
+	 * @dev mintTokenMedia() for minting the tokens depending on the _contractType
+	 * @dev If tokenRoyalty is set to false, null values need to be passed for _royaltyReceivers and _tokenRoyaltyInBips.
+	 */
     function mintTokenMedia(
         address _to,
         uint256 _id,
@@ -73,9 +89,13 @@ contract MediaFacet {
         return _id;
     }
 
-    //SetCollaborators() to set collaborators in marketplace contract
-    //TODO: research on how to set the collaborators for 1155. 
-
+	/**
+	 * @notice set collaborators in marketplace contract
+	 * @dev collaborators are only set for ERC721 collections
+	 * @param _nftAddress Address of the collection
+	 * @param _tokenID Token Id
+	 * @param _collaborators Array of collaborators. Maximum length is 5.
+	 */
 	function setCollaboratorsMedia (
 		address _nftAddress, 
 		uint256 _tokenID, 
@@ -85,6 +105,10 @@ contract MediaFacet {
 		public 
 	{
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+
+		require(_collaborators.length <= 5, "Too many Collaborators");
+		require(_collaborators.length == 0, "Collaborators not set");
+		require(_collaborators.length == _collabFraction.length, "Mismatch of Collaborators and their share");
 
         if(_nftAddress == ms.diamondAddress){
         require(ERC721FactoryFacet(_nftAddress).ownerOf(_tokenID) == msg.sender , "Only token owner could call this function");
@@ -105,6 +129,9 @@ contract MediaFacet {
         }
     }
 
+	/**
+	 * @dev View function to get collaborators Info
+	 */
     function getCollaboratorsMedia(
         address _nftAddress,
         uint256 _tokenID
@@ -117,6 +144,9 @@ contract MediaFacet {
         ));
     }
 
+	/**
+	 * @dev Approve crypto currency for the Souq marketPlace
+	 */
     function setApprovedCryptoMedia (
         address _currencyAddress, 
 		bool approving
@@ -131,6 +161,9 @@ contract MediaFacet {
         );
     }
 
+	/**
+	 * @dev View approved crypto currency for the Souq marketPlace
+	 */
     function getApprovedCryptoMedia (
         address _currencyAddress
 	) public view returns(bool) {
@@ -138,7 +171,9 @@ contract MediaFacet {
         return(MarketFacet(ms.diamondAddress).getApprovedCrypto(_currencyAddress));
     }
 
-    //Authorise marketplace contract for all NFT tokens and ERC20 tokens
+	/**
+	 * @dev Authorise marketplace contract for all NFT tokens and ERC20 tokens
+	 */
 
     function approveMarketForAllMedia () public 
 	{
@@ -146,12 +181,18 @@ contract MediaFacet {
         ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
     }
 
+	/**
+	 * @dev Get the Platform fee
+	 */
     function getAdminCommissionPercentageMedia() external view returns (uint96) {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
         return MarketFacet(ms.diamondAddress).getCommissionPercentage();
     }
 
 
+	/**
+	 * @dev Set the Platform fee
+	 */
 //TODO: Check whether we need upper thershold for comission percentage 
     function setCommissionPercentageMedia(uint96 _newCommissionPercentage)
         external
@@ -177,6 +218,9 @@ contract MediaFacet {
         return true;
     }
 
+	/**
+	 * @dev Check if the token Id exists before minting the tokens
+	 */
     function istokenIdExistMedia(
         uint256 _tokenID,
         string memory _contractType
@@ -188,6 +232,12 @@ contract MediaFacet {
         } 
     }
 
+	/**
+	 * @dev Burn token
+	 * @param amount copies of the token. 1 for ERC721.
+	 * @param _tokenID token id.
+	 * @param _contractType contract type 
+	 */
     function burnTokenMedia(
         uint256 _tokenID,
         string memory _contractType,
