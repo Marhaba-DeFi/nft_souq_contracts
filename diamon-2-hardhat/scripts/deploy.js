@@ -1,4 +1,3 @@
-
 // utils
 const hre = require('hardhat');
 const { updateContractAddresses } = require('../utils/contractsManagement');
@@ -18,25 +17,25 @@ async function main() {
   const signer = signers[0];
   console.log("signer 0 is", signer.address)
 
-  // Address of the minter and owner of nft token
-  // const signer1 = signers[1];
-  // console.log("signer 1 is", signer1.address)
+  //Address of the minter and owner of nft token
+  const signer1 = signers[1];
+  console.log("signer 1 is", signer1.address)
 
-  // // Royality address1 for nft
-  // const signer2 = signers[2];
-  // console.log("signer 2 is", signer2.address)
+  // Royality address1 for nft
+  const signer2 = signers[2];
+  console.log("signer 2 is", signer2.address)
 
-  // // Royality address2 for nft
-  // const signer3 = signers[3];
-  // console.log("signer 3 is", signer3.address)
+  // Royality address2 for nft
+  const signer3 = signers[3];
+  console.log("signer 3 is", signer3.address)
 
-  // // Contributer address1 for nft
-  // const signer4 = signers[4];
-  // console.log("signer 4 is", signer4.address)
+  // Contributer address1 for nft
+  const signer4 = signers[4];
+  console.log("signer 4 is", signer4.address)
 
-  // // Contributer address2 for nft
-  // const signer5 = signers[5];
-  // console.log("signer 5 is", signer5.address)
+  // Contributer address2 for nft
+  const signer5 = signers[5];
+  console.log("signer 5 is", signer5.address)
 
 //// Minting erc20 mock token
 
@@ -145,7 +144,7 @@ async function main() {
     1,
     "12345",
     true,
-    ["0x71593BAc0b4aE5278f784f0910f4829A103Ba7Cd", "0xCcd5FAA0C14641319f31eD72158d35BE6b9b90Da"],
+    [signer2.address, signer3.address],
     // [signer2.address, signer3.address],
     [500, 500],
     { gasLimit: 760000 }
@@ -197,7 +196,7 @@ async function main() {
   await mediaFacet.connect(signer).setCollaboratorsMedia(
     souqNFTDiamond.address,
     0,
-    ["0xa17C8DEbd6b9c2E993862255B992d45011dc898b", "0x71593BAc0b4aE5278f784f0910f4829A103Ba7Cd"],
+    [signer4.address, signer5.address],
     [1000,1000],
     { gasLimit: 760000 }
     );
@@ -232,6 +231,7 @@ async function main() {
   // console.log('Media is approved for all mock 721 tokens: ',  await erc721Mock.isApprovedForAll(signer1.address, address))
 
 ///////////////////////////////////////
+
 
 
 }
