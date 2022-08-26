@@ -1,8 +1,8 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Diamond.sol": {
-      "lastModificationDate": 1660655812724,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Diamond.sol": {
+      "lastModificationDate": 1659619438583,
       "contentHash": "d4352bbefdaa4d42916cdcb9a0c36247",
       "sourceName": "contracts/Diamond.sol",
       "solcConfig": {
@@ -40,8 +40,8 @@
         "Diamond"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibDiamond.sol": {
-      "lastModificationDate": 1660655814971,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibDiamond.sol": {
+      "lastModificationDate": 1659608739268,
       "contentHash": "c2cdd27f70d790d32ca8d9bb5c26e300",
       "sourceName": "contracts/libraries/LibDiamond.sol",
       "solcConfig": {
@@ -79,8 +79,8 @@
         "LibDiamond"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/DiamondCutFacet.sol": {
-      "lastModificationDate": 1660655813251,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/DiamondCutFacet.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "9308968804d59060a503ced37f8a8006",
       "sourceName": "contracts/facets/DiamondCutFacet.sol",
       "solcConfig": {
@@ -116,8 +116,8 @@
         "DiamondCutFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/DiamondLoupeFacet.sol": {
-      "lastModificationDate": 1660655812801,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/DiamondLoupeFacet.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "5fda0cdb57800ebbc2a11c0e1cd979dc",
       "sourceName": "contracts/facets/DiamondLoupeFacet.sol",
       "solcConfig": {
@@ -154,8 +154,8 @@
         "DiamondLoupeFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/OwnershipFacet.sol": {
-      "lastModificationDate": 1660655813251,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/OwnershipFacet.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "3ecfa87738e59d567e6c44c1708b9a7d",
       "sourceName": "contracts/facets/OwnershipFacet.sol",
       "solcConfig": {
@@ -191,8 +191,8 @@
         "OwnershipFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
-      "lastModificationDate": 1660656176009,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
+      "lastModificationDate": 1659608175364,
       "contentHash": "0e7db055ce108f9da7bb6686a00287c0",
       "sourceName": "@openzeppelin/contracts/utils/introspection/ERC165.sol",
       "solcConfig": {
@@ -227,8 +227,8 @@
         "ERC165"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IDiamondCut.sol": {
-      "lastModificationDate": 1660655813323,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IDiamondCut.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "707e073af69d132ebdc36f0b766ed4d2",
       "sourceName": "contracts/interfaces/IDiamondCut.sol",
       "solcConfig": {
@@ -261,8 +261,8 @@
         "IDiamondCut"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IDiamondLoupe.sol": {
-      "lastModificationDate": 1660655812801,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IDiamondLoupe.sol": {
+      "lastModificationDate": 1659279377266,
       "contentHash": "a471cd6a18e337530aa0fb37a1dd2294",
       "sourceName": "contracts/interfaces/IDiamondLoupe.sol",
       "solcConfig": {
@@ -295,8 +295,8 @@
         "IDiamondLoupe"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IERC173.sol": {
-      "lastModificationDate": 1660655814158,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IERC173.sol": {
+      "lastModificationDate": 1659279377266,
       "contentHash": "65e379207bc221335d0eedfe7b077af6",
       "sourceName": "contracts/interfaces/IERC173.sol",
       "solcConfig": {
@@ -329,8 +329,8 @@
         "IERC173"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1660656176009,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "lastModificationDate": 1659608175413,
       "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
       "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
@@ -363,8 +363,8 @@
         "IERC165"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IERC165.sol": {
-      "lastModificationDate": 1660655814158,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/interfaces/IERC165.sol": {
+      "lastModificationDate": 1659279377266,
       "contentHash": "f8f9ee2c76e1678bfead7a3fad131934",
       "sourceName": "contracts/interfaces/IERC165.sol",
       "solcConfig": {
@@ -397,8 +397,8 @@
         "IERC165"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/upgradeInitializers/DiamondInit.sol": {
-      "lastModificationDate": 1660655814897,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/upgradeInitializers/DiamondInit.sol": {
+      "lastModificationDate": 1659279377266,
       "contentHash": "df41d0e3b1dc15c10f01cba1a4bad9df",
       "sourceName": "contracts/upgradeInitializers/DiamondInit.sol",
       "solcConfig": {
@@ -437,9 +437,9 @@
         "DiamondInit"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Media/MediaFacet.sol": {
-      "lastModificationDate": 1661433721388,
-      "contentHash": "f5ec09cef09d3fba03e5b66c98681165",
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Media/MediaFacet.sol": {
+      "lastModificationDate": 1661500045203,
+      "contentHash": "c71a09628c67d30fa967e3ba7e6003a9",
       "sourceName": "contracts/facets/Media/MediaFacet.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -480,8 +480,8 @@
         "MediaFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1660656172762,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+      "lastModificationDate": 1659608175428,
       "contentHash": "ec99d946db3685a3630554aa6055bd7f",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
       "solcConfig": {
@@ -516,8 +516,8 @@
         "IERC721"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155Factory/ERC1155FactoryFacet.sol": {
-      "lastModificationDate": 1661463775739,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155Factory/ERC1155FactoryFacet.sol": {
+      "lastModificationDate": 1661469548741,
       "contentHash": "a885b1cfea06ecf7858c8229bf881bf9",
       "sourceName": "contracts/facets/ERC1155Factory/ERC1155FactoryFacet.sol",
       "solcConfig": {
@@ -556,8 +556,8 @@
         "ERC1155FactoryFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721Factory/ERC721FactoryFacet.sol": {
-      "lastModificationDate": 1661463609014,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721Factory/ERC721FactoryFacet.sol": {
+      "lastModificationDate": 1661469548742,
       "contentHash": "7443081fb10effb25b209fc3a427d6cc",
       "sourceName": "contracts/facets/ERC721Factory/ERC721FactoryFacet.sol",
       "solcConfig": {
@@ -595,8 +595,8 @@
         "ERC721FactoryFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Media/LibMediaStorage.sol": {
-      "lastModificationDate": 1660655813968,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Media/LibMediaStorage.sol": {
+      "lastModificationDate": 1660640644460,
       "contentHash": "58a347d11919edd1c9b045bd852463de",
       "sourceName": "contracts/facets/Media/LibMediaStorage.sol",
       "solcConfig": {
@@ -629,8 +629,8 @@
         "LibMediaStorage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibAppStorage.sol": {
-      "lastModificationDate": 1660655814897,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibAppStorage.sol": {
+      "lastModificationDate": 1659608951997,
       "contentHash": "f2013dfe351b748ec9caeff6ee9a3e87",
       "sourceName": "contracts/libraries/LibAppStorage.sol",
       "solcConfig": {
@@ -661,8 +661,8 @@
       ],
       "artifacts": []
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/EIP712/EIP712Facet.sol": {
-      "lastModificationDate": 1660655813450,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/EIP712/EIP712Facet.sol": {
+      "lastModificationDate": 1660221106916,
       "contentHash": "6b4556918464a3d0804fa9db40a1e1cc",
       "sourceName": "contracts/facets/EIP712/EIP712Facet.sol",
       "solcConfig": {
@@ -698,9 +698,9 @@
         "EIP712"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Market/MarketFacet.sol": {
-      "lastModificationDate": 1661431644155,
-      "contentHash": "7bd0cad3d941b0489f2b1eec9c7de087",
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Market/MarketFacet.sol": {
+      "lastModificationDate": 1661514554672,
+      "contentHash": "b827e4cf99987eb0d13aa81c5e047ed9",
       "sourceName": "contracts/facets/Market/MarketFacet.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -746,8 +746,8 @@
         "MarketFacet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155/ERC1155Facet.sol": {
-      "lastModificationDate": 1660736515667,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155/ERC1155Facet.sol": {
+      "lastModificationDate": 1660793432816,
       "contentHash": "5b2f10418d095fdee300861e38b599f7",
       "sourceName": "contracts/facets/ERC1155/ERC1155Facet.sol",
       "solcConfig": {
@@ -787,8 +787,8 @@
         "ERC1155Facet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1660656157483,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1659608175448,
       "contentHash": "e436cea06129be2c73cda4b1acc848b5",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -823,8 +823,8 @@
         "Ownable"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1660656170762,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
+      "lastModificationDate": 1659608175461,
       "contentHash": "cf46906c4035f51639a22265066a9e78",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
@@ -857,8 +857,8 @@
         "Strings"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155Factory/LibERC1155FactoryStorage.sol": {
-      "lastModificationDate": 1661458750818,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155Factory/LibERC1155FactoryStorage.sol": {
+      "lastModificationDate": 1661469548742,
       "contentHash": "880590e3ad5c68d904a0fb9c3e57805d",
       "sourceName": "contracts/facets/ERC1155Factory/LibERC1155FactoryStorage.sol",
       "solcConfig": {
@@ -891,8 +891,8 @@
         "LibERC1155FactoryStorage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibURI.sol": {
-      "lastModificationDate": 1660655814971,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/libraries/LibURI.sol": {
+      "lastModificationDate": 1659608840582,
       "contentHash": "1c682cbb89aef2b95279396aa5244f3d",
       "sourceName": "contracts/libraries/LibURI.sol",
       "solcConfig": {
@@ -925,45 +925,8 @@
         "LibURI"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/newArchitecture-contracts/ERC2981.sol": {
-      "lastModificationDate": 1661347953632,
-      "contentHash": "3964591d9b436b9914b420ecd12db59d",
-      "sourceName": "newArchitecture-contracts/ERC2981.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/interfaces/IERC2981.sol",
-        "@openzeppelin/contracts/utils/introspection/ERC165.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC2981"
-      ]
-    },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol": {
-      "lastModificationDate": 1660656170963,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol": {
+      "lastModificationDate": 1659608175411,
       "contentHash": "9f8822b72fe2702979e40160cb6d9636",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol",
       "solcConfig": {
@@ -998,8 +961,8 @@
         "IERC1155Receiver"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1660656169033,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1659608175336,
       "contentHash": "c476b3895a94798b88a4bb97399e6dfe",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
@@ -1032,8 +995,8 @@
         "Address"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1660656170828,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1659608175344,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -1066,8 +1029,8 @@
         "Context"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155/LibERC1155Storage.sol": {
-      "lastModificationDate": 1660655814041,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC1155/LibERC1155Storage.sol": {
+      "lastModificationDate": 1659618265214,
       "contentHash": "6b6c505226835581628aa5af2ade8161",
       "sourceName": "contracts/facets/ERC1155/LibERC1155Storage.sol",
       "solcConfig": {
@@ -1100,44 +1063,8 @@
         "LibERC1155Storage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/interfaces/IERC2981.sol": {
-      "lastModificationDate": 1660656167412,
-      "contentHash": "608566bc5327454ba54e487e7c226ff6",
-      "sourceName": "@openzeppelin/contracts/interfaces/IERC2981.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../utils/introspection/IERC165.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC2981"
-      ]
-    },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721/ERC721Facet.sol": {
-      "lastModificationDate": 1660746283378,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721/ERC721Facet.sol": {
+      "lastModificationDate": 1660793432818,
       "contentHash": "b8398af93b1cb459eee8f110a34cb442",
       "sourceName": "contracts/facets/ERC721/ERC721Facet.sol",
       "solcConfig": {
@@ -1178,8 +1105,8 @@
         "ERC721Facet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721Factory/LibERC721FactoryStorage.sol": {
-      "lastModificationDate": 1661458756261,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721Factory/LibERC721FactoryStorage.sol": {
+      "lastModificationDate": 1661469548743,
       "contentHash": "8aa53edd7132c570d5c9628ad1a46184",
       "sourceName": "contracts/facets/ERC721Factory/LibERC721FactoryStorage.sol",
       "solcConfig": {
@@ -1212,8 +1139,8 @@
         "LibERC721FactoryStorage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1660656172716,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+      "lastModificationDate": 1659608175431,
       "contentHash": "c22d4395e33763de693fd440c6fd10e1",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
       "solcConfig": {
@@ -1246,8 +1173,8 @@
         "IERC721Receiver"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721/LibERC721Storage.sol": {
-      "lastModificationDate": 1660655814041,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/ERC721/LibERC721Storage.sol": {
+      "lastModificationDate": 1659963745876,
       "contentHash": "65c2f22399f0176cdffef3d17440f354",
       "sourceName": "contracts/facets/ERC721/LibERC721Storage.sol",
       "solcConfig": {
@@ -1280,8 +1207,8 @@
         "LibERC721Storage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
-      "lastModificationDate": 1660656173022,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
+      "lastModificationDate": 1659608175359,
       "contentHash": "1dfb7cf7c7e2edae73403d50a59cc967",
       "sourceName": "@openzeppelin/contracts/utils/cryptography/ECDSA.sol",
       "solcConfig": {
@@ -1316,8 +1243,8 @@
         "ECDSA"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/EIP712/LibEIP712Storage.sol": {
-      "lastModificationDate": 1660655813450,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/EIP712/LibEIP712Storage.sol": {
+      "lastModificationDate": 1660221106917,
       "contentHash": "2d1f2e8b71961f2cec222b8c6e2f889a",
       "sourceName": "contracts/facets/EIP712/LibEIP712Storage.sol",
       "solcConfig": {
@@ -1350,8 +1277,8 @@
         "LibEIP712Storage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
-      "lastModificationDate": 1660656172716,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+      "lastModificationDate": 1659608175384,
       "contentHash": "79ff1a7eb801a525aa315fb7a679eede",
       "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
       "solcConfig": {
@@ -1392,8 +1319,8 @@
         "ERC721"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol": {
-      "lastModificationDate": 1660656170963,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol": {
+      "lastModificationDate": 1659608175361,
       "contentHash": "9be05ac5a08ad0370e3cc36665ca490c",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
       "solcConfig": {
@@ -1433,8 +1360,8 @@
         "ERC1155"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {
-      "lastModificationDate": 1660656176009,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {
+      "lastModificationDate": 1659608175459,
       "contentHash": "2337f0279507b5edf14a07067adf0d05",
       "sourceName": "@openzeppelin/contracts/utils/math/SafeMath.sol",
       "solcConfig": {
@@ -1467,8 +1394,8 @@
         "SafeMath"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1660656172061,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1659608175368,
       "contentHash": "af7bd64e1cfefbf6cb07f2adc1a25392",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
@@ -1505,8 +1432,8 @@
         "ERC20"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Market/LibMarketStorage.sol": {
-      "lastModificationDate": 1661200317031,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Market/LibMarketStorage.sol": {
+      "lastModificationDate": 1660262528926,
       "contentHash": "6ea867debd894e8f2553474ee4f7f7ae",
       "sourceName": "contracts/facets/Market/LibMarketStorage.sol",
       "solcConfig": {
@@ -1539,8 +1466,45 @@
         "LibMarketStorage"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "lastModificationDate": 1660656173832,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/newArchitecture-contracts/ERC2981.sol": {
+      "lastModificationDate": 1661472414298,
+      "contentHash": "00f6d6fcd49a91ba7bafb6a1f1ec49ab",
+      "sourceName": "newArchitecture-contracts/ERC2981.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/interfaces/IERC2981.sol",
+        "@openzeppelin/contracts/utils/introspection/ERC165.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC2981"
+      ]
+    },
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+      "lastModificationDate": 1659608175431,
       "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
       "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
       "solcConfig": {
@@ -1575,8 +1539,8 @@
         "IERC721Metadata"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol": {
-      "lastModificationDate": 1660656172762,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol": {
+      "lastModificationDate": 1659608175410,
       "contentHash": "d5a8f6e07ca38ec384856cfe9f08a867",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155.sol",
       "solcConfig": {
@@ -1611,8 +1575,8 @@
         "IERC1155"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol": {
-      "lastModificationDate": 1660656173906,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol": {
+      "lastModificationDate": 1659608175410,
       "contentHash": "9148c2e10c4efb12c71a7f080da5559b",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol",
       "solcConfig": {
@@ -1647,8 +1611,8 @@
         "IERC1155MetadataURI"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1660656171012,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1659608175418,
       "contentHash": "ad7c2d0af148c8f9f097d65deeb4da6b",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
@@ -1681,8 +1645,8 @@
         "IERC20"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
-      "lastModificationDate": 1660656174574,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
+      "lastModificationDate": 1659608175418,
       "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
@@ -1717,8 +1681,44 @@
         "IERC20Metadata"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Mocks/ERC721Mock.sol": {
-      "lastModificationDate": 1661372212616,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/@openzeppelin/contracts/interfaces/IERC2981.sol": {
+      "lastModificationDate": 1659608175418,
+      "contentHash": "608566bc5327454ba54e487e7c226ff6",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC2981.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/introspection/IERC165.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC2981"
+      ]
+    },
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Mocks/ERC721Mock.sol": {
+      "lastModificationDate": 1661435814395,
       "contentHash": "f910e39f26ebd61b597f7aeb6ff6ee6c",
       "sourceName": "contracts/Mocks/ERC721Mock.sol",
       "solcConfig": {
@@ -1754,8 +1754,8 @@
         "ERC721Mock"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Mocks/ERC20Mock.sol": {
-      "lastModificationDate": 1661193886749,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/Mocks/ERC20Mock.sol": {
+      "lastModificationDate": 1661247818458,
       "contentHash": "e30074b124be769664fbe33aca441a42",
       "sourceName": "contracts/Mocks/ERC20Mock.sol",
       "solcConfig": {
@@ -1790,8 +1790,8 @@
         "ERC20Mock"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Test1Facet.sol": {
-      "lastModificationDate": 1660655812849,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Test1Facet.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "554c0cf6078ee50cd5b5276da565fa2c",
       "sourceName": "contracts/facets/Test1Facet.sol",
       "solcConfig": {
@@ -1824,8 +1824,8 @@
         "Test1Facet"
       ]
     },
-    "/Users/mohammadhosseinchinaei/Dropbox/Mac/Documents/Marhaba/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Test2Facet.sol": {
-      "lastModificationDate": 1660655813323,
+    "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Test2Facet.sol": {
+      "lastModificationDate": 1659279377265,
       "contentHash": "de378098a7ee8e5d17f38f329b335739",
       "sourceName": "contracts/facets/Test2Facet.sol",
       "solcConfig": {

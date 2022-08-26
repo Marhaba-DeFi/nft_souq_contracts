@@ -21,6 +21,31 @@ import "../../../newArchitecture-contracts/ERC2981.sol";
 contract MarketFacet is EIP712 {
     AppStorage internal s;
 
+	/**
+     * @dev Emitted when `admin address` is set.
+     */
+    event Admin(address admin);
+
+	/**
+     * @dev Emitted when `admin fee-commission` is set.
+     */
+    event AdminFee(uint96 commissionPercentage);
+
+	/**
+     * @dev Emitted when `collaborators` are set.
+     */
+    event CollaboratorsFee(address nftAddress, uint256 tokenID, address[] collaborators, uint96[] collabFraction);
+
+	/**
+     * @dev Emitted when `ERC20 token` is approved by admin.
+     */
+    event CryptoApproved(address currencyAddress, bool approving);
+
+	/**
+     * @dev Emitted when `bid is accepted` by the seller.
+     */
+    event BidAccepted(address buyer, address seller, bool accepted);
+
     modifier onlyMediaCaller() {
         require(msg.sender == s._mediaContract, "Market Place: Unauthorized Access!");
         _;
@@ -53,6 +78,8 @@ contract MarketFacet is EIP712 {
 	) public mediaOrOwner {
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
         es._adminAddress = adminAddress_;
+
+		emit Admin(adminAddress_);
     }
 
     function getAdminAddress(
@@ -67,6 +94,8 @@ contract MarketFacet is EIP712 {
 	) public mediaOrOwner {
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
         es._approvedCurrency[_currencyAddress] = approving;
+
+		emit CryptoApproved(_currencyAddress, approving);
     }
 
     function getApprovedCrypto(
@@ -81,6 +110,9 @@ contract MarketFacet is EIP712 {
     )external mediaOrOwner returns (bool) {
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
         es._adminCommissionPercentage = _commissionPercentage;
+
+		emit AdminFee(_commissionPercentage);
+
         return true;
     }
 
@@ -104,6 +136,8 @@ contract MarketFacet is EIP712 {
         collabStruct.collaborators = _collaborators;
         collabStruct.collabFraction = _collabFraction;
         es.tokenCollaborators[_nftAddress][_tokenID] = collabStruct;
+
+		emit CollaboratorsFee(_nftAddress, _tokenID, _collaborators, _collabFraction);
     }
 
     function getCollaborators(
@@ -276,6 +310,8 @@ contract MarketFacet is EIP712 {
             ERC1155 erc1155 = ERC1155(_nftContAddress);
             erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
         }
+
+		emit BidAccepted(_bidder, _seller, true);
     }
 }
 
