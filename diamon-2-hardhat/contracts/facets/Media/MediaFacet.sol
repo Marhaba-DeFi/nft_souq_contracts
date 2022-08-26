@@ -107,7 +107,7 @@ contract MediaFacet {
         LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
 
 		require(_collaborators.length <= 5, "Too many Collaborators");
-		require(_collaborators.length == 0, "Collaborators not set");
+		require(_collaborators.length > 0, "Collaborators not set");
 		require(_collaborators.length == _collabFraction.length, "Mismatch of Collaborators and their share");
 
         if(_nftAddress == ms.diamondAddress){
@@ -193,7 +193,7 @@ contract MediaFacet {
 	/**
 	 * @dev Set the Platform fee
 	 */
-//TODO: Check whether we need upper thershold for comission percentage 
+
     function setCommissionPercentageMedia(uint96 _newCommissionPercentage)
         external
         returns (bool)

@@ -17,6 +17,8 @@ import "../../libraries/LibAppStorage.sol";
 import "../../libraries/LibDiamond.sol";
 import "../EIP712/EIP712Facet.sol";
 import "../../../newArchitecture-contracts/ERC2981.sol";
+import "../ERC1155Factory/ERC1155FactoryFacet.sol";
+import "../ERC721Factory/ERC721FactoryFacet.sol";
 
 contract MarketFacet is EIP712 {
     AppStorage internal s;
@@ -214,6 +216,7 @@ contract MarketFacet is EIP712 {
     }
 
     function royaltyFeeDeduction(
+        string memory _contractType,
 		address _currencyAddress,
         address _nftContAddress, 
 		address _payer,
@@ -223,16 +226,26 @@ contract MarketFacet is EIP712 {
 	{
         uint256 royaltyFeeAccumulator = 0;
         //royaltyFeeDeduction function is only appilcable when it is souq native token
-        if(s._mediaContract == _nftContAddress){
-            ERC2981 erc2981 = ERC2981(_nftContAddress);
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC721FactoryFacet(_nftContAddress).royaltyInfo721(_tokenID, amount);
+
             ERC20 erc20 = ERC20(_currencyAddress);
-            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = erc2981.royaltyInfo(_tokenID, amount);
-            
             for(uint256 i = 0; i< royaltyAddresses.length ; i++ ){
                 erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
                 royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
             }
         }
+
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC1155FactoryFacet(_nftContAddress).royaltyInfo1155(_tokenID, amount);
+
+            ERC20 erc20 = ERC20(_currencyAddress);
+            for(uint256 i = 0; i< royaltyAddresses.length ; i++ ){
+                erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+                royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+            }
+        }
+
         return royaltyFeeAccumulator;
         
     }
@@ -293,22 +306,31 @@ contract MarketFacet is EIP712 {
 
         uint256 remained = _bid;
         //admin fee should be deducted from amount
-        remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
+        //remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
 
         //royalty fee should be deducted from amount only for diamond tokens
         if(s._mediaContract == _nftContAddress){
-            remained = remained - royaltyFeeDeduction(_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
-        }
-
-        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
-            cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
-            ERC721 erc721 = ERC721(_nftContAddress);
-            erc721.transferFrom(_seller,_bidder, _tokenID);
-        }
-        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
-            cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
-            ERC1155 erc1155 = ERC1155(_nftContAddress);
-            erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
+            //remained = remained - royaltyFeeDeduction(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+            
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
+                ERC721FactoryFacet(_nftContAddress).transferFrom(_seller,_bidder, _tokenID);
+            }
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
+                ERC1155FactoryFacet(_nftContAddress).safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
+            }
+        } else{
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
+                ERC721 erc721 = ERC721(_nftContAddress);
+                erc721.transferFrom(_seller,_bidder, _tokenID);
+            }
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
+                ERC1155 erc1155 = ERC1155(_nftContAddress);
+                erc1155.safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
+            }
         }
 
 		emit BidAccepted(_bidder, _seller, true);
