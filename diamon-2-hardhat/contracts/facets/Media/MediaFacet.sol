@@ -208,8 +208,8 @@ contract MediaFacet {
             "Media: Invalid Commission Percentage"
         );
         require(
-            _newCommissionPercentage <= 10000,
-            "Media: Commission Percentage Must Be Less Than 100!"
+            _newCommissionPercentage <= 500,
+            "Media: Commission Percentage Must Be Less Than 5%!"
         );
 
         MarketFacet(ms.diamondAddress).setCommissionPercentage(
