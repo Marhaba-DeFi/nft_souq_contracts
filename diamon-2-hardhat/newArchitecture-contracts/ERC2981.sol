@@ -39,24 +39,15 @@ contract ERC2981 is ERC165 {
         return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    uint256[] private royaltyAmount;
-
-    function initializeRoyaltyAmount() internal {
-        delete royaltyAmount;
-    }
-
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) public view virtual returns (address[] memory , uint256[] memory) {
         RoyaltyInfo memory royalty = _tokenRoyaltyInfo[_tokenId];
-        if (royalty.receiver[0] == address(0)) {
+        if (royalty.receiver.length == 0) {
             royalty = _defaultRoyaltyInfo;
         }
-        
-        initializeRoyaltyAmount(); // 
-        for(uint i=0; i < royalty.royaltyFraction.length; i++){
-            royaltyAmount.push((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
-            // royaltyAmount.push(5);
+        uint256[] memory royaltyAmount = new uint256[](royalty.receiver.length);
+        for(uint i=0; i < royalty.receiver.length; i++){
+            royaltyAmount[i]= ((_salePrice * royalty.royaltyFraction[i]) / _feeDenominator());
         }
-    
         return (royalty.receiver, royaltyAmount);
     }
 
@@ -77,7 +68,7 @@ contract ERC2981 is ERC165 {
      * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
      */
-    function _setDefaultRoyalty(address[] calldata receiver, uint96[] calldata feeNumerator) internal {
+    function _setDefaultRoyalty(address[] memory receiver, uint96[] memory feeNumerator) internal {
         // At least one royaltyReceiver is required.
         require(receiver.length > 0, "No Royalty details provided");
         // Check on the maximum size over which the for loop will run over.
@@ -113,9 +104,9 @@ contract ERC2981 is ERC165 {
      */
     function _setTokenRoyalty(
         uint256 tokenId,
-        address[] calldata receiver,
-        uint96[] calldata feeNumerator
-    ) internal {
+        address[] memory receiver,
+        uint96[] memory feeNumerator
+		) internal virtual {
         // At least one royaltyReceiver is required.
         require(receiver.length > 0, "No Royalty details provided");
         // Check on the maximum size over which the for loop will run over.
