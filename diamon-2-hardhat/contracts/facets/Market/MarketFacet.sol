@@ -306,11 +306,11 @@ contract MarketFacet is EIP712 {
 
         uint256 remained = _bid;
         //admin fee should be deducted from amount
-        //remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
+        remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
 
         //royalty fee should be deducted from amount only for diamond tokens
         if(s._mediaContract == _nftContAddress){
-            //remained = remained - royaltyFeeDeduction(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+            remained = remained - royaltyFeeDeduction(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
             
             if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
                 cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
