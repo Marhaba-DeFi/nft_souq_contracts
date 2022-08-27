@@ -5,7 +5,7 @@ const { FacetCutAction, getSelectors } = require("../utils/diamond");
 
 // const provider = new ethers.getDefaultProvider(process.env.NETWORK);
 const network = hre.hardhatArguments.network;
-async function main() {
+async function main({ withFacets } = { withFacets: false }) {
 	const adminAddress = "0x4281d6888D7a3A6736B0F596823810ffBd7D4808";
 	const mrhbAddress = "0x45202955b5a2770A4dc526B6FB3634dDB275c8Df";
 	const wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
@@ -59,98 +59,102 @@ async function main() {
 	const address = souqNFTDiamond.address;
 	// console.log("souqNFTDiamond deployed to: ", souqNFTDiamond.address);
 
-	///////////////add facets to the souq NFT diamond
-	const facetNames = [
-		"MediaFacet",
-		"ERC1155FactoryFacet",
-		"ERC721FactoryFacet",
-		"MarketFacet",
-	];
-
-	const facetsAdresses = [];
-	const cut = [];
-
-	for (const facetName of facetNames) {
-		const Facet = await hre.ethers.getContractFactory(facetName);
-		const facet = await Facet.deploy();
-		await facet.deployed();
-		facetsAdresses.push(facet.address);
-		// console.log(`${facetName} deployed: ${facet.address}`);
-		cut.push({
-			facetAddress: facet.address,
-			action: FacetCutAction.Add,
-			functionSelectors: getSelectors(facet),
-		});
-	}
-
-	const diamondCutFacet = await hre.ethers.getContractAt(
+	let ownershipFacet = await hre.ethers.getContractAt(
+		"OwnershipFacet",
+		souqNFTDiamond.address
+	);
+	let diamondCutFacet = await hre.ethers.getContractAt(
 		"DiamondCutFacet",
 		souqNFTDiamond.address
 	);
-	await diamondCutFacet.diamondCut(
-		cut,
-		hre.ethers.constants.AddressZero,
-		"0x"
-	);
-
-	const diamondLoupeFacet = await hre.ethers.getContractAt(
+	let diamondLoupeFacet = await hre.ethers.getContractAt(
 		"DiamondLoupeFacet",
 		souqNFTDiamond.address
 	);
-	///////////////
 
-	///////////////Media deployment
-	const mediaFacet = await hre.ethers.getContractAt(
-		"MediaFacet",
-		souqNFTDiamond.address
-	);
-	await mediaFacet.mediaFacetInit(souqNFTDiamond.address, {
-		gasLimit: 760000,
-	});
-	// console.log("Media is initialized");
-	///////////////
+	let mediaFacet;
+	let erc1155FactoryFacet;
+	let erc721FactoryFacet;
+	let marketFacet;
 
-	///////////////token deployment
-	const erc1155FactoryFacet = await hre.ethers.getContractAt(
-		"ERC1155FactoryFacet",
-		souqNFTDiamond.address
-	);
-	const erc1155Name = "NFT1155 SOUQ";
-	const erc1155Symbol = "NFT1155SOUQ";
-	await erc1155FactoryFacet.erc1155FactoryFacetInit(
-		erc1155Name,
-		erc1155Symbol,
-		{ gasLimit: 760000 }
-	);
-	// console.log("erc1155FactoryFacet initialized");
+	if (withFacets) {
+		///////////////add facets to the souq NFT diamond
+		const facetNames = [
+			"MediaFacet",
+			"ERC1155FactoryFacet",
+			"ERC721FactoryFacet",
+			"MarketFacet",
+		];
 
-	const erc721FactoryFacet = await hre.ethers.getContractAt(
-		"ERC721FactoryFacet",
-		souqNFTDiamond.address
-	);
-	const erc721Name = "NFT721 SOUQ";
-	const erc721Symbol = "NFT721SOUQ";
-	await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol, {
-		gasLimit: 760000,
-	});
-	// console.log("erc721FactoryFacet initialized");
-	///////////////
+		const facetsAdresses = [];
+		const cut = [];
 
-	///////////////Market deployment
-	const marketFacet = await hre.ethers.getContractAt(
-		"MarketFacet",
-		souqNFTDiamond.address
-	);
+		for (const facetName of facetNames) {
+			const Facet = await hre.ethers.getContractFactory(facetName);
+			const facet = await Facet.deploy();
+			await facet.deployed();
+			facetsAdresses.push(facet.address);
+			// console.log(`${facetName} deployed: ${facet.address}`);
+			cut.push({
+				facetAddress: facet.address,
+				action: FacetCutAction.Add,
+				functionSelectors: getSelectors(facet),
+			});
+		}
 
-	const marketName = "Marketplace";
-	const marketVersion = "1.0.0";
-	await marketFacet.marketFacetInit(marketName, marketVersion, {
-		gasLimit: 760000,
-	});
-	// console.log("MARKET is initialized");
+		///////////////Media deployment
+		mediaFacet = await hre.ethers.getContractAt(
+			"MediaFacet",
+			souqNFTDiamond.address
+		);
+		await mediaFacet.mediaFacetInit(souqNFTDiamond.address, {
+			gasLimit: 760000,
+		});
+		// console.log("Media is initialized");
+		///////////////
 
+		///////////////token deployment
+		erc1155FactoryFacet = await hre.ethers.getContractAt(
+			"ERC1155FactoryFacet",
+			souqNFTDiamond.address
+		);
+		const erc1155Name = "NFT1155 SOUQ";
+		const erc1155Symbol = "NFT1155SOUQ";
+		await erc1155FactoryFacet.erc1155FactoryFacetInit(
+			erc1155Name,
+			erc1155Symbol,
+			{ gasLimit: 760000 }
+		);
+		// console.log("erc1155FactoryFacet initialized");
+
+		erc721FactoryFacet = await hre.ethers.getContractAt(
+			"ERC721FactoryFacet",
+			souqNFTDiamond.address
+		);
+		const erc721Name = "NFT721 SOUQ";
+		const erc721Symbol = "NFT721SOUQ";
+		await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol, {
+			gasLimit: 760000,
+		});
+		// console.log("erc721FactoryFacet initialized");
+		///////////////
+
+		///////////////Market deployment
+		marketFacet = await hre.ethers.getContractAt(
+			"MarketFacet",
+			souqNFTDiamond.address
+		);
+
+		const marketName = "Marketplace";
+		const marketVersion = "1.0.0";
+		await marketFacet.marketFacetInit(marketName, marketVersion, {
+			gasLimit: 760000,
+		});
+		// console.log("MARKET is initialized");
+	}
 	return {
 		souqNFTDiamond,
+		ownershipFacet,
 		diamondLoupeFacet,
 		diamondCutFacet,
 		erc721FactoryFacet,
