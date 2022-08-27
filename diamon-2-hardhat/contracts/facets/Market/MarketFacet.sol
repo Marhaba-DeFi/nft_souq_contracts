@@ -16,7 +16,7 @@ import "./LibMarketStorage.sol";
 import "../../libraries/LibAppStorage.sol";
 import "../../libraries/LibDiamond.sol";
 import "../EIP712/EIP712Facet.sol";
-import "../../../newArchitecture-contracts/ERC2981.sol";
+import "../../ERC2981.sol";
 import "../ERC1155Factory/ERC1155FactoryFacet.sol";
 import "../ERC721Factory/ERC721FactoryFacet.sol";
 

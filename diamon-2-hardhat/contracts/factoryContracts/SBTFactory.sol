@@ -7,7 +7,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../Interfaces/IERC4973.sol";
+import "../interfaces/IERC4973.sol";
 import "../ERC4973.sol";
 
 contract SBTFactory is ERC4973 {
