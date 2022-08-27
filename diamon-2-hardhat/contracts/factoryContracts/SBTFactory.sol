@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
+
+/**
+ * Important: This is not complete yet. More reasearch and business logic yto be added later
+ */
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
