@@ -2,7 +2,7 @@
 // ERC721A Contracts v4.0.0
 // Creator: Chiru Labs
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.6;
 
 import './interfaces/IERC721A.sol';
 
@@ -57,7 +57,7 @@ contract ERC721A is IERC721A {
     uint256 private constant BITMASK_NEXT_INITIALIZED = 1 << 225;
 
     // The tokenId of the next token to be minted.
-    uint256 private _currentIndex;
+    uint256 public _currentIndex;
 
     // The number of tokens burned.
     uint256 private _burnCounter;
