@@ -2,8 +2,8 @@
 pragma solidity ^0.8.2;
 
 import "../ERC1155.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "../ERC2981.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -19,6 +19,11 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
     mapping (uint256 => string) tokenURIs;
+
+    /**
+     * @dev Emitted when `WhiteListEnabled` is toggled.
+     */
+    event WhiteListEnabled(bool whitelistEnabled);
     
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
@@ -41,6 +46,8 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
 
     function setWhitelistEnabled(bool _state) public onlyOwner {
         whitelistEnabled = _state;
+
+        emit WhiteListEnabled(whitelistEnabled);
     }
 
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {

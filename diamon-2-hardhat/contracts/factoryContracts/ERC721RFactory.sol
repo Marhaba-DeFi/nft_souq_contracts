@@ -1,38 +1,67 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.6;
 
 import "../ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ERC721RFactory is ERC721A, Ownable {
     uint256 public maxMintSupply;
     uint256 public mintPrice;
-    uint256 public refundPeriod;
+    uint256 public maxUserMintAmount;
+    string private baseURI;
+    string public uriSuffix = ".json";
+    using Strings for uint256;
 
     // Sale Status
     bool public publicSaleActive;
     bool public presaleActive;
+
+    //Refund variables
+    uint256 public refundPeriod;
     uint256 public refundEndTime;
-
     address public refundAddress;
-    uint256 public maxUserMintAmount;
-    bool public whitelistEnabled = false;
 
-    mapping(address => bool) public whitelist; //Addresses that are whitelisted
+    // WhiteListing users
+    bool public whitelistEnabled = false;
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
+    mapping(address => bool) public whitelist; //Addresses that are whitelisted
     mapping(uint256 => bool) public hasRefunded; // users can search if the NFT has been refunded
     mapping(uint256 => bool) public isOwnerMint; // if the NFT was freely minted by owner
 
-    string private baseURI;
+    /**
+     * @dev Emitted when `refund countdown` is set.
+     */
+    event RefundCountDownSet(uint256 refundEndTime);
+
+    /**
+     * @dev Emitted when `presale` is toggled.
+     */
+    event PresaleToggled(bool presaleActive);
+
+    /**
+     * @dev Emitted when `BaseURI` is set.
+     */
+    event BaseURI(string uri);
+
+    /**
+     * @dev Emitted when `WhiteListEnabled` is toggled.
+     */
+    event WhiteListEnabled(bool whitelistEnabled);
+
+    /**
+     * @dev Emitted when `publicSaleActive` is toggled.
+     */
+    event PublicSaleSet(bool publicSaleActive);
 
     constructor(
         string memory name, 
         string memory symbol,
         uint mintSupply, 
-        uint256 mintingPrice, 
-        uint256 refundTime, 
+        uint256 mintingPrice,
+        uint256 refundTime,
         uint maxMintPerUser 
     ) ERC721A(name, symbol) {
         bytes memory validateName = bytes(name); // Uses memory
@@ -51,15 +80,15 @@ contract ERC721RFactory is ERC721A, Ownable {
         payable
     {
         require(presaleActive, "Presale is not active");
-        require(msg.value == quantity * mintPrice, "Value");
+        require(msg.value >= quantity * mintPrice, "Not enough eth sent");
         if(whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
         }
         require(
             _numberMinted(msg.sender) + quantity <= maxUserMintAmount,
-            "Max amount"
+            "Over mint limit"
         );
-        require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply");
+        require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
 
         _safeMint(msg.sender, quantity);
     }
@@ -133,22 +162,48 @@ contract ERC721RFactory is ERC721A, Ownable {
     
     function setBaseURI(string memory uri) external onlyOwner {
         baseURI = uri;
+
+        emit BaseURI(baseURI);
+    }
+
+    function setUriSuffix(string memory _uriSuffix) public onlyOwner {
+        uriSuffix = _uriSuffix;
+    }
+
+    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory){
+        require(
+            _exists(_tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+
+        string memory currentBaseURI = _baseURI();
+        return bytes(currentBaseURI).length > 0
+        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix))
+        : "";
     }
 
     function toggleRefundCountdown() public onlyOwner {
         refundEndTime = block.timestamp + refundPeriod;
+
+        emit RefundCountDownSet(refundEndTime);
     }
 
     function togglePresaleStatus() external onlyOwner {
         presaleActive = !presaleActive;
+
+        emit PresaleToggled(presaleActive);
     }
 
     function togglePublicSaleStatus() external onlyOwner {
         publicSaleActive = !publicSaleActive;
+
+        emit PublicSaleSet(publicSaleActive);
     }
 
     function setWhitelistEnabled(bool _state) public onlyOwner {
         whitelistEnabled = _state;
+
+        emit WhiteListEnabled(whitelistEnabled);
     }
 
     /**

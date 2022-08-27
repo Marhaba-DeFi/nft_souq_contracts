@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 import "../ERC721A.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title ERC721A factory contract
@@ -14,10 +15,24 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract ERC721AFactory is ERC721A, Ownable {
 	string public baseURI = "";
+    string public uriSuffix = ".json";
+    using Strings for uint256;
 
-    bool public whitelistEnabled = false;
-    mapping(address => bool) public whitelist;
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    bool public whitelistEnabled = false;
+
+    mapping(address => bool) public whitelist;
+
+    /**
+     * @dev Emitted when `BaseURI` is set.
+     */
+    event BaseURI(string uri);
+
+    /**
+     * @dev Emitted when `WhiteListEnabled` is toggled.
+     */
+    event WhiteListEnabled(bool whitelistEnabled);
+    
 
 	constructor(
         string memory name_, 
@@ -45,6 +60,12 @@ contract ERC721AFactory is ERC721A, Ownable {
             require(whitelist[msg.sender], "Address not whitelisted");
         }
         _safeMint(_creator, _quantity);
+    }
+
+    function setWhitelistEnabled(bool _state) public onlyOwner {
+        whitelistEnabled = _state;
+
+        emit WhiteListEnabled(whitelistEnabled);
     }
 
     /**
@@ -75,7 +96,6 @@ contract ERC721AFactory is ERC721A, Ownable {
             mapSize--;
 		}
     }
-	
 	/**
 	 * @dev Returns the base URI of the contract
 	 */
@@ -89,5 +109,23 @@ contract ERC721AFactory is ERC721A, Ownable {
 	 */
     function setBaseURI(string memory baseURI_) public onlyOwner {
         baseURI = baseURI_;
+
+        emit BaseURI(baseURI);
+    }
+
+    function setUriSuffix(string memory _uriSuffix) public onlyOwner {
+        uriSuffix = _uriSuffix;
+    }
+
+    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory){
+        require(
+            _exists(_tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+
+        string memory currentBaseURI = _baseURI();
+        return bytes(currentBaseURI).length > 0
+        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix))
+        : "";
     }
 }
