@@ -1,72 +1,39 @@
 // utils
 const hre = require("hardhat");
-const { updateContractAddresses } = require("../utils/contractsManagement");
 const { FacetCutAction, getSelectors } = require("../utils/diamond");
 
-// const provider = new ethers.getDefaultProvider(process.env.NETWORK);
-const network = hre.hardhatArguments.network;
+const souqNFTDiamondAtrificat = require("../artifacts/hardhat-diamond-abi/HardhatDiamondABI.sol/souqNFTDiamond.json")
+
 async function main({ withFacets } = { withFacets: false }) {
-	const adminAddress = "0x4281d6888D7a3A6736B0F596823810ffBd7D4808";
-	const mrhbAddress = "0x45202955b5a2770A4dc526B6FB3634dDB275c8Df";
-	const wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-	const wethAddress = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
-	const adminCommissionPercentage = "1";
 
-	//Address of the bidder and owner of whoile erc20 at first
 	const signers = await hre.ethers.getSigners();
+	// the owner 
 	const signer = signers[0];
-	// console.log("signer 0 is", signer.address);
+	// other participants
+	const alice = signers[1];
+	const bob = signers[2];
+	const carol = signers[3];
+	const dave = signers[4];
+	const frank = signers[5];
 
-	//Address of the minter and owner of nft token
-	const signer1 = signers[1];
-	// console.log("signer 1 is", signer1.address);
-
-	// Royality address1 for nft
-	const signer2 = signers[2];
-	// console.log("signer 2 is", signer2.address);
-
-	// Royality address2 for nft
-	const signer3 = signers[3];
-	// console.log("signer 3 is", signer3.address);
-
-	// Contributer address1 for nft
-	const signer4 = signers[4];
-	// console.log("signer 4 is", signer4.address);
-
-	// Contributer address2 for nft
-	const signer5 = signers[5];
-	// console.log("signer 5 is", signer5.address);
-
-	//// Minting erc20 mock token
-
-	// const ERC20Mock = await hre.ethers.getContractFactory(
-	//   'ERC20Mock',
-	// );
-	// const erc20Mock = await ERC20Mock.deploy("MARHABA", "MRHB", 1_000_000);
-	// await erc20Mock.deployed();
-	// const erc20Address = erc20Mock.address
-	// console.log('Mock erc20 is deployed to: ', erc20Address);
-	// console.log('The balance of signer0 is: ',  parseInt(await erc20Mock.balanceOf(signer.address)))
-
-	///////////////////////////////////////
 
 	// deploying the souq NFT diamond
 	const souqNFTDiamondFactory = await hre.ethers.getContractFactory(
-		"Diamond"
+		"Diamond",
 	);
-	const souqNFTDiamond = await souqNFTDiamondFactory.deploy(signer.address);
+	let souqNFTDiamond = await souqNFTDiamondFactory.deploy(signer.address);
 	await souqNFTDiamond.deployed();
-	const address = souqNFTDiamond.address;
-	// console.log("souqNFTDiamond deployed to: ", souqNFTDiamond.address);
 
 	let ownershipFacet = await hre.ethers.getContractAt(
 		"OwnershipFacet",
 		souqNFTDiamond.address
 	);
+
 	let diamondCutFacet = await hre.ethers.getContractAt(
 		"DiamondCutFacet",
 		souqNFTDiamond.address
 	);
+
 	let diamondLoupeFacet = await hre.ethers.getContractAt(
 		"DiamondLoupeFacet",
 		souqNFTDiamond.address
@@ -78,7 +45,8 @@ async function main({ withFacets } = { withFacets: false }) {
 	let marketFacet;
 
 	if (withFacets) {
-		///////////////add facets to the souq NFT diamond
+		// add facets to the souq NFT diamond
+
 		const facetNames = [
 			"MediaFacet",
 			"ERC1155FactoryFacet",
@@ -94,7 +62,7 @@ async function main({ withFacets } = { withFacets: false }) {
 			const facet = await Facet.deploy();
 			await facet.deployed();
 			facetsAdresses.push(facet.address);
-			// console.log(`${facetName} deployed: ${facet.address}`);
+			
 			cut.push({
 				facetAddress: facet.address,
 				action: FacetCutAction.Add,
@@ -102,7 +70,10 @@ async function main({ withFacets } = { withFacets: false }) {
 			});
 		}
 
-		///////////////Media deployment
+		// add facets functions to the diamond
+		await diamondCutFacet.diamondCut(cut, hre.ethers.constants.AddressZero, '0x');
+
+		// media facet
 		mediaFacet = await hre.ethers.getContractAt(
 			"MediaFacet",
 			souqNFTDiamond.address
@@ -110,10 +81,8 @@ async function main({ withFacets } = { withFacets: false }) {
 		await mediaFacet.mediaFacetInit(souqNFTDiamond.address, {
 			gasLimit: 760000,
 		});
-		// console.log("Media is initialized");
-		///////////////
-
-		///////////////token deployment
+		
+		// erc1155 facet
 		erc1155FactoryFacet = await hre.ethers.getContractAt(
 			"ERC1155FactoryFacet",
 			souqNFTDiamond.address
@@ -125,8 +94,8 @@ async function main({ withFacets } = { withFacets: false }) {
 			erc1155Symbol,
 			{ gasLimit: 760000 }
 		);
-		// console.log("erc1155FactoryFacet initialized");
-
+		
+		// erc721 facet
 		erc721FactoryFacet = await hre.ethers.getContractAt(
 			"ERC721FactoryFacet",
 			souqNFTDiamond.address
@@ -136,10 +105,8 @@ async function main({ withFacets } = { withFacets: false }) {
 		await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol, {
 			gasLimit: 760000,
 		});
-		// console.log("erc721FactoryFacet initialized");
-		///////////////
-
-		///////////////Market deployment
+		
+		// market facet
 		marketFacet = await hre.ethers.getContractAt(
 			"MarketFacet",
 			souqNFTDiamond.address
@@ -149,9 +116,9 @@ async function main({ withFacets } = { withFacets: false }) {
 		const marketVersion = "1.0.0";
 		await marketFacet.marketFacetInit(marketName, marketVersion, {
 			gasLimit: 760000,
-		});
-		// console.log("MARKET is initialized");
+		});		
 	}
+
 	return {
 		souqNFTDiamond,
 		ownershipFacet,
@@ -161,6 +128,12 @@ async function main({ withFacets } = { withFacets: false }) {
 		erc1155FactoryFacet,
 		marketFacet,
 		mediaFacet,
+		signer,
+		alice,
+		bob,
+		carol,
+		dave,
+		frank,
 	};
 }
 
