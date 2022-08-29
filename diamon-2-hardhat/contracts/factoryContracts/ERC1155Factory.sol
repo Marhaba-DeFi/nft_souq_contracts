@@ -3,27 +3,34 @@ pragma solidity ^0.8.2;
 
 import "../ERC1155.sol";
 import "../ERC2981.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
-
+contract ERC1155Factory is ERC1155, ERC2981, Ownable {
+	using Strings for uint256;
     using Counters for Counters.Counter;
 	Counters.Counter private _tokenIdCounter;
 
-    bool public whitelistEnabled = false;
-    mapping(address => bool) public whitelist; //Addresses that are whitelisted
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+	string public baseURI = "";
+    string public uriSuffix = ".json";
+	uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+	bool public whitelistEnabled = false;
 
+    mapping(address => bool) public whitelist; //Addresses that are whitelisted
     // Mapping from token ID to creator address
     mapping(uint256 => address) public _creators;
-    mapping (uint256 => string) tokenURIs;
 
     /**
      * @dev Emitted when `WhiteListEnabled` is toggled.
      */
     event WhiteListEnabled(bool whitelistEnabled);
+
+    /**
+     * @dev Emitted when `BaseURI` is set.
+     */
+    event BaseURI(string uri);
+
     
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
@@ -66,29 +73,45 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 2000, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++){
             delete whitelist[currentAddresses[i]];
             mapSize--;
 		}
     }
 
-    /**
-    * @dev due to multiple copies of ERC1155 tokens, this function can only be executed once while minting.
-    */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal {
-        tokenURIs[tokenId] = _tokenURI;
+	/**
+	 * @dev Returns the base URI of the contract
+	 */
+    function _baseURI() internal view returns (string memory) {
+        return baseURI;
     }
 
-	function uri(uint256 tokenId) override public view returns (string memory) {
-        return(tokenURIs[tokenId]);
+	/**
+	 * @dev Set the base URI of the contract. Only owner and Media contract(if configured)
+	 * can call this function.
+	 */
+    function setBaseURI(string memory baseURI_) public onlyOwner {
+        baseURI = baseURI_;
+
+        emit BaseURI(baseURI);
     }
 
+	function tokenURI(uint256 _tokenId) public view virtual returns (string memory){
+        require(
+            balanceOf(msg.sender, _tokenId) != 0,
+            "ERC1155Metadata: URI query for nonexistent token"
+        );
+
+        string memory currentBaseURI = _baseURI();
+        return bytes(currentBaseURI).length > 0
+        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix))
+        : "";
+    }
 
 	/**
      * @notice This function is used for minting new NFT in the market.
      * @param creator address of the owner and creator of the NFT
-     * @param tokenURI tokenURI
      * @param copies copies of the NFT to be minted
      * @param royaltyReceiver an array of address that will recieve royalty. Max upto 5.
      * @param tokenRoyaltyInBips an array of royalty percentages. It should match the number of reciever addresses. Max upto 5.
@@ -112,7 +135,6 @@ contract ERC1155Factory is Pausable, ERC1155, ERC2981, Ownable {
             }
             uint256 tokenId = _tokenIdCounter.current();
             _mint(creator, tokenId, copies, "");
-            _setTokenURI(tokenId, tokenURI);
             //If Author royalty is set to true
             if(tokenRoyalty){
                 _setTokenRoyalty(tokenId, royaltyReceiver, tokenRoyaltyInBips);

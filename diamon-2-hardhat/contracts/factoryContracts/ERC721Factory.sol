@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title ERC721 factory contract
@@ -20,8 +21,9 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * pausable, ERC721URIStorage and ERC2981 royalty contracts.
  */
 contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
+	using Strings for uint256;
     string public uriSuffix = ".json";
-    using Strings for uint256;
+	string public baseURI = "";
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     bool public whitelistEnabled = false;
@@ -37,6 +39,12 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
      * @dev Emitted when `WhiteListEnabled` is toggled.
      */
     event WhiteListEnabled(bool whitelistEnabled);
+
+	/**
+     * @dev Emitted when `BaseURI` is set.
+     */
+    event BaseURI(string uri);
+
 
 	/**
      * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
@@ -92,6 +100,24 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
             mapSize--;
 		}
     }
+
+	/**
+	 * @dev Returns the base URI of the contract
+	 */
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+	/**
+	 * @dev Set the base URI of the contract. Only owner and Media contract(if configured)
+	 * can call this function.
+	 */
+    function setBaseURI(string memory baseURI_) public onlyOwner {
+        baseURI = baseURI_;
+
+        emit BaseURI(baseURI);
+    }
+
 
     /**
 	 * @param creator address of the owner and creator of the NFT

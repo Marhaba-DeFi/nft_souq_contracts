@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-// import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 
 import "./LibMarketStorage.sol";
@@ -131,6 +130,9 @@ contract MarketFacet is EIP712 {
         uint96[] calldata _collabFraction
     ) external mediaOrOwner 
 	{
+		require(_collaborators.length <= 5, "Too many Collaborators");
+		require(_collaborators.length > 0, "Collaborators not set");
+		require(_collaborators.length == _collabFraction.length, "Mismatch of Collaborators and their share");
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
         LibMarketStorage.Collaborators memory collabStruct ;
 
@@ -299,7 +301,7 @@ contract MarketFacet is EIP712 {
         require(_verifyBidderOffer(_nftContAddress, _tokenID, _copies,  _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
 
         //Checking the seller signiture is valid
-        require(_verifySellerOffer(_nftContAddress, _tokenID, _copies,  _currencyAddress, _bid, _sellerSig, _seller), "Bidders offer not verified");
+        require(_verifySellerOffer(_nftContAddress, _tokenID, _copies,  _currencyAddress, _bid, _sellerSig, _seller), "Sellers offer not verified");
 
         ERC20 erc20 = ERC20(_currencyAddress);
         require(erc20.balanceOf(_bidder) >= _bid, "ERC20 in the payer address is not enough");
