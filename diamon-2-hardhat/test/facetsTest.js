@@ -239,7 +239,7 @@ describe('FacetsTest', async function () {
       ).to.be.revertedWith("Too many Collaborators")
     })
 
-    it.only('mint an erc721 token with mismatch of collaborators and fractions', async () => {
+    it('mint an erc721 token with mismatch of collaborators and fractions', async () => {
         await global.mediaFacet.mintTokenMedia(
         global.alice.address,
         0,
