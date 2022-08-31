@@ -115,9 +115,9 @@ contract ERC721RFactory is ERC721A, Ownable {
         );
         _safeMint(msg.sender, quantity);
 
-        for (uint256 i = _currentIndex - quantity; i < _currentIndex; i++) {
-            isOwnerMint[i] = true;
-        }
+        // for (uint256 i = _currentIndex - quantity; i < _currentIndex; i++) {
+        //     isOwnerMint[i] = true;
+        // }
     }
 
     function refund(uint256[] calldata tokenIds) external {
