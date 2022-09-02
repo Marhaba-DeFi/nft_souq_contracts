@@ -3,7 +3,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-diamond-abi");
 require('@typechain/hardhat')
 require('@nomiclabs/hardhat-ethers')
-require('@nomiclabs/hardhat-waffle')
+// require('@nomiclabs/hardhat-waffle')
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-chai-matchers");
 

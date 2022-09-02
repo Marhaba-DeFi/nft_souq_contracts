@@ -120,8 +120,7 @@ contract ERC1155Factory is ERC1155, ERC2981, Ownable {
      * @dev internal setTokenRoyalty() to set the rolayty at token level.
      */
     function mint(
-			address creator, 
-			string memory tokenURI,  
+			address creator,  
 			uint256 copies, 
             bool tokenRoyalty,
 			address[] memory royaltyReceiver, 
