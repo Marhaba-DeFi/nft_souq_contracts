@@ -12,13 +12,6 @@ async function main({ withFacets } = { withFacets: true }) {
 	const signers = await hre.ethers.getSigners();
 	// the owner 
 	const signer = signers[0];
-	// other participants
-	// const alice = signers[1];
-	// const bob = signers[2];
-	// const carol = signers[3];
-	// const dave = signers[4];
-	// const frank = signers[5];
-
 
 	// deploying the souq NFT diamond
 	const souqNFTDiamondFactory = await hre.ethers.getContractFactory(
@@ -127,23 +120,6 @@ async function main({ withFacets } = { withFacets: true }) {
 		console.log("Marketplace is initiated ")
 		txMarketInit.wait();
 	}
-
-	return {
-		souqNFTDiamond,
-		ownershipFacet,
-		diamondLoupeFacet,
-		diamondCutFacet,
-		erc721FactoryFacet,
-		erc1155FactoryFacet,
-		marketFacet,
-		mediaFacet,
-		signer,
-		alice,
-		bob,
-		carol,
-		dave,
-		frank,
-	};
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -156,5 +132,3 @@ if (require.main === module) {
 			process.exit(1);
 		});
 }
-
-exports.deployDiamond = main;

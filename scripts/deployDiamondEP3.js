@@ -80,7 +80,7 @@ let bider = bidder.address
 let currencyAddress = erc20Address
 let biderSigniture = await bidder._signTypedData(
 	{
-		name: "Marketplace",
+		name: "SouqMarketPlace",
 		version: "1.0.0",
 		chainId: chainId,
 		verifyingContract: diamondAddress

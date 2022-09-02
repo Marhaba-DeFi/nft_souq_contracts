@@ -46,8 +46,8 @@ const token721 = await mediaFacet.mintTokenMedia(
     1,
     "TESTURI",
     true,
-    ["", ""],
-    [500, 500],
+    [""],
+    [500],
     { gasLimit: 7_600_000 }
   );
   console.log("token 0 minted")
@@ -73,8 +73,8 @@ const token721 = await mediaFacet.mintTokenMedia(
   await mediaFacet.connect(signer).setCollaboratorsMedia(
     diamondAddress,
     0,
-    ["", ""],
-    [1000,1000],
+    [""],
+    [1000],
     { gasLimit: 7_600_000 }
     );  
   ///////////////
