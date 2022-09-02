@@ -7176,13 +7176,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "approveMarketForAllMedia",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "uint256",

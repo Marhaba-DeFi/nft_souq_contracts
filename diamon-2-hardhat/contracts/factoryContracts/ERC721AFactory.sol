@@ -1,6 +1,6 @@
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.6;
 
 import "../ERC721A.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";

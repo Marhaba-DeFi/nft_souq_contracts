@@ -6,7 +6,7 @@
  * 
  */
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.6;
 
 import "../ERC2981.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";

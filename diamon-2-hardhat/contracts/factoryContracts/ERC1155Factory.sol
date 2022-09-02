@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.6;
 
 import "../ERC1155.sol";
 import "../ERC2981.sol";
@@ -153,7 +153,8 @@ contract ERC1155Factory is ERC1155, ERC2981, Ownable {
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens of token type `id`.
 	 */
-    function burn(address _from, 
+    function burn(
+		address _from, 
         uint256 _tokenId, 
         uint256 _amount
     ) external {

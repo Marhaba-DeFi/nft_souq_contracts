@@ -212,7 +212,7 @@ contract MarketFacet is EIP712 {
         ERC20 erc20 = ERC20(_currencyAddress);
         // require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
-        uint256 addminShare = amount * (es._adminCommissionPercentage/10000);
+        uint256 addminShare = (amount * es._adminCommissionPercentage)/10000;
         erc20.transferFrom(_payer, es._adminAddress, addminShare);
         return addminShare;
     }
@@ -305,12 +305,16 @@ contract MarketFacet is EIP712 {
 
         ERC20 erc20 = ERC20(_currencyAddress);
         require(erc20.balanceOf(_bidder) >= _bid, "ERC20 in the payer address is not enough");
+        require(erc20.allowance(_bidder,s._mediaContract) >= _bid, "ERC20: Diamond is not approved by the bidder for spending ERC20 tokens");
+
 
         uint256 remained = _bid;
         //admin fee should be deducted from amount
         remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
 
         //royalty fee should be deducted from amount only for diamond tokens
+        //bear it in mind address of all different facets are the same in diamond proxy
+        // Media address = Market address = erc721Factory address = erc1155Factory address
         if(s._mediaContract == _nftContAddress){
             remained = remained - royaltyFeeDeduction(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
             

@@ -450,8 +450,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Media/MediaFacet.sol": {
-      "lastModificationDate": 1661777872377,
-      "contentHash": "c5415343f6e19703bcef6339fa2e3204",
+      "lastModificationDate": 1662110765504,
+      "contentHash": "d48cfacb174a2d112aedc4e1111212b8",
       "sourceName": "contracts/facets/Media/MediaFacet.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -718,8 +718,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/facets/Market/MarketFacet.sol": {
-      "lastModificationDate": 1661777043061,
-      "contentHash": "47f3a673d72fd7b48c1c8790ddb2a6eb",
+      "lastModificationDate": 1662110765503,
+      "contentHash": "38a15b41a68d1a88264232e7170c4ce2",
       "sourceName": "contracts/facets/Market/MarketFacet.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -1767,8 +1767,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/factoryContracts/ERC721RFactory.sol": {
-      "lastModificationDate": 1661949848891,
-      "contentHash": "451474a3cf6ff3ca79cd16fa4bb16f67",
+      "lastModificationDate": 1662114813384,
+      "contentHash": "6955a1acbcfb06ebbcea834420c4ddf8",
       "sourceName": "contracts/factoryContracts/ERC721RFactory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -1955,8 +1955,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/factoryContracts/ERC721Factory.sol": {
-      "lastModificationDate": 1661770108301,
-      "contentHash": "5200539c43437432a80069bb60e550df",
+      "lastModificationDate": 1662115718820,
+      "contentHash": "d0699475009ae14e45dd413d38b9af71",
       "sourceName": "contracts/factoryContracts/ERC721Factory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -1990,7 +1990,7 @@
         "@openzeppelin/contracts/utils/Strings.sol"
       ],
       "versionPragmas": [
-        "^0.8.0"
+        "^0.8.6"
       ],
       "artifacts": [
         "ERC721Factory"
@@ -2256,8 +2256,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/factoryContracts/ERC1155Factory.sol": {
-      "lastModificationDate": 1662031379057,
-      "contentHash": "f11cc98113ffbadca233754d0f9a23b1",
+      "lastModificationDate": 1662115734919,
+      "contentHash": "a4338a0a56b30954de3793d3fd38eacc",
       "sourceName": "contracts/factoryContracts/ERC1155Factory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -2290,7 +2290,7 @@
         "@openzeppelin/contracts/utils/Strings.sol"
       ],
       "versionPragmas": [
-        "^0.8.2"
+        "^0.8.6"
       ],
       "artifacts": [
         "ERC1155Factory"
@@ -2339,8 +2339,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/contracts/factoryContracts/ERC721AFactory.sol": {
-      "lastModificationDate": 1661573832697,
-      "contentHash": "4b773c455a9c8d490d44adeca3ae1b62",
+      "lastModificationDate": 1662115709339,
+      "contentHash": "baf2491111dc08d21cdf2ac139bc7df8",
       "sourceName": "contracts/factoryContracts/ERC721AFactory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -2372,7 +2372,7 @@
         "@openzeppelin/contracts/utils/Strings.sol"
       ],
       "versionPragmas": [
-        "^0.8.4"
+        "^0.8.6"
       ],
       "artifacts": [
         "ERC721AFactory"
@@ -2486,7 +2486,7 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/diamon-2-hardhat/node_modules/hardhat-diamond-abi/dist/contract.sol": {
-      "lastModificationDate": 1662031455984,
+      "lastModificationDate": 1662115793426,
       "contentHash": "f0899ccf3452b0b76299b9fb99d6bbf2",
       "sourceName": "hardhat-diamond-abi/HardhatDiamondABI.sol",
       "solcConfig": {

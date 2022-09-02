@@ -1,20 +1,23 @@
-// utils
+// Diamond deployment test - Ep1
+// In this deployment file we will try deploying diamond and all of the facets
+//Also we would initiate all the facets the address of diamond would be used in the following deployments
+// deployMintingDiamond.js and deployAcceptBid.js
 const hre = require("hardhat");
 const { FacetCutAction, getSelectors } = require("../utils/diamond");
 
 const souqNFTDiamondAtrificat = require("../artifacts/hardhat-diamond-abi/HardhatDiamondABI.sol/souqNFTDiamond.json")
 
-async function main({ withFacets } = { withFacets: false }) {
+async function main({ withFacets } = { withFacets: true }) {
 
 	const signers = await hre.ethers.getSigners();
 	// the owner 
 	const signer = signers[0];
 	// other participants
-	const alice = signers[1];
-	const bob = signers[2];
-	const carol = signers[3];
-	const dave = signers[4];
-	const frank = signers[5];
+	// const alice = signers[1];
+	// const bob = signers[2];
+	// const carol = signers[3];
+	// const dave = signers[4];
+	// const frank = signers[5];
 
 
 	// deploying the souq NFT diamond
@@ -23,6 +26,10 @@ async function main({ withFacets } = { withFacets: false }) {
 	);
 	let souqNFTDiamond = await souqNFTDiamondFactory.deploy(signer.address);
 	await souqNFTDiamond.deployed();
+
+	// Printing out the diamond's address
+	console.log("Diamond address is: ", souqNFTDiamond.address)
+	//
 
 	let ownershipFacet = await hre.ethers.getContractAt(
 		"OwnershipFacet",
@@ -78,9 +85,9 @@ async function main({ withFacets } = { withFacets: false }) {
 			"MediaFacet",
 			souqNFTDiamond.address
 		);
-		await mediaFacet.mediaFacetInit(souqNFTDiamond.address, {
-			gasLimit: 760000,
-		});
+		const txMediaInit = await mediaFacet.mediaFacetInit(souqNFTDiamond.address,{ gasLimit: 10_600_000 });
+		console.log("mediaFacet is initiated ")
+		txMediaInit.wait();
 		
 		// erc1155 facet
 		erc1155FactoryFacet = await hre.ethers.getContractAt(
@@ -89,11 +96,13 @@ async function main({ withFacets } = { withFacets: false }) {
 		);
 		const erc1155Name = "NFT1155 SOUQ";
 		const erc1155Symbol = "NFT1155SOUQ";
-		await erc1155FactoryFacet.erc1155FactoryFacetInit(
+		const tx1155Init = await erc1155FactoryFacet.erc1155FactoryFacetInit(
 			erc1155Name,
 			erc1155Symbol,
-			{ gasLimit: 760000 }
+			{ gasLimit: 10_600_000 }
 		);
+		console.log("erc1155FactoryFacet is initiated ")
+		tx1155Init.wait();
 		
 		// erc721 facet
 		erc721FactoryFacet = await hre.ethers.getContractAt(
@@ -102,21 +111,21 @@ async function main({ withFacets } = { withFacets: false }) {
 		);
 		const erc721Name = "NFT721 SOUQ";
 		const erc721Symbol = "NFT721SOUQ";
-		await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol, {
-			gasLimit: 760000,
-		});
-		
+		const tx721Init =  await erc721FactoryFacet.erc721FactoryFacetInit(erc721Name, erc721Symbol,{ gasLimit: 10_600_000 });
+		console.log("erc721FactoryFacet is initiated ")
+		tx721Init.wait();
+
 		// market facet
 		marketFacet = await hre.ethers.getContractAt(
 			"MarketFacet",
 			souqNFTDiamond.address
 		);
 
-		const marketName = "Marketplace";
+		const marketName = "SouqMarketPlace";
 		const marketVersion = "1.0.0";
-		await marketFacet.marketFacetInit(marketName, marketVersion, {
-			gasLimit: 760000,
-		});		
+		const txMarketInit = await marketFacet.marketFacetInit(marketName, marketVersion, { gasLimit: 10_600_000 });
+		console.log("Marketplace is initiated ")
+		txMarketInit.wait();
 	}
 
 	return {

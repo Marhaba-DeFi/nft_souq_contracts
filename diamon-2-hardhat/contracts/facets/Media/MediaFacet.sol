@@ -175,11 +175,11 @@ contract MediaFacet {
 	 * @dev Authorise marketplace contract for all NFT tokens and ERC20 tokens
 	 */
 
-    function approveMarketForAllMedia () public 
-	{
-        LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
-        ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
-    }
+    // function approveMarketForAllMedia () public 
+	// {
+    //     LibMediaStorage.MediaStorage storage ms = LibMediaStorage.mediaStorage();
+    //     ERC1155FactoryFacet(ms.diamondAddress).setApprovalForAll(ms.diamondAddress, true);
+    // }
 
 	/**
 	 * @dev Get the Platform fee
