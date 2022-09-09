@@ -1,9 +1,15 @@
 // test/ERC721-test.js
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
+const { ethers } = require("hardhat");
+const parseEther = ethers.utils.parseEther;
 
 describe("ERCFactory contracts", function () {
     let ERC721Factory, ERC1155Factory, ERC721AFactory, ERC721RFactory, ERC2981;
     let token721, token1155, token721A, token721R, erc2981;
+
+    let account2;
+    let account3;
 
     let name='Artwork Contract';
     let symbol='ART';
@@ -12,8 +18,8 @@ describe("ERCFactory contracts", function () {
     let royaltyReceiver = ["0xaB856c0f5901432DEb88940C9423c555814BC0fd"];
     let royaltyFeesInBips = [0000];
     let mintSupply = 1000;
-    let mintingPrice = 1000;
-    let refundTime = 86400 // 1 day in sec;
+    let mintingPrice = "1";
+    let refundTime = 24 * 60 * 60 * 45;
     let maxMintPerUser = 5;
     let alice="0x71593BAc0b4aE5278f784f0910f4829A103Ba7Cd";
     let bob= "0x032779f45b50d0Fa6F55692C18548DfC6ca1E58F";
@@ -22,12 +28,30 @@ describe("ERCFactory contracts", function () {
     let frank="0xCcd5FAA0C14641319f31eD72158d35BE6b9b90Da";
     let jane="0xAEB8Fa0Bf852f412CaE5897Cf2E24E7E9aC60944";
 
+
+    const mineSingleBlock = async () => {
+        await ethers.provider.send("hardhat_mine", [
+          ethers.utils.hexValue(1).toString(),
+        ]);
+      };
+      
+      async function simulateNextBlockTime(baseTime, changeBy) {
+        const bi = BigNumber.from(baseTime);
+        await ethers.provider.send("evm_setNextBlockTimestamp", [
+          ethers.utils.hexlify(bi.add(changeBy)),
+        ]);
+        await mineSingleBlock();
+      }
+
     beforeEach(async function () {
+
+        [owner, account2,account3] = await ethers.getSigners();
         ERC721Factory = await ethers.getContractFactory("ERC721Factory")
         ERC1155Factory = await ethers.getContractFactory("ERC1155Factory")
         ERC721AFactory = await ethers.getContractFactory("ERC721AFactory")
         ERC721RFactory = await ethers.getContractFactory("ERC721RFactory")
         ERC2981 = await ethers.getContractFactory("ERC2981")
+
 
         token721 = await ERC721Factory.deploy(
             name,
@@ -55,6 +79,18 @@ describe("ERCFactory contracts", function () {
             refundTime,
             maxMintPerUser);
 
+        const saleActivePub = await token721R.publicSaleActive();
+        expect(saleActivePub).to.be.equal(false);
+        await token721R.togglePublicSaleStatus();
+        const publicSaleActive = await token721R.publicSaleActive();
+        expect(publicSaleActive).to.eq(true);
+      
+        const saleActivePre = await token721R.presaleActive();
+        expect(saleActivePre).to.be.equal(false);
+        await token721R.togglePresaleStatus();
+        const presaleActive = await token721R.presaleActive();
+        expect(presaleActive).to.eq(true);
+
         erc2981 = await ERC2981.deploy();
         
     });
@@ -72,7 +108,7 @@ describe("ERCFactory contracts", function () {
     describe('Minting Factory token', async function () {
         it('mint an erc721 token without royalty', async () => {
             // alice mint a token
-            await expect(
+            await expect( 
                 token721.safeMint(
                     alice,
                     false,
@@ -112,7 +148,7 @@ describe("ERCFactory contracts", function () {
 
         it('mint an erc1155 token without royalty', async () => {
             // alice mint a token
-            await expect(
+            expect(await
                 token1155.mint(
                     alice,
                     copies,
@@ -152,7 +188,7 @@ describe("ERCFactory contracts", function () {
         it('mint 10 erc721A tokens', async () => {
           
             // alice mint a token
-            await expect(
+            expect(await
             token721A.mint(
                     10,
                     alice
@@ -165,5 +201,193 @@ describe("ERCFactory contracts", function () {
             expect(ownerOfToken9).to.equals(alice)
         })
     })
+
+    describe("PublicMint", function () {
+        it("Should not be able to mint when `Public sale is not active`", async function () {
+            await token721R.togglePublicSaleStatus();
+            await expect(
+                token721R
+                .connect(account2)
+                .publicSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Public sale is not active");
+        });
+      
+        it("Should not be able to mint when `Not enough eth sent`", async function () {
+            await expect(
+                token721R.connect(account2).publicSaleMint(1, { value: 0 })
+            ).to.be.revertedWith("Not enough eth sent");
+        });
+      
+        it("Should not be able to mint when `Max mint supply reached`", async function () {
+            await token721R.provider.send("hardhat_setStorageAt", [
+                token721R.address,
+                "0x0",
+                ethers.utils.solidityPack(["uint256"], [mintSupply]), // 8000
+            ]);
+            await expect(
+                token721R
+                .connect(account2)
+                .publicSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Max mint supply reached");
+        });
+      
+        it("Should not be able to mint when `Over mint limit`", async function () {
+            await token721R
+                .connect(account2)
+                .publicSaleMint(5, { value: parseEther("0.5") });
+            await expect(
+                token721R
+                .connect(account2)
+                .publicSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Over mint limit");
+        });
+    });
+
+    describe("PreSaleMint", function () {
+
+        it("Should not be able to mint when `Presale is not active`", async function () {
+            await token721R.togglePresaleStatus();
+            await expect(
+              token721R
+                .connect(account2)
+                .preSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Presale is not active");
+        });
+        
+        it("Should not presale mint when `Address not whitelisted`", async function () {
+            await token721R.provider.send("hardhat_setBalance", [
+                owner.address,
+                "0xffffffffffffffffffff",
+            ]);
+            // await token721R.togglePresaleStatus();
+            await token721R.setWhitelistEnabled(true);
+            await expect(
+                token721R
+                .connect(account2)
+                .preSaleMint(1, { value: parseEther(mintingPrice) })
+            ).revertedWith("Address not whitelisted");
+            expect(await token721R.balanceOf(account2.address)).to.be.equal(0);
+        });
+
+        it("Should presale mint when `Address is whitelisted`", async function () {
+            await token721R.provider.send("hardhat_setBalance", [
+                owner.address,
+                "0xffffffffffffffffffff",
+            ]);
+            // await token721R.togglePresaleStatus();
+            await token721R.setWhitelistEnabled(true);
+            await token721R.setWhitelist([account2.address]);
+            expect( await
+                token721R
+                .connect(account2)
+                .preSaleMint(1, { value: parseEther(mintingPrice) })
+            )
+            const ownerOfToken0 = await token721R.ownerOf(0);
+            expect(ownerOfToken0).to.equals(account2.address)  
+        });
+
+        it("Should not be able to mint when `Not enough eth sent`", async function () {
+            await expect(
+                token721R.connect(account2).preSaleMint(1, { value: 0 })
+            ).to.be.revertedWith("Not enough eth sent");
+        });
+        
+        it("Should not be able to mint when `Max mint supply reached`", async function () {
+            await token721R.provider.send("hardhat_setStorageAt", [
+                token721R.address,
+                "0x0",
+                ethers.utils.solidityPack(["uint256"], [mintSupply]), // 8000
+            ]);
+            await expect(
+                token721R
+                    .connect(account2)
+                    .preSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Max mint supply reached");
+        });
+        
+        it("Should not be able to mint when `Over mint limit`", async function () {
+            await token721R
+                .connect(account2)
+                .preSaleMint(5, { value: parseEther("0.5") });
+            await expect(
+                token721R
+                    .connect(account2)
+                    .preSaleMint(1, { value: parseEther(mintingPrice) })
+            ).to.be.revertedWith("Over mint limit");
+        });
+    });
+
+    describe("Refund", function () {
+        it("Should be store correct tokenId in refund", async function () {
+            await token721R
+            .connect(account2)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+            await token721R.connect(account2).refund([0]);
+            expect(await token721R.hasRefunded(0)).to.be.true;
+        });
+        
+        it("Should be revert `Freely minted NFTs cannot be refunded`", async function () {
+            await token721R.ownerMint(1);
+            expect(await token721R.isOwnerMint(0)).to.be.equal(true);
+            await expect(token721R.refund([0])).to.be.revertedWith(
+                "Freely minted NFTs cannot be refunded"
+            );
+        });
+        
+        it("Should be refund NFT in 45 days", async function () {
+            const refundEndTime = await token721R.getRefundGuaranteeEndTime();
+        
+            await token721R
+            .connect(account2)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+        
+            await token721R.provider.send("evm_setNextBlockTimestamp", [
+                refundEndTime.toNumber(),
+            ]);
+        
+            await token721R.connect(account2).refund([0]);
+        });
+        
+        it("Should not be refunded when `Not token owner`", async function () {
+            await token721R.ownerMint(1);
+            expect(await token721R.isOwnerMint(0)).to.be.equal(true);
+            await expect(
+            token721R.connect(account2).refund([0])
+            ).to.be.revertedWith("Not token owner");
+        });
+        
+        it("Should not be refunded NFT twice `Already refunded`", async function () {
+            // update refund address and mint NFT from refund address
+            await token721R.setRefundAddress(account2.address);
+
+            await token721R
+            .connect(account3)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+
+            await token721R
+            .connect(account2)
+            .publicSaleMint(3, { value: parseEther("3") });
+        
+            await token721R.connect(account2).refund([1]);
+
+            await expect(
+            token721R.connect(account2).refund([1])
+            ).to.be.revertedWith("Already refunded");
+        });
+        
+        it("Should not be refund NFT expired after 45 days `Refund expired`", async function () {
+            const refundEndTime = await token721R.getRefundGuaranteeEndTime();
+        
+            await token721R
+            .connect(account2)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+        
+            await simulateNextBlockTime(refundEndTime, +1);
+        
+            await expect(token721R.connect(account2).refund([0])).to.revertedWith(
+                "Refund expired"
+            );
+        });
+    });
 });
 
