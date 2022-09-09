@@ -21,7 +21,7 @@ git clone git@github.com:mudgen/diamond-2-hardhat.git
 2. Install NPM packages:
 ```console
 cd diamond-2-hardhat
-npm install
+yarn install
 ```
 
 ## Deployment
@@ -44,6 +44,9 @@ How a diamond is deployed is not part of the EIP-2535 Diamonds standard. This im
 ```console
 npx hardhat test
 ```
+## Test Accept Bid:
+To test acceptBid - first deploy the deployDiamondEP1.js then deploy the deployDiamondEP2.js and finally using the info from previous deployment run the deployDiamondEP3.js. Also you need to setup the hardhat config file with your wallet address credentials obviously.
+Have fun 🤩
 
 ## Upgrade a diamond
 
@@ -105,30 +108,5 @@ Similarly you need to use the ABI of a facet in Solidity code in order to call f
 string result = MyUsefulFacet(address(diamondContract)).getResult()
 ```
 
-## Get Help and Join the Community
 
-If you need help or would like to discuss diamonds then send me a message [on twitter](https://twitter.com/mudgen), or [email me](mailto:nick@perfectabstractions.com). Or join the [EIP-2535 Diamonds Discord server](https://discord.gg/kQewPw2).
-
-## Useful Links
-1. [Introduction to the Diamond Standard, EIP-2535 Diamonds](https://eip2535diamonds.substack.com/p/introduction-to-the-diamond-standard)
-1. [EIP-2535 Diamonds](https://github.com/ethereum/EIPs/issues/2535)
-1. [Understanding Diamonds on Ethereum](https://dev.to/mudgen/understanding-diamonds-on-ethereum-1fb)
-1. [Solidity Storage Layout For Proxy Contracts and Diamonds](https://medium.com/1milliondevs/solidity-storage-layout-for-proxy-contracts-and-diamonds-c4f009b6903)
-1. [New Storage Layout For Proxy Contracts and Diamonds](https://medium.com/1milliondevs/new-storage-layout-for-proxy-contracts-and-diamonds-98d01d0eadb)
-1. [Upgradeable smart contracts using the Diamond Standard](https://hiddentao.com/archives/2020/05/28/upgradeable-smart-contracts-using-diamond-standard)
-1. [buidler-deploy supports diamonds](https://github.com/wighawag/buidler-deploy/)
-
-## Author
-
-This example implementation was written by Nick Mudge.
-
-Contact:
-
-- https://twitter.com/mudgen
-- nick@perfectabstractions.com
-
-## License
-
-MIT license. See the license file.
-Anyone can use or modify this software for their purposes.
 
