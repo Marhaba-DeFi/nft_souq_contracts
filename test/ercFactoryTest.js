@@ -27,6 +27,7 @@ describe("ERCFactory contracts", function () {
     let carol="0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
     let frank="0xCcd5FAA0C14641319f31eD72158d35BE6b9b90Da";
     let jane="0xAEB8Fa0Bf852f412CaE5897Cf2E24E7E9aC60944";
+    let blockDeployTimeStamp;
 
 
     const mineSingleBlock = async () => {
@@ -78,6 +79,11 @@ describe("ERCFactory contracts", function () {
             mintingPrice,
             refundTime,
             maxMintPerUser);
+
+       
+        await token721R.deployed();
+        blockDeployTimeStamp = (await token721R.provider.getBlock("latest"))
+        .timestamp;
 
         const saleActivePub = await token721R.publicSaleActive();
         expect(saleActivePub).to.be.equal(false);
@@ -202,7 +208,7 @@ describe("ERCFactory contracts", function () {
         })
     })
 
-    describe("PublicMint", function () {
+    describe("ERC721R PublicMint", function () {
         it("Should not be able to mint when `Public sale is not active`", async function () {
             await token721R.togglePublicSaleStatus();
             await expect(
@@ -243,7 +249,7 @@ describe("ERCFactory contracts", function () {
         });
     });
 
-    describe("PreSaleMint", function () {
+    describe("ERC721R PreSaleMint", function () {
 
         it("Should not be able to mint when `Presale is not active`", async function () {
             await token721R.togglePresaleStatus();
@@ -317,7 +323,7 @@ describe("ERCFactory contracts", function () {
         });
     });
 
-    describe("Refund", function () {
+    describe("ERC721R Refund", function () {
         it("Should be store correct tokenId in refund", async function () {
             await token721R
             .connect(account2)
@@ -389,5 +395,159 @@ describe("ERCFactory contracts", function () {
             );
         });
     });
+
+    describe("ERC721R Owner", function () {
+        it("Should be able to mint", async function () {
+          await token721R.ownerMint(1);
+          expect(await token721R.balanceOf(owner.address)).to.be.equal(1);
+          expect(await token721R.ownerOf(0)).to.be.equal(owner.address);
+        });
+      
+        it("Should not be able to mint when `Max mint supply reached`", async function () {
+          await token721R.provider.send("hardhat_setStorageAt", [
+            token721R.address,
+            "0x0",
+            ethers.utils.solidityPack(["uint256"], [mintSupply]), // 8000
+          ]);
+          await expect(token721R.ownerMint(1)).to.be.revertedWith(
+            "Max mint supply reached"
+          );
+        });
+      
+        it("Should not be withdraw when `Refund period not over`", async function () {
+          await expect(token721R.connect(owner).withdraw()).to.revertedWith(
+            "Refund period not over"
+          );
+        });
+      
+        it("Should be able to withdraw after refundEndTime", async function () {
+          const refundEndTime = await token721R.getRefundGuaranteeEndTime();
+      
+          await token721R
+            .connect(account2)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+      
+          await simulateNextBlockTime(refundEndTime, +11);
+      
+          await token721R.provider.send("hardhat_setBalance", [
+            owner.address,
+            "0x8e1bc9bf040000", // 0.04 ether
+          ]);
+          const ownerOriginBalance = await token721R.provider.getBalance(
+            owner.address
+          );
+          // first check the owner balance is less than 0.1 ether
+          expect(ownerOriginBalance).to.be.lt(parseEther("1"));
+      
+          await token721R.connect(owner).withdraw();
+      
+          const contractVault = await token721R.provider.getBalance(
+            token721R.address
+          );
+          const ownerBalance = await token721R.provider.getBalance(
+            owner.address
+          );
+      
+          expect(contractVault).to.be.equal(parseEther("0"));
+          // the owner origin balance is less than 0.1 ether
+          expect(ownerBalance).to.be.gt(parseEther("1"));
+        });
+    });
+
+    describe("ERC721R Toogle", function () {
+    it("Should be call toggleRefundCountdown and refundEndTime add `refundPeriod` days.", async function () {
+    const beforeRefundEndTime = (
+      await token721R.getRefundGuaranteeEndTime()
+    ).toNumber();
+
+    await token721R.provider.send("evm_setNextBlockTimestamp", [
+      beforeRefundEndTime,
+    ]);
+
+    await token721R.toggleRefundCountdown();
+
+    const afterRefundEndTime = (
+      await token721R.getRefundGuaranteeEndTime()
+    ).toNumber();
+
+    expect(afterRefundEndTime).to.be.equal(beforeRefundEndTime + refundTime);
+  });
+
+  it("Should not be able to call togglePresaleStatus", async function () {
+    await token721R.togglePresaleStatus();
+    expect(await token721R.presaleActive()).to.be.false;
+  });
+
+  it("Should not be able to call togglePublicSaleStatus", async function () {
+    await token721R.togglePublicSaleStatus();
+    expect(await token721R.publicSaleActive()).to.be.false;
+  });
+    });
+
+    describe("ERC721R Setter", function () {
+    it("Should be able to call setRefundAddress", async function () {
+      await token721R.setRefundAddress(account2.address);
+      expect(await token721R.refundAddress()).to.be.equal(account2.address);
+    });
+  
+    });
+
+    describe("Aggregation", function () {
+        it("Should be able to mint and request a refund", async function () {
+          await token721R
+            .connect(account2)
+            .publicSaleMint(1, { value: parseEther(mintingPrice) });
+      
+          const balanceAfterMint = await token721R.balanceOf(account2.address);
+          expect(balanceAfterMint).to.eq(1);
+      
+          const endRefundTime = await token721R.getRefundGuaranteeEndTime();
+          await simulateNextBlockTime(endRefundTime, -10);
+      
+          await token721R.connect(account2).refund([0]);
+      
+          const balanceAfterRefund = await token721R.balanceOf(account2.address);
+          expect(balanceAfterRefund).to.eq(0);
+      
+          const balanceAfterRefundOfOwner = await token721R.balanceOf(
+            owner.address
+          );
+          expect(balanceAfterRefundOfOwner).to.eq(1);
+        });
+    });
+      
+    describe("Check ERC721R Constant & Variables", function () {
+        it(`Should maxMintSupply = ${mintSupply}`, async function () {
+          expect(await token721R.maxMintSupply()).to.be.equal(mintSupply);
+        });
+      
+        it(`Should mintPrice = ${mintingPrice}`, async function () {
+            //console.log(mintingPrice," mint" );
+          expect(await token721R.mintPrice()).to.be.equal(mintingPrice
+          );
+          
+        });
+      
+        it(`Should refundPeriod ${refundTime}`, async function () {
+          expect(await token721R.refundPeriod()).to.be.equal(refundTime);
+        });
+      
+        it(`Should maxUserMintAmount ${maxMintPerUser}`, async function () {
+          expect(await token721R.maxUserMintAmount()).to.be.equal(
+            maxMintPerUser
+          );
+        });
+      
+        it("Should refundEndTime is same with block timestamp in first deploy", async function () {
+          const refundEndTime = await token721R.getRefundGuaranteeEndTime();
+          expect(blockDeployTimeStamp + refundTime).to.be.equal(refundEndTime);
+        });
+      
+        it(`Should refundGuaranteeActive = true`, async function () {
+          expect(await token721R.isRefundGuaranteeActive()).to.be.true;
+        });
+    });
+
+
 });
 
