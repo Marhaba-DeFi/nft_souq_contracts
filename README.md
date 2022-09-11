@@ -13,21 +13,18 @@ The loupe functions are NOT gas optimized. In this implementation the `facets`, 
 
 ## Installation
 
-1. Clone this repo:
+1. Install NPM packages:
 ```console
-git clone git@github.com:mudgen/diamond-2-hardhat.git
-```
-
-2. Install NPM packages:
-```console
-cd diamond-2-hardhat
 yarn install
 ```
 
-## Deployment
+## Deployment Diamond contracts
 
 ```console
 npx hardhat run scripts/deploy.js
+npx hardhat run scripts/deployDiamondEP1.js
+npx hardhat run scripts/deployDiamondEP2.js
+npx hardhat run scripts/deployDiamondEP3.js
 ```
 
 ### How the scripts/deploy.js script works
@@ -47,6 +44,15 @@ npx hardhat test
 ## Test Accept Bid:
 To test acceptBid - first deploy the deployDiamondEP1.js then deploy the deployDiamondEP2.js and finally using the info from previous deployment run the deployDiamondEP3.js. Also you need to setup the hardhat config file with your wallet address credentials obviously.
 Have fun 🤩
+
+## Deployment Factory contracts (B2B contracts)
+
+```console
+npx hardhat run scripts/deployERC721AFactory.js
+npx hardhat run scripts/deployERC721Factory.js
+npx hardhat run scripts/deployERC721RFactory.js
+npx hardhat run scripts/deployERC1155Factory.js
+```
 
 ## Upgrade a diamond
 
