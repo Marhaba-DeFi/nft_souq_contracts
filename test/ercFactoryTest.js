@@ -14,9 +14,9 @@ describe("ERCFactory contracts", function () {
     let name='Artwork Contract';
     let symbol='ART';
     let copies = 10;
-    let defaultRoyalty = false;
+    let defaultRoyalty = true;
     let royaltyReceiver = ["0xaB856c0f5901432DEb88940C9423c555814BC0fd"];
-    let royaltyFeesInBips = [0000];
+    let royaltyFeesInBips = [1000];
     let mintSupply = 1000;
     let mintingPrice = "1";
     let refundTime = 24 * 60 * 60 * 45;
@@ -76,7 +76,8 @@ describe("ERCFactory contracts", function () {
             name,
             symbol,
             mintSupply,
-            mintingPrice,
+            ethers.utils.parseEther(mintingPrice),
+            //mintingPrice,
             refundTime,
             maxMintPerUser);
 
@@ -240,7 +241,7 @@ describe("ERCFactory contracts", function () {
         it("Should not be able to mint when `Over mint limit`", async function () {
             await token721R
                 .connect(account2)
-                .publicSaleMint(5, { value: parseEther("0.5") });
+                .publicSaleMint(5, { value: parseEther("5") });
             await expect(
                 token721R
                 .connect(account2)
@@ -314,11 +315,11 @@ describe("ERCFactory contracts", function () {
         it("Should not be able to mint when `Over mint limit`", async function () {
             await token721R
                 .connect(account2)
-                .preSaleMint(5, { value: parseEther("0.5") });
+                .preSaleMint(5, { value: ethers.utils.parseEther("5") });
             await expect(
                 token721R
                     .connect(account2)
-                    .preSaleMint(1, { value: parseEther(mintingPrice) })
+                    .preSaleMint(1, { value: ethers.utils.parseEther(mintingPrice) })
             ).to.be.revertedWith("Over mint limit");
         });
     });
@@ -414,7 +415,7 @@ describe("ERCFactory contracts", function () {
           );
         });
       
-        it("Should not be withdraw when `Refund period not over`", async function () {
+        it("Should not be able to withdraw when `Refund period is not over`", async function () {
           await expect(token721R.connect(owner).withdraw()).to.revertedWith(
             "Refund period not over"
           );
@@ -454,8 +455,8 @@ describe("ERCFactory contracts", function () {
         });
     });
 
-    describe("ERC721R Toogle", function () {
-    it("Should be call toggleRefundCountdown and refundEndTime add `refundPeriod` days.", async function () {
+    describe("ERC721R Toggle", function () {
+    it("Should be able to call toggleRefundCountdown and refundEndTime add `refundPeriod` days.", async function () {
     const beforeRefundEndTime = (
       await token721R.getRefundGuaranteeEndTime()
     ).toNumber();
@@ -492,7 +493,7 @@ describe("ERCFactory contracts", function () {
   
     });
 
-    describe("Aggregation", function () {
+    describe("ERC 721R Aggregation", function () {
         it("Should be able to mint and request a refund", async function () {
           await token721R
             .connect(account2)
@@ -516,17 +517,16 @@ describe("ERCFactory contracts", function () {
         });
     });
       
-    describe("Check ERC721R Constant & Variables", function () {
+    describe("ERC 721R Check ERC721R Constant & Variables", function () {
         it(`Should maxMintSupply = ${mintSupply}`, async function () {
           expect(await token721R.maxMintSupply()).to.be.equal(mintSupply);
         });
-      
+
         it(`Should mintPrice = ${mintingPrice}`, async function () {
-            //console.log(mintingPrice," mint" );
-          expect(await token721R.mintPrice()).to.be.equal(mintingPrice
-          );
-          
-        });
+            expect(await token721R.mintPrice()).to.be.equal(
+            ethers.utils.parseEther(mintingPrice)
+            );
+          });
       
         it(`Should refundPeriod ${refundTime}`, async function () {
           expect(await token721R.refundPeriod()).to.be.equal(refundTime);
