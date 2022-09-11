@@ -3,6 +3,9 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { ethers } = require("hardhat");
 const parseEther = ethers.utils.parseEther;
+const _INTERFACE_ID_ERC165 = '0x01ffc9a7';
+const _INTERFACE_ID_ROYALTIES_EIP2981 = '0x2a55205a';
+const _INTERFACE_ID_ERC721 = '0x80ac58cd';
 
 describe("ERCFactory contracts", function () {
     let ERC721Factory, ERC1155Factory, ERC721AFactory, ERC721RFactory, ERC2981;
@@ -28,6 +31,7 @@ describe("ERCFactory contracts", function () {
     let frank="0xCcd5FAA0C14641319f31eD72158d35BE6b9b90Da";
     let jane="0xAEB8Fa0Bf852f412CaE5897Cf2E24E7E9aC60944";
     let blockDeployTimeStamp;
+	const ADDRESS_ZERO = ethers.constants.AddressZero;
 
 
     const mineSingleBlock = async () => {
@@ -208,6 +212,42 @@ describe("ERCFactory contracts", function () {
             expect(ownerOfToken9).to.equals(alice)
         })
     })
+
+	describe('Royalties', async () => {
+        it('ERC721factory has all the right interfaces', async function () {
+            expect(
+                await token721.supportsInterface(
+                    _INTERFACE_ID_ERC165,
+                ),
+                'Error Royalties 165',
+            ).to.be.true;
+
+            expect(
+                await token721.supportsInterface(
+                    _INTERFACE_ID_ROYALTIES_EIP2981,
+                ),
+                'Error Royalties 2981',
+            ).to.be.true;
+
+            expect(
+                await token721.supportsInterface(
+                    _INTERFACE_ID_ERC721,
+                ),
+                'Error Royalties 721',
+            ).to.be.true;
+        });
+
+		it('ERC721factory throws if royalties more than 100%', async function () {
+            const tx = token721.safeMint(
+				alice,
+				true,
+				[alice],
+				[10001]  // 100.01%
+			)
+
+            await expect(tx).to.be.revertedWith('ERC2981: royalty fee will exceed salePrice');
+        });
+	})
 
     describe("ERC721R PublicMint", function () {
         it("Should not be able to mint when `Public sale is not active`", async function () {
