@@ -217,17 +217,17 @@ contract MarketFacet is EIP712 {
         return addminShare;
     }
 
-    function royaltyFeeDeduction(
+    function royaltyFeeDeductionNative(
         string memory _contractType,
 		address _currencyAddress,
         address _nftContAddress, 
 		address _payer,
 		uint256 amount,
         uint256 _tokenID
-	) public returns (uint256) 
+	) internal returns (uint256) 
 	{
         uint256 royaltyFeeAccumulator = 0;
-        //royaltyFeeDeduction function is only appilcable when it is souq native token
+        //royaltyFeeDeductionNative function is only appilcable when dealing with souq native token
         if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
             (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC721FactoryFacet(_nftContAddress).royaltyInfo721(_tokenID, amount);
 
@@ -250,6 +250,27 @@ contract MarketFacet is EIP712 {
 
         return royaltyFeeAccumulator;
         
+    }
+
+    function royaltyFeeDeductionBusiness(
+		address _currencyAddress,
+        address _nftContAddress, 
+		address _payer,
+		uint256 amount,
+        uint256 _tokenID
+	) internal returns (uint256) 
+	{
+        uint256 royaltyFeeAccumulator = 0;
+        //royaltyFeeDeductionNative function is only appilcable when dealing with business tokens
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC2981(_nftContAddress).royaltyInfo(_tokenID, amount);
+
+            ERC20 erc20 = ERC20(_currencyAddress);
+            for(uint256 i = 0; i< royaltyAddresses.length ; i++ ){
+                erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+                royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+            }
+        
+        return royaltyFeeAccumulator;
     }
 
     function cryptoDistributor(
@@ -316,7 +337,7 @@ contract MarketFacet is EIP712 {
         //bear it in mind address of all different facets are the same in diamond proxy
         // Media address = Market address = erc721Factory address = erc1155Factory address
         if(s._mediaContract == _nftContAddress){
-            remained = remained - royaltyFeeDeduction(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+            remained = remained - royaltyFeeDeductionNative(_contractType,_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
             
             if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
                 cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
@@ -327,6 +348,7 @@ contract MarketFacet is EIP712 {
                 ERC1155FactoryFacet(_nftContAddress).safeTransferFrom(_seller,_bidder, _tokenID, _copies, "");
             }
         } else{
+            remained = remained - royaltyFeeDeductionBusiness(_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
             if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
                 cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID );
                 ERC721 erc721 = ERC721(_nftContAddress);
