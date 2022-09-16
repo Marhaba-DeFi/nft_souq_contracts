@@ -128,4 +128,10 @@ contract ERC721AFactory is ERC721A, Ownable {
         ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix))
         : "";
     }
+
+    function burn(
+        uint256 tokenId
+    ) public {
+        _burn(tokenId);
+    }
 }
