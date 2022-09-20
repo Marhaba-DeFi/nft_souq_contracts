@@ -159,6 +159,11 @@ contract ERC721RFactory is ERC721A, Ownable {
         refundAddress = _refundAddress;
     }
 
+    function burn(
+        uint256 tokenId
+    ) public {
+        _burn(tokenId);
+    }
     
     function setBaseURI(string memory uri) external onlyOwner {
         baseURI = uri;
