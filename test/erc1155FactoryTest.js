@@ -21,7 +21,7 @@ describe("ERCFactory contracts", function () {
 
     beforeEach(async function () {
         [owner, account1, account2, account3, account4, account5] = await ethers.getSigners();
-        console.log("owner: ", owner.address);
+        // console.log("owner: ", owner.address);
 
         ERC1155Factory = await ethers.getContractFactory("ERC1155Factory")
         ERC2981 = await ethers.getContractFactory("ERC2981")
@@ -34,7 +34,7 @@ describe("ERCFactory contracts", function () {
             royaltyFeesInBips);
 
         erc2981 = await ERC2981.connect(owner).deploy();
-        console.log("token1155 is deployed to :", token1155.address)
+        // console.log("token1155 is deployed to :", token1155.address)
     });
 
     // You can nest describe calls to create subsections.

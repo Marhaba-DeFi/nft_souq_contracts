@@ -15,12 +15,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./LibERC1155FactoryStorage.sol";
 import "../../libraries/LibURI.sol";
 
-
-
 contract ERC1155FactoryFacet is ERC1155Facet {
     using Strings for uint256;
 
-	modifier onlyMediaCaller() {
+    modifier onlyMediaCaller() {
         require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
         _;
     }
@@ -32,7 +30,7 @@ contract ERC1155FactoryFacet is ERC1155Facet {
 
         require(bytes(name_).length != 0 && bytes(symbol_).length != 0, "INVALID_PARAMS");
 
-		require(msg.sender == ds.contractOwner, "Must own the contract.");
+        require(msg.sender == ds.contractOwner, "Must own the contract.");
         es.name = name_;
         es.symbol = symbol_;
     }
@@ -67,12 +65,14 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         uint256 totalSupply,
         string memory tokenURI,
         bool tokenRoyalty,
-		address [] memory royaltyReceiver,
-		uint96 [] memory tokenRoyaltyInBips
-
-    ) external  onlyMediaCaller {
-        if(tokenRoyalty){
-            require(royaltyReceiver.length == tokenRoyaltyInBips.length, "ERC1155: the length of royalty addresses is not equal to the length of shares");
+        address[] memory royaltyReceiver,
+        uint96[] memory tokenRoyaltyInBips
+    ) external onlyMediaCaller {
+        if (tokenRoyalty) {
+            require(
+                royaltyReceiver.length == tokenRoyaltyInBips.length,
+                "ERC1155: the length of royalty addresses is not equal to the length of shares"
+            );
             require(royaltyReceiver.length <= 5, "ERC1155: too many royalty addresses has been set");
             //_setTokenRoyalty(tokenId,royaltyReceiver,tokenRoyaltyInBips);
         }
@@ -107,18 +107,21 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         return true;
     }
 
-	/**
-	 * @notice This function is used for burning an existing NFT.
-	 * @dev _burn is an inherited function from ERC1155.
-	 * @dev Destroys `amount` tokens of token type `tokenId` from `from` account
+    /**
+     * @notice This function is used for burning an existing NFT.
+     * @dev _burn is an inherited function from ERC1155.
+     * @dev Destroys `amount` tokens of token type `tokenId` from `from` account
      *
      * Requirements:
      *
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens of token type `id`.
-	 */
-	function burn(address from, uint256 tokenId, uint256 amount) external  
-	{
+     */
+    function burn(
+        address from,
+        uint256 tokenId,
+        uint256 amount
+    ) external {
         _burn(from, tokenId, amount);
     }
 
@@ -147,27 +150,27 @@ contract ERC1155FactoryFacet is ERC1155Facet {
         require(_receivers[0] != address(0), "ERC1155 royalty: invalid receiver");
         require(_receivers.length <= 5, "ERC1155 royalty: Royalty recievers cannot be more than 5");
         require(_receivers.length == _feeNumerator.length, "ERC1155 royalty: Mismatch of Royalty Recxiever address and their share");
-        uint totalFeeNumerator=0;
-        for(uint i ; i < _feeNumerator.length; i++){
+        uint256 totalFeeNumerator = 0;
+        for (uint256 i; i < _feeNumerator.length; i++) {
             totalFeeNumerator += _feeNumerator[i];
         }
         require(totalFeeNumerator <= _feeDenominator1155(), "ERC1155 royalty: royalty fee will exceed salePrice");
-        
+
         LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
-        LibERC1155FactoryStorage.RoyaltyInfo memory royaltyInfo ;
+        LibERC1155FactoryStorage.RoyaltyInfo memory royaltyInfo;
         royaltyInfo.receiver = _receivers;
         royaltyInfo.royaltyFraction = _feeNumerator;
-        es._tokenRoyaltyInfo[tokenId] = royaltyInfo; 
+        es._tokenRoyaltyInfo[tokenId] = royaltyInfo;
     }
 
-    function royaltyInfo1155(uint256 _tokenID, uint256 _salePrice) public virtual returns (address[] memory , uint256[] memory) {
-		LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
+    function royaltyInfo1155(uint256 _tokenID, uint256 _salePrice) public virtual returns (address[] memory, uint256[] memory) {
+        LibERC1155FactoryStorage.ERC1155FactoryStorage storage es = LibERC1155FactoryStorage.erc1155FactoryStorage();
 
         address[] memory receivers = es._tokenRoyaltyInfo[_tokenID].receiver;
         uint96[] memory fractions = es._tokenRoyaltyInfo[_tokenID].royaltyFraction;
         uint256[] memory royaltyAmount = new uint256[](fractions.length);
 
-        for(uint i=0; i < fractions.length; i++){
+        for (uint256 i = 0; i < fractions.length; i++) {
             royaltyAmount[i] = (_salePrice * fractions[i]) / _feeDenominator1155();
         }
         return (receivers, royaltyAmount);

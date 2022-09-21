@@ -24,7 +24,7 @@ import "./LibEIP712Storage.sol";
  *
  * _Available since v3.4._
  */
- contract EIP712 {
+contract EIP712 {
     /* solhint-disable var-name-mixedcase */
     // Cache the domain separator as an immutable value, but also store the chain id that it corresponds to, in order to
     // invalidate the cached domain separator if the chain id changes.
@@ -63,29 +63,19 @@ import "./LibEIP712Storage.sol";
     //     _CACHED_THIS = address(this);
     //     _TYPE_HASH = typeHash;
     // }
-    function eip712FacetInit(
-    string memory name_,
-    string memory version_
-    ) public {
-
+    function eip712FacetInit(string memory name_, string memory version_) public {
         LibEIP712Storage.EIP712Storage storage es = LibEIP712Storage.eip712torage();
         require(
-        es._HASHED_NAME == 0x0000000000000000000000000000000000000000000000000000000000000000 &&
-        es._HASHED_VERSION == 0x0000000000000000000000000000000000000000000000000000000000000000,
-        "ALREADY_INITIALIZED"
+            es._HASHED_NAME == 0x0000000000000000000000000000000000000000000000000000000000000000 &&
+                es._HASHED_VERSION == 0x0000000000000000000000000000000000000000000000000000000000000000,
+            "ALREADY_INITIALIZED"
         );
 
-        require(
-        bytes(name_).length != 0 &&
-        bytes(version_).length != 0,
-        "INVALID_PARAMS"
-        );
+        require(bytes(name_).length != 0 && bytes(version_).length != 0, "INVALID_PARAMS");
 
         bytes32 hashedName = keccak256(bytes(name_));
         bytes32 hashedVersion = keccak256(bytes(version_));
-        bytes32 typeHash = keccak256(
-            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-        );
+        bytes32 typeHash = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
         // _HASHED_NAME = hashedName;
         // _HASHED_VERSION = hashedVersion;
@@ -106,9 +96,8 @@ import "./LibEIP712Storage.sol";
      * @dev Returns the domain separator for the current chain.
      */
     function _domainSeparatorV4() internal view returns (bytes32) {
-                
         LibEIP712Storage.EIP712Storage storage es = LibEIP712Storage.eip712torage();
-        
+
         if (address(this) == es._CACHED_THIS && block.chainid == es._CACHED_CHAIN_ID) {
             return es._CACHED_DOMAIN_SEPARATOR;
         } else {
@@ -143,18 +132,13 @@ import "./LibEIP712Storage.sol";
         return ECDSA.toTypedDataHash(_domainSeparatorV4(), structHash);
     }
 
-
-    function getName() view public returns(bytes32){
-
+    function getName() public view returns (bytes32) {
         LibEIP712Storage.EIP712Storage storage es = LibEIP712Storage.eip712torage();
         return es._HASHED_NAME;
-
     }
 
-    function getAddress() view public returns(address){
-
+    function getAddress() public view returns (address) {
         LibEIP712Storage.EIP712Storage storage es = LibEIP712Storage.eip712torage();
         return es._CACHED_THIS;
-
     }
 }

@@ -57,16 +57,16 @@ contract ERC721RFactory is ERC721A, Ownable {
     event PublicSaleSet(bool publicSaleActive);
 
     constructor(
-        string memory name, 
+        string memory name,
         string memory symbol,
-        uint mintSupply, 
+        uint256 mintSupply,
         uint256 mintingPrice,
         uint256 refundTime,
-        uint maxMintPerUser 
+        uint256 maxMintPerUser
     ) ERC721A(name, symbol) {
         bytes memory validateName = bytes(name); // Uses memory
         bytes memory validateSymbol = bytes(symbol);
-        require( validateName.length != 0 && validateSymbol.length != 0, "ERC721R: Choose a name and symbol");
+        require(validateName.length != 0 && validateSymbol.length != 0, "ERC721R: Choose a name and symbol");
         refundAddress = msg.sender;
         maxMintSupply = mintSupply;
         mintPrice = mintingPrice;
@@ -75,19 +75,13 @@ contract ERC721RFactory is ERC721A, Ownable {
         toggleRefundCountdown();
     }
 
-    function preSaleMint(uint256 quantity)
-        external
-        payable
-    {
+    function preSaleMint(uint256 quantity) external payable {
         require(presaleActive, "Presale is not active");
         require(msg.value >= quantity * mintPrice, "Not enough eth sent");
-        if(whitelistEnabled == true) {
+        if (whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
         }
-        require(
-            _numberMinted(msg.sender) + quantity <= maxUserMintAmount,
-            "Over mint limit"
-        );
+        require(_numberMinted(msg.sender) + quantity <= maxUserMintAmount, "Over mint limit");
         require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
 
         _safeMint(msg.sender, quantity);
@@ -96,23 +90,14 @@ contract ERC721RFactory is ERC721A, Ownable {
     function publicSaleMint(uint256 quantity) external payable {
         require(publicSaleActive, "Public sale is not active");
         require(msg.value >= quantity * mintPrice, "Not enough eth sent");
-        require(
-            _numberMinted(msg.sender) + quantity <= maxUserMintAmount,
-            "Over mint limit"
-        );
-        require(
-            _totalMinted() + quantity <= maxMintSupply,
-            "Max mint supply reached"
-        );
+        require(_numberMinted(msg.sender) + quantity <= maxUserMintAmount, "Over mint limit");
+        require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
 
         _safeMint(msg.sender, quantity);
     }
 
     function ownerMint(uint256 quantity) external onlyOwner {
-        require(
-            _totalMinted() + quantity <= maxMintSupply,
-            "Max mint supply reached"
-        );
+        require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
         _safeMint(msg.sender, quantity);
 
         for (uint256 i = _currentIndex - quantity; i < _currentIndex; i++) {
@@ -159,12 +144,10 @@ contract ERC721RFactory is ERC721A, Ownable {
         refundAddress = _refundAddress;
     }
 
-    function burn(
-        uint256 tokenId
-    ) public {
+    function burn(uint256 tokenId) public {
         _burn(tokenId);
     }
-    
+
     function setBaseURI(string memory uri) external onlyOwner {
         baseURI = uri;
 
@@ -175,16 +158,11 @@ contract ERC721RFactory is ERC721A, Ownable {
         uriSuffix = _uriSuffix;
     }
 
-    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory){
-        require(
-            _exists(_tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function tokenURI(uint256 _tokenId) public view virtual override returns (string memory) {
+        require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
 
         string memory currentBaseURI = _baseURI();
-        return bytes(currentBaseURI).length > 0
-        ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix))
-        : "";
+        return bytes(currentBaseURI).length > 0 ? string(abi.encodePacked(currentBaseURI, _tokenId.toString(), uriSuffix)) : "";
     }
 
     function toggleRefundCountdown() public onlyOwner {
@@ -212,31 +190,31 @@ contract ERC721RFactory is ERC721A, Ownable {
     }
 
     /**
-	 * @dev set whitelisted users
-	 */
+     * @dev set whitelisted users
+     */
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
         require(newAddresses.length < 2000, "Too many userss to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++) {
-			require(mapSize < 2000, "Maximum Users already whitelisted");
+            require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
             mapSize++;
-		}
+        }
     }
 
     /**
-	 * @dev remove whitelisted users
-	 */
+     * @dev remove whitelisted users
+     */
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
         require(currentAddresses.length <= 5, "Too many userss to whitelist");
-        for (uint256 i = 0; i < currentAddresses.length; i++){
+        for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
             mapSize--;
-		}
+        }
     }
 }
