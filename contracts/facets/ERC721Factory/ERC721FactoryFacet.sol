@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: MIT
+/**
+ * ERC721FactoryFacet is used to mint NFTs that are ERC721 compliant.
+ * The mint function can only be called from souq Media contract.
+ * It is initialized with name and symbol and default royalty.
+ *
+ */
 
 pragma solidity ^0.8.0;
 
@@ -10,46 +16,28 @@ import "../../libraries/LibURI.sol";
 
 contract ERC721FactoryFacet is ERC721Facet {
     using Strings for uint256;
-    event BaseUriChanged(string newBaseURI);
 
     modifier onlyMediaCaller() {
-        require(
-            msg.sender == s._mediaContract,
-            "ERC721Factory: Unauthorized Access!"
-        );
+        require(msg.sender == s._mediaContract, "ERC721Factory: Unauthorized Access!");
         _;
     }
 
-       /**
-     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` and default royalty to the token collection.
      */
-    function erc721FactoryFacetInit(
-    string memory name_,
-    string memory symbol_,
-    string memory baseURI_
-  ) external {
-    LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
-    LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+    function erc721FactoryFacetInit(string memory name_, string memory symbol_) external {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-    require(
-      bytes(es._name).length == 0 &&
-      bytes(es._symbol).length == 0 &&
-      bytes(es._baseURI).length ==0,
-      "ALREADY_INITIALIZED"
-    );
+        require(bytes(es._name).length == 0 && bytes(es._symbol).length == 0);
 
-    require(
-      bytes(name_).length != 0 &&
-      bytes(symbol_).length != 0,
-      "INVALID_PARAMS"
-    );
+        require(bytes(name_).length != 0 && bytes(symbol_).length != 0, "INVALID_PARAMS");
 
-    require(msg.sender == ds.contractOwner, "Must own the contract.");
+        require(msg.sender == ds.contractOwner, "Must own the contract.");
 
-    es._name = name_;
-    es._symbol = symbol_;
-    _setBaseURI(baseURI_);
-  }
+        es._name = name_;
+        es._symbol = symbol_;
+    }
 
     /**
      * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
@@ -58,36 +46,10 @@ contract ERC721FactoryFacet is ERC721Facet {
      *
      * - `tokenId` must exist.
      */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+    function _setTokenURI721(uint256 tokenId, string memory _tokenURI) internal virtual {
         require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
         es._tokenURIs[tokenId] = _tokenURI;
-    }
-
-    function removeTokenUri(uint256 tokenId) external onlyMediaCaller{
-        require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-        delete es._tokenURIs[tokenId];
-    }
-
-    /**
-     * @dev Internal function to set the base URI for all token IDs. It is
-     * automatically added as a prefix to the value returned in {tokenURI},
-     * or to the token ID if {tokenURI} is empty.
-     */
-    function _setBaseURI(string memory baseURI_) internal virtual {
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-        es._baseURI = baseURI_;
-    }
-
-    /**
-    * @dev Returns the base URI set via {_setBaseURI}. This will be
-    * automatically added as a prefix in {tokenURI} to each token's URI, or
-    * to the token ID if no specific URI is set for that token ID.
-    */
-    function baseURI() internal view virtual returns (string memory) {
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-        return es._baseURI;
     }
 
     /**
@@ -98,79 +60,116 @@ contract ERC721FactoryFacet is ERC721Facet {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
         string memory _tokenURI = es._tokenURIs[tokenId];
-        string memory base = baseURI();
+        return _tokenURI;
+    }
 
-        // If there is no base URI, return the token URI.
-        if (bytes(base).length == 0) {
-            return _tokenURI;
+    /**
+     * @notice This function is used for minting new NFT in the market.
+     * @param tokenId tokenId
+     * @param creator address of the owner and creator of the NFT
+     * @param _tokenURI tokenURI
+     * @param royaltyReceiver an array of address that will recieve royalty. Max upto 5.
+     * @param tokenRoyaltyInBips an array of royalty percentages. It should match the number of reciever addresses. Max upto 5.
+     * @dev safemint() for minting the tokens.
+     * @dev internal setTokenURI() to set the token URI for the minted token
+     * @dev internal setTokenRoyalty() to set the rolayty at token level.
+     */
+
+    function mint(
+        uint256 tokenId,
+        address creator,
+        string memory _tokenURI,
+        bool tokenRoyalty,
+        address[] memory royaltyReceiver,
+        uint96[] memory tokenRoyaltyInBips
+    ) external onlyMediaCaller {
+        if (tokenRoyalty) {
+            require(
+                royaltyReceiver.length == tokenRoyaltyInBips.length,
+                "ERC721: the length of royalty addresses is not equal to the length of shares"
+            );
+            require(royaltyReceiver.length <= 5, "ERC721: too many royalty addresses has been set");
+            _setTokenRoyalty721(tokenId, royaltyReceiver, tokenRoyaltyInBips);
         }
-        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        if (bytes(_tokenURI).length > 0) {
-            return LibURI.checkPrefix(base, _tokenURI);
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+
+        es.nftToOwners[tokenId] = creator;
+        es.nftToCreators[tokenId] = creator;
+        _safeMint(creator, tokenId);
+        _setTokenURI721(tokenId, _tokenURI);
+    }
+
+    /**
+     * @notice This function is used for burning an existing NFT.
+     * @dev _burn is an inherited function from ERC721.
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function burn(uint256 tokenId) external {
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        _burn(tokenId);
+        delete es.nftToCreators[tokenId];
+    }
+
+    /**
+     * @notice This function is used for checking existance of an NFT.
+     * @dev _tokenExists calls _exists function (which is internal) from ERC721.
+     * Requirements:
+     *
+     */
+    function _tokenExists(uint256 tokenId) public view virtual returns (bool) {
+        return (_exists(tokenId));
+    }
+
+    /**
+     * @dev The denominator with which to interpret the fee set in {_setTokenRoyalty} and {_setDefaultRoyalty} as a
+     * fraction of the sale price. Defaults to 10000 so fees are expressed in basis points, but may be customized by an
+     * override.
+     */
+    function _feeDenominator721() internal pure virtual returns (uint96) {
+        return 10000;
+    }
+
+    /**
+     * @dev Sets the royalty information that all ids in this contract will default to.
+     *
+     * Requirements:
+     *
+     * - `receiver` cannot be the zero address.
+     * - `feeNumerator` cannot be greater than the fee denominator.
+     */
+    function _setTokenRoyalty721(
+        uint256 tokenId,
+        address[] memory _receivers,
+        uint96[] memory _feeNumerator
+    ) internal virtual {
+        require(_receivers[0] != address(0), "ERC2981: invalid receiver");
+        require(_receivers.length <= 5, "Royalty recievers cannot be more than 5");
+        require(_receivers.length == _feeNumerator.length, "Mismatch of Royalty Recxiever address and their share");
+        uint256 totalFeeNumerator = 0;
+        for (uint256 i; i < _feeNumerator.length; i++) {
+            totalFeeNumerator += _feeNumerator[i];
         }
-        // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
-        return string(abi.encodePacked(base, tokenId.toString()));
+        require(totalFeeNumerator <= _feeDenominator721(), "ERC2981: royalty fee will exceed salePrice");
+
+        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
+        LibERC721FactoryStorage.RoyaltyInfo memory royaltyInfo;
+        royaltyInfo.receiver = _receivers;
+        royaltyInfo.royaltyFraction = _feeNumerator;
+        es._tokenRoyaltyInfo[tokenId] = royaltyInfo;
     }
 
-    /* 
-    @notice This function is used for minting 
-     new NFT in the market.
-    @dev 'msg.sender' will pass the '_tokenID' and 
-     the respective NFT details.
-    */
-    function mint(uint256 _tokenID, address _creator, string memory _tokenURI) external onlyMediaCaller {
+    function royaltyInfo721(uint256 _tokenID, uint256 _salePrice) public view virtual returns (address[] memory, uint256[] memory) {
         LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
 
-        es.nftToOwners[_tokenID] = _creator;
-        es.nftToCreators[_tokenID] = _creator;
-        _safeMint(_creator, _tokenID);
-        _approve(s._mediaContract, _tokenID);
-        // _tokenUri is optional but will set if nft owner supply the details
-        // 42 is the ipfs hash length that we sent from FE
-        // if length is not 42 means, its url and add it as token url
-        if ( bytes(_tokenURI).length != 42 )
-        _setTokenURI(_tokenID, _tokenURI);
-    }
+        address[] memory receivers = es._tokenRoyaltyInfo[_tokenID].receiver;
+        uint96[] memory fractions = es._tokenRoyaltyInfo[_tokenID].royaltyFraction;
+        uint256[] memory royaltyAmount = new uint256[](fractions.length);
 
-    /*
-    @notice This function will transfer the Token 
-     from the caller's address to the recipient address
-    @dev Called the ERC721'_transfer' function to transfer 
-     tokens from 'msg.sender'
-    */
-    function transfer(address _recipient, uint256 _tokenID)
-        public
-        onlyMediaCaller
-    {
-        require(_tokenID > 0, "ERC721Factory: Token Id should be non-zero");
-        transferFrom(msg.sender, _recipient, _tokenID); // ERC721 transferFrom function called
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-        
-        es.nftToOwners[_tokenID] = _recipient;
-    }
-
-    /*
-    @notice This function will transfer from the sender account
-     to the recipient account but the caller have the allowence 
-     to send the Token.
-    @dev check the allowence limit for msg.sender before sending
-     the token
-    */
-    function transferFrom(
-        address _sender,
-        address _recipient,
-        uint256 _tokenID
-    ) public override onlyMediaCaller {
-        require(_tokenID > 0, "ERC721Factory: Token Id should be non-zero");
-        require(
-            _isApprovedOrOwner(_msgSender(), _tokenID),
-            "ERC721Factory: transfer caller is neither owner nor approved"
-        );
-
-        safeTransferFrom(_sender, _recipient, _tokenID); // ERC721 safeTransferFrom function called
-        LibERC721FactoryStorage.ERC721FactoryStorage storage es = LibERC721FactoryStorage.erc721FactoryStorage();
-
-        _approve(s._mediaContract, _tokenID);
-        es.nftToOwners[_tokenID] = _recipient;
+        for (uint256 i = 0; i < royaltyAmount.length; i++) {
+            royaltyAmount[i] = (_salePrice * fractions[i]) / _feeDenominator721();
+        }
+        return (receivers, royaltyAmount);
     }
 }

@@ -1,763 +1,344 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.6;
 
-pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "../../interfaces/IMarket.sol";
-import "../../interfaces/Iutils.sol";
-
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "../../libraries/LibDiamond.sol";
-import "../../libraries/LibAppStorage.sol";
 import "./LibMarketStorage.sol";
+import "../../libraries/LibAppStorage.sol";
+import "../../libraries/LibDiamond.sol";
+import "../EIP712/EIP712Facet.sol";
+import "../../ERC2981.sol";
+import "../ERC1155Factory/ERC1155FactoryFacet.sol";
+import "../ERC721Factory/ERC721FactoryFacet.sol";
 
-contract MarketFacet is IMarket {
+contract MarketFacet is EIP712 {
     AppStorage internal s;
-    
-    using SafeERC20 for IERC20;
-    using Counters for Counters.Counter;
 
-    function marketInit(
-    ) external {
-        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
+    /**
+     * @dev Emitted when `admin address` is set.
+     */
+    event Admin(address admin);
 
-        require(
-            ms._EXPO == 0 &&
-            ms._BASE == 0 &&
-            ms.timeBuffer == 0 &&
-            ms._minBidIncrementPercentage == 0,
-            "ALREADY_INITIALIZED"
-        );
+    /**
+     * @dev Emitted when `admin fee-commission` is set.
+     */
+    event AdminFee(uint96 commissionPercentage);
 
-        require(msg.sender == ds.contractOwner, "Must own the contract.");
+    /**
+     * @dev Emitted when `collaborators` are set.
+     */
+    event CollaboratorsFee(address nftAddress, uint256 tokenID, address[] collaborators, uint96[] collabFraction);
 
-        ms._minBidIncrementPercentage = 5;
-        ms._EXPO = 1e18;
-        ms._BASE = 100 * ms._EXPO;
-        ms.timeBuffer = 15 * 60;
-    }
-    
+    /**
+     * @dev Emitted when `ERC20 token` is approved by admin.
+     */
+    event CryptoApproved(address currencyAddress, bool approving);
+
+    /**
+     * @dev Emitted when `bid is accepted` by the seller.
+     */
+    event BidAccepted(address buyer, address seller, bool accepted);
+
     modifier onlyMediaCaller() {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        require(msg.sender == s._mediaContract, "Market: Unauthorized Access!");
+        require(msg.sender == s._mediaContract, "Market Place: Unauthorized Access!");
         _;
     }
 
-    /**
-     * @notice This method is used to Set Media Contract's Address
-     *
-     * @param _mediaContractAddress Address of the Media Contract to set
-     */
-    function configureMedia(address _mediaContractAddress) external {
-        LibDiamond.enforceIsContractOwner();
-        require(
-            _mediaContractAddress != address(0),
-            "Market: Invalid Media Contract Address!"
-        );
-        
-        require(
-            s._mediaContract == address(0),
-            "Market: Media Contract Already Configured!"
-        );
-
-        s._mediaContract = _mediaContractAddress;
-        emit MediaUpdated(_mediaContractAddress);
+    modifier mediaOrOwner() {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        require(msg.sender == ds.contractOwner || msg.sender == s._mediaContract, "Not media nor owner");
+        _;
     }
 
-    /**
-     * @dev See {IMarket}
-     */
+    struct Collaborators {
+        address[] collaborators;
+        uint96[] collabFraction;
+    }
+
+    function marketFacetInit(string memory name_, string memory version_) external {
+        LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
+        eip712FacetInit(name_, version_);
+        setAdminAddress(ds.contractOwner);
+    }
+
+    //TODO: Check whether we need to configure admin address for market place contract or not
+    function setAdminAddress(address adminAddress_) public mediaOrOwner {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        es._adminAddress = adminAddress_;
+
+        emit Admin(adminAddress_);
+    }
+
+    function getAdminAddress() public view returns (address) {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        return (es._adminAddress);
+    }
+
+    function setApprovedCrypto(address _currencyAddress, bool approving) public mediaOrOwner {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        es._approvedCurrency[_currencyAddress] = approving;
+
+        emit CryptoApproved(_currencyAddress, approving);
+    }
+
+    function getApprovedCrypto(address _currencyAddress) public view returns (bool) {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        return (es._approvedCurrency[_currencyAddress]);
+    }
+
+    function setCommissionPercentage(uint96 _commissionPercentage) external mediaOrOwner returns (bool) {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        es._adminCommissionPercentage = _commissionPercentage;
+
+        emit AdminFee(_commissionPercentage);
+
+        return true;
+    }
+
+    function getCommissionPercentage() external view mediaOrOwner returns (uint96) {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        return es._adminCommissionPercentage;
+    }
+
     function setCollaborators(
+        address _nftAddress,
         uint256 _tokenID,
-        Collaborators calldata _collaborators
-    ) external override onlyMediaCaller {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        ms._tokenCollaborators[_tokenID] = _collaborators;
+        address[] calldata _collaborators,
+        uint96[] calldata _collabFraction
+    ) external mediaOrOwner {
+        require(_collaborators.length <= 5, "Too many Collaborators");
+        require(_collaborators.length > 0, "Collaborators not set");
+        require(_collaborators.length == _collabFraction.length, "Mismatch of Collaborators and their share");
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        LibMarketStorage.Collaborators memory collabStruct;
+
+        //Collaborators memory collabStruct;
+        collabStruct.collaborators = _collaborators;
+        collabStruct.collabFraction = _collabFraction;
+        es.tokenCollaborators[_nftAddress][_tokenID] = collabStruct;
+
+        emit CollaboratorsFee(_nftAddress, _tokenID, _collaborators, _collabFraction);
     }
 
-    /**
-     * @dev See {IMarket}
-     */
-    function setRoyaltyPoints(uint256 _tokenID, uint8 _royaltyPoints)
-        external
-        override
-        onlyMediaCaller
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        ms._tokenRoyaltyPercentage[_tokenID] = _royaltyPoints;
-        emit RoyaltyUpdated(_tokenID, _royaltyPoints);
+    function getCollaborators(address _nftAddress, uint256 _tokenID) external view mediaOrOwner returns (LibMarketStorage.Collaborators memory) {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        LibMarketStorage.Collaborators memory collabStructReturn;
+
+        //Collaborators memory collabStructReturn;
+        collabStructReturn.collaborators = es.tokenCollaborators[_nftAddress][_tokenID].collaborators;
+        collabStructReturn.collabFraction = es.tokenCollaborators[_nftAddress][_tokenID].collabFraction;
+        return (collabStructReturn);
     }
 
-    /**
-     * @dev See {IMarket}
-     */
-    function setBid(
+    function hashOffer(
+        address nftContAddress,
+        uint256 tokenID,
+        uint256 copies,
+        address currencyAddress,
+        uint256 bid
+    ) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        keccak256("Bid(address nftContAddress,uint256 tokenID,uint256 copies,address currencyAddress,uint256 bid)"),
+                        nftContAddress,
+                        tokenID,
+                        copies,
+                        currencyAddress,
+                        bid
+                    )
+                )
+            );
+    }
+
+    function _verifyBidderOffer(
+        address _nftContAddress,
         uint256 _tokenID,
-        address _tokenAddress,
-        address _owner, 
-        address _bidder,
-        Iutils.Bid calldata _bid,
-        address _creator
-    ) external payable override onlyMediaCaller returns (bool) {
-        require(_bid._bidPrice != 0, "Market: You Can't Bid With 0 Amount!");
-        require(_bid._quantity != 0, "Market: You Can't Bid For 0 Tokens");
-        require(
-            !(_bid._quantity < 0),
-            "Market: You Can't Bid For Negative Tokens"
-        );
-        
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
-        require(
-            _bid._recipient != address(0),
-            "Market: bid recipient cannot be 0 address"
-        );
-        
-        require(
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID]._sender != address(0),
-            "Market: Token is not open for Sale"
-        );
-
-        require(_bid._quantity <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity, "Market: Invalid quantity value supplied");
-
-        require(_bid._currency == ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, "Market: Invalid Currency Supplied for bid");
-
-        // TODO: improve with some functional check OR multi require
-        if ( ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency != address(0)){
-        require(
-            _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reservePrice,
-            "Market: Bid Cannot be placed below the min Amount"
-        );
-        }else{
-            require(msg.value >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._reservePrice,
-            "Market: Bid Cannot be placed below the min Amount"
-        );
-        }
-        require(
-                _bid._bidPrice <= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice,
-                "Market: You Cannot Pay more then Buy Asked Amount "
-        );
-
-        _verifyBidAmount(_tokenID, _tokenAddress, _owner, _bid);
-
-        if (ms._tokenAsks[_tokenAddress][_owner][_tokenID].askType == Iutils.AskTypes.FIXED) {
-            _handleIncomingBid(
-                _bid._bidPrice,
-                ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
-                _bid._bidder
-            );
-
-            // Set New Bid for the Token
-            ms._tokenBidders[_tokenAddress][_bid._bidder][_tokenID] = Iutils.Bid(
-                _bid._tokenAddress,
-                _bid._owner,
-                _bid._quantity,
-                _bid._bidPrice,
-                _bid._currency,
-                _bid._bidder,
-                _bid._recipient,
-                _bid.askType
-            );
-
-            emit BidCreated(_tokenID, _bid);
-            // Needs to be taken care of
-            // // If a bid meets the criteria for an ask, automatically accept the bid.
-            // // If no ask is set or the bid does not meet the requirements, ignore.
-            if (
-                _bid._bidPrice >= ms._tokenAsks[_tokenAddress][_owner][_tokenID]._buyNowPrice
-            ) {
-                ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= _bid._quantity;
-                // Finalize Exchange
-                divideMoney(_tokenID, _tokenAddress, ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency, _owner, _bidder, _bid._bidPrice, _creator);
-            }
-            return true;
-        } else {
-            return _setIncomingBid(_tokenID, _tokenAddress, _owner, _creator, _bid);
-        }
-    }
-
-    function _verifyBidAmount(uint256 _tokenID, address _tokenAddress ,address _owner, Iutils.Bid calldata _bid) internal {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
-        if (_bid._currency == address(0)) {
-            require(msg.value >= _bid._bidPrice, "Market: bid amount is less than expected amount");
-        } else {
-            IERC20 token = IERC20(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency);
-            require(
-                token.allowance(_bid._bidder, address(this)) >= _bid._bidPrice,
-                "Market: Please Approve Tokens Before You Bid"
-            );
-        }
-    }
-
-    function _setIncomingBid(uint256 _tokenID, address _tokenAddress ,address _owner, address _creator, Iutils.Bid calldata _bid)
-        internal
-    returns (bool){
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        // Manage if the Bid is of Auction Type
-
-        Iutils.Ask storage askInfo = ms._tokenAsks[_tokenAddress][_owner][_tokenID];
-        address lastBidder = askInfo._bidder;
-
-        require(
-            askInfo._firstBidTime == 0 ||
-                block.timestamp <
-                askInfo._firstBidTime +
-                askInfo._duration,
-            "Market: Auction expired"
-        );
-
-        require(
-            _bid._bidPrice >=
-                askInfo._highestBid +
-                    (askInfo._highestBid *
-                        (ms._minBidIncrementPercentage * ms._EXPO)) /
-                    (ms._BASE),
-            "Market: Must send more than last bid by _minBidIncrementPercentage amount"
-        );
-        if (askInfo._firstBidTime == 0) {
-            // If this is the first valid bid, we should set the starting time now.
-            askInfo._firstBidTime = block.timestamp;
-            // Set New Bid for the Token
-        } else if (lastBidder != address(0)) {
-            // If it's not, then we should refund the last bid amount
-            uint256 bidAmountToReturn = ms._tokenBidders[_tokenAddress][lastBidder][_tokenID]._bidPrice;
-            delete ms._tokenBidders[_tokenAddress][lastBidder][_tokenID];
-
-            // return bid to outbidder either its native or erc20
-            transferNativeOrErc20(askInfo._currency, lastBidder, bidAmountToReturn);
-
-        }
-        askInfo._highestBid = _bid._bidPrice;
-        askInfo._bidder = _bid._bidder;
-        _handleIncomingBid(
-            _bid._bidPrice,
-            askInfo._currency,
-            _bid._bidder
-        );
-
-        // create new Bid
-        ms._tokenBidders[_tokenAddress][_bid._bidder][_tokenID] = Iutils.Bid(
-            _bid._tokenAddress,
-            _bid._owner,
-            _bid._quantity,
-            _bid._bidPrice,
-            _bid._currency,
-            _bid._bidder,
-            _bid._recipient,
-            _bid.askType
-        );
-
-        emit BidCreated(_tokenID, _bid);
-
-        // if the bid amount is >= askAmount accept the bid and close the auction
-        // Note: askAmount is the maximum amount seller wanted to accept against its NFT
-
-        if ( _bid._bidPrice >= askInfo._buyNowPrice ){
-
-        address newOwner = askInfo._bidder;
-
-        divideMoney(
-            _tokenID,
-            _tokenAddress,
-            askInfo._currency,
-            _owner,
-            _bid._bidder,
-            askInfo._highestBid,
-            _creator
-        );
-        emit BidAccepted(_tokenID, newOwner);
-        return true;
-        }
-        return false;
-    }
-    function _handleIncomingBid(
-        uint256 _amount,
-        address _currency,
+        uint256 _copies,
+        address _currencyAddress,
+        uint256 _bid,
+        bytes memory _bidderSig,
         address _bidder
-    ) internal {
-        // We must check the balance that was actually transferred to the auction,
-        // as some tokens impose a transfer fee and would not actually transfer the
-        // full amount to the market, resulting in potentially locked funds
-        if (_currency != address(0)){
-        IERC20 token = IERC20(_currency);
-        uint256 beforeBalance = token.balanceOf(address(this));
-        token.safeTransferFrom(_bidder, address(this), _amount);
-        uint256 afterBalance = token.balanceOf(address(this));
-        require(
-            beforeBalance + _amount == afterBalance,
-            "Token transfer call did not transfer expected amount"
-        );
-        }
+    ) internal view returns (bool) {
+        bytes32 _bidderOfferHash = hashOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid);
+        return (ECDSA.recover(_bidderOfferHash, _bidderSig) == _bidder);
     }
 
-    // /**
-    //  * @notice Sets the ask on a particular media. If the ask cannot be evenly split into the media's
-    //  * bid shares, this reverts.
-    //  */
-    function _setAsk(uint256 _tokenID, address _tokenAddress, address _owner, Iutils.Ask memory ask)
-        public
-        override
-        onlyMediaCaller
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        Iutils.Ask storage _oldAsk = ms._tokenAsks[_tokenAddress][_owner][_tokenID];
-        // make sure, currency is the one enable in contract
-
-        if (ask._currency != address(0) )
-        require( this.isTokenApproved(ask._currency), "Market: Token Not Approved");
-
-        if (_oldAsk._sender != address(0)) {
-            if (ask.askType == Iutils.AskTypes.AUCTION) {
-                require(
-                    _oldAsk._firstBidTime == 0,
-                    "Market: Auction Started, Nothing can be modified"
-                );
-                require(
-                    ask._reservePrice < ask._buyNowPrice,
-                    "Market reserve amount error"
-                );
-            } else {
-                require(
-                    ask._reservePrice == ask._buyNowPrice,
-                    "Amount observe and Asked Need to be same for Fixed Sale"
-                );
-            }
-
-            require(
-                _oldAsk._sender == ask._sender,
-                "Market: sender should be token owner"
-            );
-            require(
-                _oldAsk._firstBidTime == ask._firstBidTime,
-                "Market: cannot change first bid time"
-            );
-            require(
-                _oldAsk._bidder == ask._bidder,
-                "Market: cannot change bidder"
-            );
-            require(
-                _oldAsk._highestBid == ask._highestBid,
-                "Market: cannot change highest bid"
-            );
-
-            Iutils.Ask memory _updatedAsk = Iutils.Ask(
-                _oldAsk._tokenAddress,
-                _oldAsk._sender,
-                ask._reservePrice,
-                ask._buyNowPrice,
-                ask._askQuantity,
-                ask._currency,
-                ask.askType,
-                ask._duration,
-                _oldAsk._firstBidTime,
-                _oldAsk._bidder,
-                _oldAsk._highestBid,
-                block.timestamp
-            );
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID] = _updatedAsk;
-            emit AskUpdated(_tokenID, _updatedAsk);
-        } else {
-            
-            if ( ask.askType == Iutils.AskTypes.FIXED )
-            require(ask._reservePrice == ask._buyNowPrice, "Market: reserve and buyNow price needs to be same");
-            else
-            require(ask._reservePrice <= ask._buyNowPrice, "Market: buyNow price needs to be higher the reserve price");
-
-            // set bidder, firstBidTime and highest bid to default state
-            ask._bidder = address(0);
-            ask._firstBidTime = 0;
-            ask._highestBid = 0;
-
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID] = ask;
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID]._createdAt = block.timestamp;
-            emit AskUpdated(_tokenID, ask);
-        }
-    }
-
-    function removeBid(uint256 _tokenID, address _tokenAddress, address _bidder)
-        public
-        override
-        onlyMediaCaller
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        Iutils.Bid storage bid = ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
-        uint256 bidAmount = bid._bidPrice;
-        address bidCurrency = bid._currency;
-
-        require(
-            bid._bidder == _bidder,
-            "Market: Only bidder can remove the bid"
-        );
-        require(bid._bidPrice > 0, "Market: cannot remove bid amount of 0");
-        transferNativeOrErc20(bidCurrency, bid._bidder, bidAmount);
-        // line safeTransfer should be upper before delete??
-        delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
-        emit BidRemoved(_tokenID, bid);
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function _setAdminAddress(address _newAdminAddress)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        require(
-            _newAdminAddress != address(0),
-            "Market: Invalid Admin Address!"
-        );
-
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        
-        require(
-            ms._adminAddress == address(0),
-            "Market: Admin Already Configured!"
-        );
-
-        ms._adminAddress = _newAdminAddress;
-        emit AdminUpdated(ms._adminAddress);
-        return true;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function _addCurrency(address _tokenAddress)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
-        require(
-            !this.isTokenApproved(_tokenAddress),
-            "Market: Token Already Configured!"
-        );
-
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
-        ms._approvedCurrency[_tokenAddress] = true;
-        return true;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function _removeCurrency(address _tokenAddress)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        require(_tokenAddress != address(0), "Market: Invalid Token Address!");
-        require(
-            this.isTokenApproved(_tokenAddress),
-            "Market: Token not found!"
-        );
-
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
-        ms._approvedCurrency[_tokenAddress] = false;
-        return true;
-    }
-
-    /** 
-    @dev check function if Token Contract address is already added 
-    @param _tokenAddress token address */
-    function isTokenApproved(address _tokenAddress)
-        external
-        view
-        override
-        returns (bool)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        if (ms._approvedCurrency[_tokenAddress] == true) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function getAdminAddress()
-        external
-        view
-        override
-        onlyMediaCaller
-        returns (address)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        return ms._adminAddress;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function _setCommissionPercentage(uint8 _commissionPercentage)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        ms._adminCommissionPercentage = _commissionPercentage;
-        emit CommissionUpdated(ms._adminCommissionPercentage);
-        return true;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function _setMinimumBidIncrementPercentage(uint8 __minBidIncrementPercentage)
-        external
-        override
-        onlyMediaCaller
-        returns (bool)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        ms._minBidIncrementPercentage = __minBidIncrementPercentage;
-        emit BidIncrementPercentageUpdated(ms._minBidIncrementPercentage);
-        return true;
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function getCommissionPercentage()
-        external
-        view
-        override
-        onlyMediaCaller
-        returns (uint8)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        return ms._adminCommissionPercentage;
-    }
-
-    function endAuction(
+    function _verifySellerOffer(
+        address _nftContAddress,
         uint256 _tokenID,
-        address _tokenAddress,
-        address _owner,
-        address _creator
-    ) external override onlyMediaCaller returns (bool) {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        require(
-            uint256(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._firstBidTime) != 0,
-            "Market: Auction hasn't begun"
-        );
-        require(
-            block.timestamp >=
-                (ms._tokenAsks[_tokenAddress][_owner][_tokenID]._firstBidTime - ms._tokenAsks[_tokenAddress][_owner][_tokenID]._createdAt)
-                    + ms._tokenAsks[_tokenAddress][_owner][_tokenID]._duration,
-            "Market: Auction hasn't completed"
-        );
-        address bidder = ms._tokenAsks[_tokenAddress][_owner][_tokenID]._bidder;
+        uint256 _copies,
+        address _currencyAddress,
+        uint256 _bid,
+        bytes memory _sellerSig,
+        address _seller
+    ) internal view returns (bool) {
+        bytes32 _sellerOfferHash = hashOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid);
+        return (ECDSA.recover(_sellerOfferHash, _sellerSig) == _seller);
+    }
 
-        Iutils.Bid memory bidInfo = ms._tokenBidders[_tokenAddress][bidder][_tokenID];
+    function adminFeeDeduction(
+        address _currencyAddress,
+        address _payer,
+        uint256 amount
+    ) internal returns (uint256) {
+        ERC20 erc20 = ERC20(_currencyAddress);
+        // require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        uint256 addminShare = (amount * es._adminCommissionPercentage) / 10000;
+        erc20.transferFrom(_payer, es._adminAddress, addminShare);
+        return addminShare;
+    }
 
-        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= bidInfo._quantity;
+    function royaltyFeeDeductionNative(
+        string memory _contractType,
+        address _currencyAddress,
+        address _nftContAddress,
+        address _payer,
+        uint256 amount,
+        uint256 _tokenID
+    ) internal returns (uint256) {
+        uint256 royaltyFeeAccumulator = 0;
+        //royaltyFeeDeductionNative function is only appilcable when dealing with souq native token
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC721FactoryFacet(_nftContAddress).royaltyInfo721(_tokenID, amount);
 
-        // address(0) for _bidder is only need when sale type is of type Auction
-        divideMoney(
-            _tokenID,
-            _tokenAddress,
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
-            _owner,
-            bidder,
-            bidInfo._bidPrice,
-            _creator
-        );
-        emit BidAccepted(_tokenID, bidder);
+            ERC20 erc20 = ERC20(_currencyAddress);
+            for (uint256 i = 0; i < royaltyAddresses.length; i++) {
+                erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+                royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+            }
+        }
+
+        if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+            (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC1155FactoryFacet(_nftContAddress).royaltyInfo1155(
+                _tokenID,
+                amount
+            );
+
+            ERC20 erc20 = ERC20(_currencyAddress);
+            for (uint256 i = 0; i < royaltyAddresses.length; i++) {
+                erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+                royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+            }
+        }
+
+        return royaltyFeeAccumulator;
+    }
+
+    function royaltyFeeDeductionBusiness(
+        address _currencyAddress,
+        address _nftContAddress,
+        address _payer,
+        uint256 amount,
+        uint256 _tokenID
+    ) internal returns (uint256) {
+        uint256 royaltyFeeAccumulator = 0;
+        //royaltyFeeDeductionNative function is only appilcable when dealing with business tokens
+        (address[] memory royaltyAddresses, uint256[] memory royaltyFees) = ERC2981(_nftContAddress).royaltyInfo(_tokenID, amount);
+
+        ERC20 erc20 = ERC20(_currencyAddress);
+        for (uint256 i = 0; i < royaltyAddresses.length; i++) {
+            erc20.transferFrom(_payer, royaltyAddresses[i], royaltyFees[i]);
+            royaltyFeeAccumulator = royaltyFeeAccumulator + royaltyFees[i];
+        }
+
+        return royaltyFeeAccumulator;
+    }
+
+    function cryptoDistributor(
+        address _currencyAddress,
+        address _nftContAddress,
+        address _payer,
+        address _payee,
+        uint256 amount,
+        uint256 _tokenID
+    ) internal returns (bool) {
+        ERC20 erc20 = ERC20(_currencyAddress);
+        require(erc20.balanceOf(_payer) >= amount, "ERC20 in the payer address is not enough");
+
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        LibMarketStorage.Collaborators memory _collab;
+
+        uint256 remained = amount;
+        //collaborators fee should be deducted from amount
+        _collab = es.tokenCollaborators[_nftContAddress][_tokenID];
+        for (uint256 i = 0; i < _collab.collaborators.length; i++) {
+            uint256 collabShare = (amount * _collab.collabFraction[i]) / 10000;
+            remained = amount - collabShare;
+            erc20.transferFrom(_payer, _collab.collaborators[i], collabShare);
+        }
+        //the remained amount would be paided to the owner of nft
+        erc20.transferFrom(_payer, _payee, remained);
         return true;
     }
 
     function acceptBid(
-        uint256 _tokenID,
-        address _tokenAddress,
-        address _owner,
-        address _creator
-    ) external override onlyMediaCaller returns (bool) {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        address bidder = ms._tokenAsks[_tokenAddress][_owner][_tokenID]._bidder;
-
-        // retrieve bid info
-        Iutils.Bid memory bidInfo = ms._tokenBidders[_tokenAddress][bidder][_tokenID];
-        require(
-            uint256(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._firstBidTime) != 0,
-            "Market.Auction hasn't begun"
-        );
-        require(uint256(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._highestBid) != 0, "No Bid Found");
-        require(address(bidInfo._bidder) != address(0), "Media: No Bid Found against token ask");
-
-        ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity -= bidInfo._quantity;
-        
-        // address(0) for _bidder is only need when sale type is of type Auction
-        divideMoney(
-            _tokenID,
-            _tokenAddress,
-            ms._tokenAsks[_tokenAddress][_owner][_tokenID]._currency,
-            _owner,
-            bidInfo._bidder,
-            bidInfo._bidPrice, // make sure to pass amount from bid so that we avoid manupulation by asker
-            _creator
-        );
-        emit BidAccepted(_tokenID, bidder);
-        return true;
-    }
-
-    /**
-     * @notice Cancel an auction.
-     * @dev Transfers the NFT back to the auction creator and emits an AuctionCanceled event
-     */
-    function _cancelAuction(uint256 _tokenID, address _tokenAddress, address _owner) external override onlyMediaCaller {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        require(
-            uint256(ms._tokenAsks[_tokenAddress][_owner][_tokenID]._firstBidTime) == 0,
-            "Can't cancel an auction once it's begun"
-        );
-        delete ms._tokenAsks[_tokenAddress][_owner][_tokenID];
-        emit AuctionCancelled(_tokenID);
-    }
-
-    /**
-     * @dev See {IMarket}
-     */
-    function divideMoney(
-        uint256 _tokenID,
-        address _tokenAddress,
-        address _currency,
-        address _owner,
+        string memory _contractType,
+        address _nftContAddress,
+        address _currencyAddress,
+        address _seller,
         address _bidder,
-        uint256 _amountToDistribute,
-        address _creator
-    ) internal returns (bool) {
-        require(
-            _amountToDistribute > 0,
-            "Market: Amount To Divide Can't Be 0!"
-        );
+        uint256 _tokenID,
+        uint256 _bid,
+        uint256 _copies,
+        bytes memory _bidderSig,
+        bytes memory _sellerSig
+    ) public mediaOrOwner {
+        LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
+        //Checking the erc20 currency is approved by the admin
+        require(es._approvedCurrency[_currencyAddress] == true, "Not an approved cryptocurrency for bidding");
 
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        
-        // first send admin cut
-        uint256 adminCommission = (_amountToDistribute *
-            (ms._adminCommissionPercentage * ms._EXPO)) / (ms._BASE);
-        uint256 _amount = _amountToDistribute - adminCommission;
+        //Checking the bidder signiture is valid
+        require(_verifyBidderOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
 
-        transferNativeOrErc20(_currency, ms._adminAddress, adminCommission);
-        // fetch owners added royalty points
-        uint256 collabPercentage = ms._tokenRoyaltyPercentage[_tokenID];
-        uint256 royaltyPoints = (_amount * (collabPercentage * ms._EXPO)) / (ms._BASE);
+        //Checking the seller signiture is valid
+        require(_verifySellerOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _sellerSig, _seller), "Sellers offer not verified");
 
-        // royaltyPoints represents amount going to divide among Collaborators
-        transferNativeOrErc20(_currency, _owner, _amount - royaltyPoints);
+        ERC20 erc20 = ERC20(_currencyAddress);
+        require(erc20.balanceOf(_bidder) >= _bid, "ERC20 in the payer address is not enough");
+        require(erc20.allowance(_bidder, s._mediaContract) >= _bid, "ERC20: Diamond is not approved by the bidder for spending ERC20 tokens");
 
-        // Collaborators will only receive share when creator have set some royalty and sale is occurring for the first time
-        Collaborators storage tokenCollab = ms._tokenCollaborators[_tokenID];
-        uint256 totalAmountTransferred = 0;
+        uint256 remained = _bid;
+        //admin fee should be deducted from amount
+        remained = remained - adminFeeDeduction(_currencyAddress, _bidder, _bid);
 
-        if (tokenCollab._receiveCollabShare == false) {
-            for (
-                uint256 index = 0;
-                index < tokenCollab._collaborators.length;
-                index++
-            ) {
-                // Individual Collaborator's share Amount
+        //royalty fee should be deducted from amount only for diamond tokens
+        //bear it in mind address of all different facets are the same in diamond proxy
+        // Media address = Market address = erc721Factory address = erc1155Factory address
+        if (s._mediaContract == _nftContAddress) {
+            remained = remained - royaltyFeeDeductionNative(_contractType, _currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
 
-                uint256 amountToTransfer = (royaltyPoints *
-                    (tokenCollab._percentages[index] * ms._EXPO)) / (ms._BASE);
-                // transfer Individual Collaborator's share Amount
-                transferNativeOrErc20(_currency, tokenCollab._collaborators[index], amountToTransfer);
-
-                // Total Amount Transferred
-                totalAmountTransferred =
-                    totalAmountTransferred +
-                    amountToTransfer;
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID);
+                ERC721FactoryFacet(_nftContAddress).transferFrom(_seller, _bidder, _tokenID);
             }
-            // after transferring to collabs, remaining would be sent to creator
-            // update collaborators got the shares
-            tokenCollab._receiveCollabShare = true;
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID);
+                ERC1155FactoryFacet(_nftContAddress).safeTransferFrom(_seller, _bidder, _tokenID, _copies, "");
+            }
+        } else {
+            remained = remained - royaltyFeeDeductionBusiness(_currencyAddress, _nftContAddress, _bidder, remained, _tokenID);
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC721")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID);
+                ERC721 erc721 = ERC721(_nftContAddress);
+                erc721.transferFrom(_seller, _bidder, _tokenID);
+            }
+            if (keccak256(abi.encodePacked((_contractType))) == keccak256(abi.encodePacked(("ERC1155")))) {
+                cryptoDistributor(_currencyAddress, _nftContAddress, _bidder, _seller, remained, _tokenID);
+                ERC1155 erc1155 = ERC1155(_nftContAddress);
+                erc1155.safeTransferFrom(_seller, _bidder, _tokenID, _copies, "");
+            }
         }
-        transferNativeOrErc20(_currency, _creator, royaltyPoints - totalAmountTransferred);
 
-        totalAmountTransferred =
-            totalAmountTransferred +
-            (royaltyPoints - (totalAmountTransferred));
-
-        totalAmountTransferred =
-            totalAmountTransferred +
-            (_amount - (royaltyPoints));
-        // Check for Transfer amount error
-        require(
-            totalAmountTransferred == _amount,
-            "Market: Amount Transfer Value Error!"
-        );
-
-        deleteBidderAndAsks(_tokenID, _tokenAddress, _bidder, _owner);
-
-        return true;
-    }
-
-    function deleteBidderAndAsks(uint256 _tokenID, address _tokenAddress, address _bidder, address _owner) internal {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-
-        delete ms._tokenBidders[_tokenAddress][_bidder][_tokenID];
-        if (ms._tokenAsks[_tokenAddress][_owner][_tokenID]._askQuantity == 0) {
-        delete ms._tokenAsks[_tokenAddress][_owner][_tokenID];
-        }
-    }
-
-    function _getTokenAsks(uint256 _tokenId, address _tokenAddress, address _owner)
-        external
-        view
-        override
-        returns (Iutils.Ask memory)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        return ms._tokenAsks[_tokenAddress][_owner][_tokenId];
-    }
-
-    function _getTokenBid(uint256 _tokenId, address _tokenAddress, address _owner)
-        external
-        view
-        override
-        returns (Iutils.Bid memory)
-    {
-        LibMarketStorage.MarketStorage storage ms = LibMarketStorage.marketStorage();
-        address bidder = ms._tokenAsks[_tokenAddress][_owner][_tokenId]._bidder;
-        return ms._tokenBidders[_tokenAddress][bidder][_tokenId];
-    }
-
-    /**
-     * @dev See {IERC721-isApprovedForAll}.
-     */
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-    
-        returns (bool)
-    {
-        return s._operatorApprovals[owner][operator];
-    }
-
-    function transferNativeOrErc20(address _currency, address _receiver, uint256 _amount) internal{
-        require(_receiver != address(0), "Market: receipent is zero address");
-        if ( _currency == address(0)){
-            (bool success, ) = _receiver.call{value: _amount}("");
-            require(success, "Address: unable to transfer native tokens, recipient may have reverted");
-        }else{
-            IERC20 token = IERC20(_currency);
-            token.transfer(_receiver, _amount);
-        }
+        emit BidAccepted(_bidder, _seller, true);
     }
 }
