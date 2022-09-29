@@ -19,8 +19,6 @@ contract SBTFactory is ERC4973, IERC5484 {
     address public creator;
     uint256 public maxMintLimit = 5;
 
-    // BurnAuth public _burnAuth; // why public ?????????.....name and symbol not workiung...
-
     struct UserInfo {
         address user; // address of user role
         uint256 expires; // unix timestamp, user expires
@@ -28,14 +26,12 @@ contract SBTFactory is ERC4973, IERC5484 {
 
     mapping(uint256 => UserInfo) internal _users;
     mapping(uint256 => BurnAuth) internal _auth;
+    mapping(uint256 => string) private token_Uri;
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
     mapping(address => bool) public whitelist;
 
-    // constructor() ERC4973("name_", "symbol_") {
-    //     creator = msg.sender;
-    // }
     constructor(string memory name_, string memory symbol_) ERC4973(name_, symbol_) {
         creator = msg.sender;
     }
@@ -54,6 +50,17 @@ contract SBTFactory is ERC4973, IERC5484 {
         return _auth[tokenId];
     }
 
+    function setURI(uint256 tokenId, string memory newuri) public {
+        require(_exists(tokenId), "tokenURI: token doesn't exist");
+        if (whitelistEnabled == false) {
+            require(msg.sender == creator, "Address not whitelisted");
+        }
+        if (whitelistEnabled == true) {
+            require(whitelist[msg.sender], "Address not whitelisted");
+        }
+        token_Uri[tokenId] = newuri;
+    }
+
     function issueOne(
         address _recipient,
         string memory _uri,
@@ -69,7 +76,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         tokenIdCounter.increment();
 
         _mint(_recipient, id, _uri);
-
+        setURI(id, _uri);
         _auth[id] = BurnAuth.Both;
         nftToOwners[id] = _recipient;
         _setUser(id, _recipient, _expires);
@@ -105,12 +112,16 @@ contract SBTFactory is ERC4973, IERC5484 {
         }
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "tokenURI: token doesn't exist");
+        return token_Uri[tokenId];
+    }
+
     function _setUser(
         uint256 tokenId,
         address user,
         uint256 expires
     ) internal {
-        
         UserInfo storage info = _users[tokenId];
         info.user = user;
         info.expires = expires;
