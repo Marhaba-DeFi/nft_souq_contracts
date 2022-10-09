@@ -1767,8 +1767,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/contracts/factoryContracts/ERC721RFactory.sol": {
-      "lastModificationDate": 1665279314140,
-      "contentHash": "ae0207157a4003773cdc79b42ec7661a",
+      "lastModificationDate": 1665281388364,
+      "contentHash": "ceec75e0498964e895c45c0e4c45e5cb",
       "sourceName": "contracts/factoryContracts/ERC721RFactory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -1955,8 +1955,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/contracts/factoryContracts/ERC721Factory.sol": {
-      "lastModificationDate": 1665227052648,
-      "contentHash": "3550271691d2a1b5a70987bfc966bd9f",
+      "lastModificationDate": 1665281393099,
+      "contentHash": "95f3dc96f21a7823deb8583a7f73661c",
       "sourceName": "contracts/factoryContracts/ERC721Factory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -2107,8 +2107,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/contracts/factoryContracts/ERC1155Factory.sol": {
-      "lastModificationDate": 1665233671162,
-      "contentHash": "a3ccb8cae761582ee6649f29c0163c72",
+      "lastModificationDate": 1665281382964,
+      "contentHash": "d6aa35d8326a252faa63da97e237a045",
       "sourceName": "contracts/factoryContracts/ERC1155Factory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -2190,8 +2190,8 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/contracts/factoryContracts/ERC721AFactory.sol": {
-      "lastModificationDate": 1665227056919,
-      "contentHash": "38d797660121e849b88819233386e295",
+      "lastModificationDate": 1665281399090,
+      "contentHash": "fd4f6f881a7be0edb4a35b7acaa32f9a",
       "sourceName": "contracts/factoryContracts/ERC721AFactory.sol",
       "solcConfig": {
         "version": "0.8.9",
@@ -2267,7 +2267,7 @@
       ]
     },
     "/Users/faizinkanwal/Documents/GitHub/nft_souq_contracts/node_modules/hardhat-diamond-abi/dist/contract.sol": {
-      "lastModificationDate": 1665279458071,
+      "lastModificationDate": 1665281416676,
       "contentHash": "f0899ccf3452b0b76299b9fb99d6bbf2",
       "sourceName": "hardhat-diamond-abi/HardhatDiamondABI.sol",
       "solcConfig": {

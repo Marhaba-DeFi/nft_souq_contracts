@@ -23,7 +23,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
     using Strings for uint256;
     string public uriSuffix = ".json";
     string public baseURI = "";
-    uint256 private mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     bool public whitelistEnabled = false;
 

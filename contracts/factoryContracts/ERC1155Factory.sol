@@ -20,7 +20,7 @@ contract ERC1155Factory is ERC1155, ERC2981, Ownable {
 
     string public baseURI = "";
     string public uriSuffix = ".json";
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
 
     mapping(address => bool) public whitelist; //Addresses that are whitelisted

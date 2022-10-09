@@ -16,7 +16,7 @@ contract ERC721AFactory is ERC721A, Ownable {
     string public uriSuffix = ".json";
     using Strings for uint256;
 
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
 
     mapping(address => bool) public whitelist;

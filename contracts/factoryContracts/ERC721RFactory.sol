@@ -19,7 +19,7 @@ contract ERC721RFactory is ERC721A, Ownable {
     uint256 public maxMintSupply;
     uint256 public mintPrice;
     uint256 public maxUserMintAmount;
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
     //Refund variables
     uint256 public refundPeriod;
     uint256 public refundEndTime;
