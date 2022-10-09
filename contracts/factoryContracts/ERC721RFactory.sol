@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: MIT
+/**
+ * @title ERC721R factory contract
+ * @dev This contract inherits from ERC721A Azuki smart contract.
+ * ERC721A bulks mints NFTs while saving considerable gas by eliminating enumarable function
+ */
 pragma solidity ^0.8.6;
 
 import "../ERC721A.sol";
@@ -7,25 +12,25 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ERC721RFactory is ERC721A, Ownable {
-    uint256 public maxMintSupply;
-    uint256 public mintPrice;
-    uint256 public maxUserMintAmount;
     string private baseURI;
     string public uriSuffix = ".json";
     using Strings for uint256;
 
-    // Sale Status
-    bool public publicSaleActive;
-    bool public presaleActive;
-
+    uint256 public maxMintSupply;
+    uint256 public mintPrice;
+    uint256 public maxUserMintAmount;
+    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     //Refund variables
     uint256 public refundPeriod;
     uint256 public refundEndTime;
     address public refundAddress;
 
+    // Sale Status
+    bool public publicSaleActive;
+    bool public presaleActive;
+
     // WhiteListing users
     bool public whitelistEnabled = false;
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     mapping(address => bool) public whitelist; //Addresses that are whitelisted
     mapping(uint256 => bool) public hasRefunded; // users can search if the NFT has been refunded
@@ -75,18 +80,33 @@ contract ERC721RFactory is ERC721A, Ownable {
         toggleRefundCountdown();
     }
 
+	/**
+	 * required1: Presale should be active
+	 * required2: Address should be whitelisted if whitelisting is enabled
+	 * required3: msg.value should be enough to cover the minting price.
+	 * required4: user should not mint more the the minting limit per wallet
+	 * required5: Number of tokens minted should not exceed the max supply
+	 * @param quantity Number of NFTs to be minted
+	 */
     function preSaleMint(uint256 quantity) external payable {
         require(presaleActive, "Presale is not active");
-        require(msg.value >= quantity * mintPrice, "Not enough eth sent");
-        if (whitelistEnabled == true) {
+		if (whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
         }
+        require(msg.value >= quantity * mintPrice, "Not enough eth sent");
         require(_numberMinted(msg.sender) + quantity <= maxUserMintAmount, "Over mint limit");
         require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
 
         _safeMint(msg.sender, quantity);
     }
 
+	/**
+	 * required1: Public sale should be active
+	 * required2: msg.value should be enough to cover the minting price.
+	 * required3: user should not mint more the the minting limit per wallet
+	 * required4: Number of tokens minted should not exceed the max supply
+	 * @param quantity Number of NFTs to be minted
+	 */
     function publicSaleMint(uint256 quantity) external payable {
         require(publicSaleActive, "Public sale is not active");
         require(msg.value >= quantity * mintPrice, "Not enough eth sent");
@@ -96,6 +116,12 @@ contract ERC721RFactory is ERC721A, Ownable {
         _safeMint(msg.sender, quantity);
     }
 
+	/**
+	 * @notice Free Owner minting
+	 * required1: Only Owner access
+	 * required2: Number of tokens minted should not exceed the max supply
+	 * @param quantity Number of NFTs to be minted
+	 */
     function ownerMint(uint256 quantity) external onlyOwner {
         require(_totalMinted() + quantity <= maxMintSupply, "Max mint supply reached");
         _safeMint(msg.sender, quantity);
@@ -105,6 +131,11 @@ contract ERC721RFactory is ERC721A, Ownable {
         }
     }
 
+	/**
+	 * @notice Refund can only happen within refund period
+	 * @notice Freely minted NFTs by the owner cannot be refunded
+	 * @notice Can only be refunded to the owner of the token
+	 */
     function refund(uint256[] calldata tokenIds) external {
         require(isRefundGuaranteeActive(), "Refund expired");
 
@@ -122,14 +153,18 @@ contract ERC721RFactory is ERC721A, Ownable {
         require(os);
     }
 
+	// Get Refund end time
     function getRefundGuaranteeEndTime() public view returns (uint256) {
         return refundEndTime;
     }
 
+	//Check if refund time is still valid
     function isRefundGuaranteeActive() public view returns (bool) {
         return (block.timestamp <= refundEndTime);
     }
 
+	// Withdraw funds from this contract to wallet address
+	// Required: only owner
     function withdraw() external onlyOwner {
         require(block.timestamp > refundEndTime, "Refund period not over");
         (bool os, ) = payable(owner()).call{value: address(this).balance}("");
@@ -196,7 +231,7 @@ contract ERC721RFactory is ERC721A, Ownable {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        require(newAddresses.length < 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++) {
             require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
@@ -211,7 +246,7 @@ contract ERC721RFactory is ERC721A, Ownable {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
             mapSize--;

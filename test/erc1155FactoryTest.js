@@ -56,10 +56,32 @@ describe("ERCFactory contracts", function () {
                     [],
                     []
                 )
+            ).to.emit(token1155, "Transfer")
+			.withArgs(ethers.constants.AddressZero, owner.address, 0)
+            // check owner
+            const ownerOfToken0 = await token1155.balanceOf(owner.address, 0);
+            expect(ownerOfToken0).to.equals(10)  
+        })
+
+		it('mint an ERC1155Factory token with royalty', async () => {
+            // alice mint a token
+            expect(await 
+                token1155.mint(
+                    owner.address,
+                    copies,
+                    true,
+                    [owner.address, account1.address],
+                    [1000,2000]
+                )
             )
             // check owner
             const ownerOfToken0 = await token1155.balanceOf(owner.address, 0);
             expect(ownerOfToken0).to.equals(10)  
+			const royaltyInfo = await token1155.royaltyInfo(0, 5000);
+			expect(royaltyInfo[0][0]).to.be.equal(owner.address);
+			expect(royaltyInfo[0][1]).to.be.equal(account1.address);
+			expect(Number(royaltyInfo[1][0])).to.be.equal(BigNumber.from(500));
+			expect(Number(royaltyInfo[1][1])).to.be.equal(BigNumber.from(1000));
         })
 
         it('mint an 1155Factory token with more than 5 royalty receivers', async () => {
@@ -171,7 +193,8 @@ describe("ERCFactory contracts", function () {
                     [],
                     []
                 )
-            await token1155.connect(owner).burn(owner.address, 0, 2);
+            expect(await token1155.connect(owner).burn(owner.address, 0, 2))
+			.emit(token1155, "TransferSingle").withArgs(owner, owner, ethers.constants.AddressZero, 0, 2);;
             const ownerOfToken0 = await token1155.balanceOf(owner.address, 0);
             expect(ownerOfToken0).to.equals(8)  
         })

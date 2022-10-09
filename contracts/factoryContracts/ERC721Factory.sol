@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 /**
  * ERC721FactoryFacet is used to mint NFTs that are ERC721 compliant.
- * The mint function can only be called from souq Media contract.
  * It is initialized with name and symbol and default royalty.
  *
  */
@@ -24,7 +23,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
     using Strings for uint256;
     string public uriSuffix = ".json";
     string public baseURI = "";
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 private mapSize = 0; //Keeps a count of white listed users. Max is 2000
 
     bool public whitelistEnabled = false;
 
@@ -77,7 +76,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        require(newAddresses.length < 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++) {
             require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
@@ -92,7 +91,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
             mapSize--;
@@ -123,6 +122,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
      * @dev safemint() for minting the tokens.
      * @dev internal setTokenURI() to set the token URI for the minted token
      * @dev internal setTokenRoyalty() to set the rolayty at token level.
+	 * required: Owner or whitelisted Addresses
      */
     function safeMint(
         address creator,
@@ -131,10 +131,10 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
         uint96[] memory tokenRoyaltyInBips
     ) public {
         if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "Address not whitelisted");
+            require(msg.sender == owner(), "Ownable: Not the owner");
         }
         if (whitelistEnabled == true) {
-            require(whitelist[msg.sender], "Address not whitelisted");
+            require(whitelist[msg.sender] || msg.sender == owner(), "Address not whitelisted");
         }
         uint256 tokenId = _tokenIdCounter.current();
         _safeMint(creator, tokenId);
@@ -162,7 +162,7 @@ contract ERC721Factory is ERC721, ERC721Enumerable, ERC2981, Ownable {
      *
      * - `tokenId` must exist.
      */
-    function _burn(uint256 tokenId) internal override(ERC721) {
+    function burn(uint256 tokenId) public onlyOwner {
         super._burn(tokenId);
         delete _creators[tokenId];
     }
