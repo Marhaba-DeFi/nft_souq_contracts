@@ -28,6 +28,10 @@ contract SBTFactory is ERC4973, IERC5484 {
     mapping(uint256 => BurnAuth) internal _auth;
     mapping(uint256 => string) private token_Uri;
 
+
+    event extendExpiry(uint256 newExpiration, uint256 _tokenId);
+
+
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
     mapping(address => bool) public whitelist;
@@ -135,11 +139,13 @@ contract SBTFactory is ERC4973, IERC5484 {
         return (expDate, userAddress);
     }
 
-    function extend(uint256 newExpiration, uint256 _tokenId) external {
+    function extend (uint256 newExpiration, uint256 _tokenId) external {
         require(msg.sender == creator, " not an creator");
         require(newExpiration > block.timestamp, " Not valid time");
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
         _users[_tokenId].expires = newExpiration;
+
+        emit extendExpiry(newExpiration, _tokenId);
     }
 
     function setWhitelistEnabled(bool _state) public onlyCreator {

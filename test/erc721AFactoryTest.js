@@ -14,9 +14,9 @@ describe("ERC721AFactory contracts", function () {
 
     let account1, account2, account3;
 
-    let name='Artwork Contract';
-    let symbol='ART';
-	const ADDRESS_ZERO = ethers.constants.AddressZero;
+    let name = 'Artwork Contract';
+    let symbol = 'ART';
+    const ADDRESS_ZERO = ethers.constants.AddressZero;
 
     beforeEach(async function () {
         [owner, account1, account2, account3] = await ethers.getSigners();
@@ -41,19 +41,19 @@ describe("ERC721AFactory contracts", function () {
         it('mint an 721AFactory token', async () => {
             it('mint erc721A tokens', async () => {
                 expect(await
-                token721A.mint(
+                    token721A.mint(
                         10,
                         account1.address
                     )
                 )
                 expect(await
                     token721A.mint(
-                    10,
-                    account2.address)
+                        10,
+                        account2.address)
                 )
                 // check owner
                 const ownerOfToken0 = await token721A.ownerOf(0);
-                expect(ownerOfToken0).to.equals(account1.address)  
+                expect(ownerOfToken0).to.equals(account1.address)
                 const ownerOfToken9 = await token721A.ownerOf(9);
                 expect(ownerOfToken9).to.equals(account1.address)
                 const balance = await token721A.balanceOf(account1.address);
@@ -68,7 +68,7 @@ describe("ERC721AFactory contracts", function () {
         it('ERC 721A Minting cannot be done when whitelist is enabled and the address is not whitelisted', async () => {
             await token721A.setWhitelistEnabled(true);
             await token721A.setWhitelist([account2.address, account3.address]);
-            const tx =  token721A.connect(account1).mint(
+            const tx = token721A.connect(account1).mint(
                 10,
                 account1.address
             )
@@ -77,7 +77,7 @@ describe("ERC721AFactory contracts", function () {
         it('ERC 721A Minting can be done when whitelist is enabled and the address is whitelisted', async () => {
             await token721A.setWhitelistEnabled(true);
             await token721A.setWhitelist([account2.address, account3.address]);
-            expect(await 
+            expect(await
                 token721A.connect(account2).mint(
                     10,
                     account2.address
@@ -95,46 +95,46 @@ describe("ERC721AFactory contracts", function () {
             await token721A.setWhitelistEnabled(true);
             await token721A.setWhitelist([account2.address, account3.address]);
             expect(await token721A.connect(account2).mint(
-                    10,
-                    account2.address
-                )
+                10,
+                account2.address
+            )
             )
             expect(await token721A.connect(account3).mint(
                 10,
                 account3.address
-                )
+            )
             )
             // check owner
             const ownerOfToken0 = await token721A.ownerOf(0);
-            expect(ownerOfToken0).to.equals(account2.address) 
+            expect(ownerOfToken0).to.equals(account2.address)
             const balance = await token721A.balanceOf(account2.address);
             expect(balance).to.equals(10)
             const ownerOfToken10 = await token721A.ownerOf(10);
             expect(ownerOfToken10).to.equals(account3.address);
-    
+
             await token721A.connect(account2).transferFrom(account2.address, account3.address, 5);
             const addr2Balance = await token721A.balanceOf(account3.address);
             expect(addr2Balance).to.equal(11);
         })
     })
-  
+
     describe('burn', async function () {
         it('ERC 721A Burn', async () => {
             await token721A.setWhitelistEnabled(true);
             await token721A.setWhitelist([account2.address]);
             expect(await
-            token721A.connect(account2).mint(
+                token721A.connect(account2).mint(
                     10,
                     account2.address
                 )
             )
             // check owner
             const ownerOfToken0 = await token721A.ownerOf(0);
-            expect(ownerOfToken0).to.equals(account2.address)  
+            expect(ownerOfToken0).to.equals(account2.address)
             await token721A.connect(account2).burn(5);
             // const addr2Balance = await token721A.balanceOf(account3.address);
             // expect(addr2Balance).to.equal(11);
         })
     });
-    
+
 });
