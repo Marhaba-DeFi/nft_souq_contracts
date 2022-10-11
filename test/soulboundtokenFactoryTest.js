@@ -5,7 +5,7 @@ const { ethers } = require("hardhat");
 const parseEther = ethers.utils.parseEther;
 
 
-describe.only("SoulBoundToken Contracts", function () {
+describe("SoulBoundToken Contracts", function () {
     let SBTFactory;
     let tokenSBT;
     let expdate = 1;
