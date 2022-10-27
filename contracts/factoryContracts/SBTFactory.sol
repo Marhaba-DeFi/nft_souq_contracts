@@ -29,13 +29,11 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
     mapping(uint256 => BurnAuth) internal _auth;
     mapping(uint256 => string) private token_Uri;
 
-<<<<<<< HEAD
 
     event ExpiryExtended(uint256 newExpiration, uint256 _tokenId);
     event UriChanged(uint256 tokenId, string newuri);
-	event WhitelistEnabled(bool value);
+
 	event Whitelisted(address user, bool value);
-=======
     /* @dev Emitted when `Expiry date of SBT is extended */
     event extendExpiry(uint256 newExpiration, uint256 _tokenId);
 
@@ -47,7 +45,6 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     /* @dev Emitted when SBT is issued to many */
     event issuedMany(address, address, uint256, uint256);
->>>>>>> 681fe459d1454f032ae16d6d5b43143e8d968368
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
@@ -157,13 +154,7 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         return (expDate, userAddress);
     }
 
-<<<<<<< HEAD
     function extend (uint256 newExpiration, uint256 _tokenId) external onlyOwner {
-=======
-    /* @dev  extends the expiry date of an SBT*/
-    function extend(uint256 newExpiration, uint256 _tokenId) external {
-        require(msg.sender == creator, " not an creator");
->>>>>>> 681fe459d1454f032ae16d6d5b43143e8d968368
         require(newExpiration > block.timestamp, " Not valid time");
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
         _users[_tokenId].expires = newExpiration;
@@ -171,22 +162,12 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         emit ExpiryExtended(newExpiration, _tokenId);
     }
 
-<<<<<<< HEAD
     function setWhitelistEnabled(bool _state) public onlyOwner {
-=======
-    /* @dev  only creater can enable or change the state of whitelisting */
-    function setWhitelistEnabled(bool _state) public onlyCreator {
->>>>>>> 681fe459d1454f032ae16d6d5b43143e8d968368
         whitelistEnabled = _state;
-		emit WhitelistEnabled(_state);
+		emit WhiteListEnabled(_state);
     }
 
-<<<<<<< HEAD
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
-=======
-    /* @dev  only creater can whitelist members including oneself */
-    function setWhitelist(address[] calldata newAddresses) public onlyCreator {
->>>>>>> 681fe459d1454f032ae16d6d5b43143e8d968368
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
@@ -199,12 +180,7 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         }
     }
 
-<<<<<<< HEAD
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
-=======
-    /* @dev  only creater can remove whitelisted members */
-    function removeWhitelist(address[] calldata currentAddresses) public onlyCreator {
->>>>>>> 681fe459d1454f032ae16d6d5b43143e8d968368
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
