@@ -10,13 +10,14 @@ pragma solidity ^0.8.6;
 // - SBTs should adhere to these standards to cover current and future use cases: https://github.com/rugpullindex/awesome-soulbound-tokens/blob/main/README.md
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IERC4973.sol";
 import "../ERC4973.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IERC5484.sol";
 
-contract SBTFactory is ERC4973, IERC5484 {
-    address public creator;
+contract SBTFactory is ERC4973, IERC5484, Ownable {
+
     uint256 public maxMintLimit = 5;
 
     struct UserInfo {
@@ -29,26 +30,23 @@ contract SBTFactory is ERC4973, IERC5484 {
     mapping(uint256 => string) private token_Uri;
 
 
-    event extendExpiry(uint256 newExpiration, uint256 _tokenId);
-
+    event ExpiryExtended(uint256 newExpiration, uint256 _tokenId);
+    event UriChanged(uint256 tokenId, string newuri);
+	event WhitelistEnabled(bool value);
+	event Whitelisted(address user, bool value);
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
     mapping(address => bool) public whitelist;
 
     constructor(string memory name_, string memory symbol_) ERC4973(name_, symbol_) {
-        creator = msg.sender;
+
     }
 
     using Counters for Counters.Counter;
     Counters.Counter private tokenIdCounter;
 
     mapping(uint256 => address) nftToOwners;
-
-    modifier onlyCreator() {
-        require(msg.sender == creator, "Not the owner");
-        _;
-    }
 
     function burnAuth(uint256 tokenId) external view returns (BurnAuth) {
         return _auth[tokenId];
@@ -57,12 +55,13 @@ contract SBTFactory is ERC4973, IERC5484 {
     function setURI(uint256 tokenId, string memory newuri) public {
         require(_exists(tokenId), "tokenURI: token doesn't exist");
         if (whitelistEnabled == false) {
-            require(msg.sender == creator, "Address not whitelisted");
+            require(msg.sender == owner(), "Address not whitelisted");
         }
         if (whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
         }
         token_Uri[tokenId] = newuri;
+		emit UriChanged(tokenId, newuri);
     }
 
     function issueOne(
@@ -71,7 +70,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         uint256 _expires
     ) external {
         if (whitelistEnabled == false) {
-            require(msg.sender == creator, "Address not whitelisted");
+            require(msg.sender == owner(), "sender not owner");
         }
         if (whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
@@ -97,7 +96,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         require(_recipient.length == _uri.length && _recipient.length == _expires.length, "SBT: Mismatch of recipientsor URI or exp Date");
         //require
         if (whitelistEnabled == false) {
-            require(msg.sender == creator, "Address not whitelisted");
+            require(msg.sender == owner(), "Address not whitelisted");
         }
         if (whitelistEnabled == true) {
             require(whitelist[msg.sender], "Address not whitelisted");
@@ -139,20 +138,20 @@ contract SBTFactory is ERC4973, IERC5484 {
         return (expDate, userAddress);
     }
 
-    function extend (uint256 newExpiration, uint256 _tokenId) external {
-        require(msg.sender == creator, " not an creator");
+    function extend (uint256 newExpiration, uint256 _tokenId) external onlyOwner {
         require(newExpiration > block.timestamp, " Not valid time");
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
         _users[_tokenId].expires = newExpiration;
 
-        emit extendExpiry(newExpiration, _tokenId);
+        emit ExpiryExtended(newExpiration, _tokenId);
     }
 
-    function setWhitelistEnabled(bool _state) public onlyCreator {
+    function setWhitelistEnabled(bool _state) public onlyOwner {
         whitelistEnabled = _state;
+		emit WhitelistEnabled(_state);
     }
 
-    function setWhitelist(address[] calldata newAddresses) public onlyCreator {
+    function setWhitelist(address[] calldata newAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
@@ -161,34 +160,36 @@ contract SBTFactory is ERC4973, IERC5484 {
             require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
             mapSize++;
+			emit Whitelisted(newAddresses[i],true);
         }
     }
 
-    function removeWhitelist(address[] calldata currentAddresses) public onlyCreator {
+    function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
         require(currentAddresses.length <= 5, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
+			emit Whitelisted(currentAddresses[i],false);
             mapSize--;
         }
     }
 
     ///@dev change how many NFTs can be minted at a time
-    function setMaxMintLimit(uint256 _newMaxMintLimit) public onlyCreator {
+    function setMaxMintLimit(uint256 _newMaxMintLimit) public onlyOwner {
         maxMintLimit = _newMaxMintLimit;
     }
 
     function burn(uint256 tokenId) public override {
         if (_auth[tokenId] == BurnAuth.IssuerOnly) {
-            require(msg.sender == creator, "Not Authorised");
+            require(msg.sender == owner(), "Not Authorised");
         }
         if (_auth[tokenId] == BurnAuth.OwnerOnly) {
             require(msg.sender == nftToOwners[tokenId], "Not Authorised");
         }
         if (_auth[tokenId] == BurnAuth.Both) {
-            require(msg.sender == creator || msg.sender == nftToOwners[tokenId], "Not Authorised");
+            require(msg.sender == owner() || msg.sender == nftToOwners[tokenId], "Not Authorised");
         }
 
         _burn(tokenId);

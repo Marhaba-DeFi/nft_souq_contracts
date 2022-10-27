@@ -7,6 +7,7 @@ require('@nomiclabs/hardhat-ethers')
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-chai-matchers");
 
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -14,7 +15,19 @@ module.exports = {
 	diamondAbi: {
 		name: "souqNFTDiamond",
 		strict: false
-	}
+	},
+	networks: {
+		goerli: {
+			url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+			accounts: [`0x${process.env.PRIVATE_KEY}`],
+			gasPrice: 45000000000 
+		}
+	},
+	etherscan: {
+		apiKey: {
+			goerli: process.env.ETH_SCAN
+		}
+	  }
 };
 
 
