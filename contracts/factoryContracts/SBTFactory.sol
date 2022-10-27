@@ -28,9 +28,17 @@ contract SBTFactory is ERC4973, IERC5484 {
     mapping(uint256 => BurnAuth) internal _auth;
     mapping(uint256 => string) private token_Uri;
 
-
+    /* @dev Emitted when `Expiry date of SBT is extended */
     event extendExpiry(uint256 newExpiration, uint256 _tokenId);
 
+    /* @dev Emitted when `WhiteListEnabled` is toggled */
+    event WhiteListEnabled(bool whitelistEnabled);
+
+    /* @dev Emitted when SBT is issued */
+    event issuedOne(address, address, uint256, uint256);
+
+    /* @dev Emitted when SBT is issued to many */
+    event issuedMany(address, address, uint256, uint256);
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
@@ -54,6 +62,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         return _auth[tokenId];
     }
 
+    /* @dev Set the URI of the contract. Only whitelisted member can call this function */
     function setURI(uint256 tokenId, string memory newuri) public {
         require(_exists(tokenId), "tokenURI: token doesn't exist");
         if (whitelistEnabled == false) {
@@ -65,6 +74,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         token_Uri[tokenId] = newuri;
     }
 
+    /* @dev  MRHB or the whitelisted member can call this function to issue/mint only one SBT*/
     function issueOne(
         address _recipient,
         string memory _uri,
@@ -88,6 +98,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         emit Issued(msg.sender, _recipient, id, _auth[id]);
     }
 
+    /* @dev  MRHB or the whitelisted member can call this function to mint/issue 5 SBT at at time*/
     function issueMany(
         address[] memory _recipient,
         string[] memory _uri,
@@ -121,6 +132,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         return token_Uri[tokenId];
     }
 
+    /* @dev  sets user of SB tokens*/
     function _setUser(
         uint256 tokenId,
         address user,
@@ -132,6 +144,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         // emit UpdateUser(tokenId, user, expires);
     }
 
+    /* @dev  gets expiry date of an SBT*/
     function getExpDate(uint256 _tokenId) public view returns (uint256 _expDate, address _user) {
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
         uint256 expDate = _users[_tokenId].expires;
@@ -139,7 +152,8 @@ contract SBTFactory is ERC4973, IERC5484 {
         return (expDate, userAddress);
     }
 
-    function extend (uint256 newExpiration, uint256 _tokenId) external {
+    /* @dev  extends the expiry date of an SBT*/
+    function extend(uint256 newExpiration, uint256 _tokenId) external {
         require(msg.sender == creator, " not an creator");
         require(newExpiration > block.timestamp, " Not valid time");
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
@@ -148,10 +162,12 @@ contract SBTFactory is ERC4973, IERC5484 {
         emit extendExpiry(newExpiration, _tokenId);
     }
 
+    /* @dev  only creater can enable or change the state of whitelisting */
     function setWhitelistEnabled(bool _state) public onlyCreator {
         whitelistEnabled = _state;
     }
 
+    /* @dev  only creater can whitelist members including oneself */
     function setWhitelist(address[] calldata newAddresses) public onlyCreator {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
@@ -164,6 +180,7 @@ contract SBTFactory is ERC4973, IERC5484 {
         }
     }
 
+    /* @dev  only creater can remove whitelisted members */
     function removeWhitelist(address[] calldata currentAddresses) public onlyCreator {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
