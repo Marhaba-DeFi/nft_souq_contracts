@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: MIT
+
+/**
+ * ERC1155FactoryFacet is used to mint NFTs that are ERC1155 compliant.
+ * It is initialized with name and symbol and default royalty.
+ *
+ */
 pragma solidity ^0.8.6;
 
 import "../ERC1155.sol";
@@ -14,7 +20,7 @@ contract ERC1155Factory is ERC1155, ERC2981, Ownable {
 
     string public baseURI = "";
     string public uriSuffix = ".json";
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
 
     mapping(address => bool) public whitelist; //Addresses that are whitelisted
@@ -121,10 +127,10 @@ contract ERC1155Factory is ERC1155, ERC2981, Ownable {
         uint96[] memory tokenRoyaltyInBips
     ) public returns (uint256, uint256) {
         if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "Address not whitelisted");
+            require(msg.sender == owner(), "Ownable: Not the owner");
         }
         if (whitelistEnabled == true) {
-            require(whitelist[_msgSender()], "Address not whitelisted");
+            require(whitelist[msg.sender] || msg.sender == owner(), "Address not whitelisted");
         }
         uint256 tokenId = _tokenIdCounter.current();
         _mint(creator, tokenId, copies, "");

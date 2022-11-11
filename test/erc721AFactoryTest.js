@@ -45,12 +45,14 @@ describe("ERC721AFactory contracts", function () {
                         10,
                         account1.address
                     )
-                )
+                ).to.emit(token721A, "Transfer")
+				.withArgs(ethers.constants.AddressZero, account1.address, 10)
                 expect(await
                     token721A.mint(
                     10,
                     account2.address)
-                )
+                ).to.emit(token721A, "Transfer")
+				.withArgs(ethers.constants.AddressZero, account2.address, 20)
                 // check owner
                 const ownerOfToken0 = await token721A.ownerOf(0);
                 expect(ownerOfToken0).to.equals(account1.address)  
