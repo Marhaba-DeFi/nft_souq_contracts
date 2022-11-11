@@ -18,7 +18,7 @@ import "../interfaces/IERC5484.sol";
 
 contract SBTFactory is ERC4973, IERC5484, Ownable {
 
-    uint256 public maxMintLimit = 100;
+    uint256 public maxMintLimit = 5;
 
     struct UserInfo {
         address user; // address of user role

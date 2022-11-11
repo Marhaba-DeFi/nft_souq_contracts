@@ -15,7 +15,7 @@ describe("SoulBoundToken Contracts", function () {
     // let _uri = 1664936268;
     //userAddress ='0x01ffc9a7';
     // let _expires = 1764936268;
-    let maxMintLimit = 100;
+    let maxMintLimit = 5;
     let blockDeployTimeStamp;
     let _recipient, account1, account2, account3, account4, account5, account6;
 
