@@ -18,7 +18,7 @@ import "../interfaces/IERC5484.sol";
 
 contract SBTFactory is ERC4973, IERC5484, Ownable {
 
-    uint256 public maxMintLimit = 5;
+    uint256 public maxMintLimit = 100;
 
     struct UserInfo {
         address user; // address of user role
@@ -35,16 +35,9 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
 	event Whitelisted(address user, bool value);
     /* @dev Emitted when `Expiry date of SBT is extended */
-    event extendExpiry(uint256 newExpiration, uint256 _tokenId);
 
     /* @dev Emitted when `WhiteListEnabled` is toggled */
     event WhiteListEnabled(bool whitelistEnabled);
-
-    /* @dev Emitted when SBT is issued */
-    event issuedOne(address, address, uint256, uint256);
-
-    /* @dev Emitted when SBT is issued to many */
-    event issuedMany(address, address, uint256, uint256);
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;

@@ -15,7 +15,7 @@ describe("SoulBoundToken Contracts", function () {
     // let _uri = 1664936268;
     //userAddress ='0x01ffc9a7';
     // let _expires = 1764936268;
-    let maxMintLimit = 5;
+    let maxMintLimit = 100;
     let blockDeployTimeStamp;
     let _recipient, account1, account2, account3, account4, account5, account6;
 
@@ -93,19 +93,42 @@ describe("SoulBoundToken Contracts", function () {
         it('IssueMany cannot be done if whitelist is enabled and the address is not whitelisted', async () => {
             await tokenSBT.setWhitelistEnabled(true);
             await tokenSBT.setWhitelist([account5.address, account6.address]);
+			let receipients = []
+			let urls = []
+			let expires = []
+
+			for (let i = 0 ;i < maxMintLimit ; i++){
+				receipients.push(_recipient.address)
+				urls.push("ipfsdotcom")
+				expires.push(353535353)
+			}
             const tx = tokenSBT.connect(owner).issueMany(
-                [_recipient.address,
-                account1.address,
-                account2.address,
-                account3.address,
-                account4.address],
-                ["ipfsdotcom", "ipfsdotcom", "ipfsdotcom", "ipfsdotcom", "ipfsdotcom"],
-                [353535353, 353535353, 353535353, 353535353, 353535353]
+                receipients,
+                urls,
+                expires
             )
             await expect(tx).to.be.revertedWith('Address not whitelisted')
         })
 
+		it('IssueMany cannot be done for more then the maxMintLimit limit', async () => {
+			await tokenSBT.setWhitelistEnabled(true);
+			await tokenSBT.setWhitelist([owner.address]);
+			let receipients = []
+			let urls = []
+			let expires = []
 
+			for (let i = 0 ;i < maxMintLimit + 1 ; i++){
+				receipients.push(_recipient.address)
+				urls.push("ipfsdotcom")
+				expires.push(353535353)
+			}
+			const tx = tokenSBT.connect(owner).issueMany(
+				receipients,
+				urls,
+				expires
+			)
+			await expect(tx).to.be.revertedWith('SBT: Number of reciepient exceed the max mint limit')
+		})
         it('IssueMany can be done by owner if whitelist is not enabled ', async () => {
             await tokenSBT.setWhitelistEnabled(false);
             expect(await
