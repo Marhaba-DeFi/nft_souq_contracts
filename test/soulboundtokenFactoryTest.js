@@ -21,6 +21,7 @@ describe("SoulBoundToken Contracts", function () {
 
     let name = 'Artwork Contract';
     let symbol = 'ART';
+	let baseURI = "https://api.marhaba.staging/sbt/";
 
     // const mineSingleBlock = async () => {
     //     await ethers.provider.send("hardhat_mine", [
@@ -43,8 +44,8 @@ describe("SoulBoundToken Contracts", function () {
         SBTFactory = await ethers.getContractFactory("SBTFactory")
         tokenSBT = await SBTFactory.connect(owner).deploy(
             name,
-            symbol,
-        );
+            symbol
+		);
 
         await tokenSBT.deployed();
         blockDeployTimeStamp = (await tokenSBT.provider.getBlock("latest"))
@@ -60,24 +61,43 @@ describe("SoulBoundToken Contracts", function () {
     });
 
     describe('SBTFactory issueOne', async function () {
+		it("Should set and get baseUri", async function () {
+			let baseURI = "https://staging.api.marhaba.com/sbt/0x1234/";
+			let tx = await tokenSBT.connect(owner).setBaseURI(baseURI);
+            tx.wait();
+			expect(await tokenSBT.baseURI()).to.equal(baseURI);
+        });
+
         it('IssueOne cannot be done if whitelist is enabled and the address is not whitelisted', async () => {
             await tokenSBT.setWhitelistEnabled(true);
             await tokenSBT.setWhitelist([account2.address, account3.address]);
             const tx = tokenSBT.connect(owner).issueOne(
                 _recipient.address,
-                "ipfsdotcom",
                 3888000
             )
-            await expect(tx).to.be.revertedWith('Address not whitelisted')
-        })
+            await expect(tx).to.be.revertedWith('SBT: Address not whitelisted')
 
+		})
 
         it('IssueOne can be done by owner if whitelist is not enabled ', async () => {
             await tokenSBT.setWhitelistEnabled(false);
             expect(await
                 tokenSBT.connect(owner).issueOne(
                     _recipient.address,
-                    "ipfsdotcom",
+                    3888000
+                )
+            )
+			
+            // check owner
+            const ownerOfToken0 = await tokenSBT.ownerOf(0);
+            expect(ownerOfToken0).to.equals(_recipient.address)
+        })
+
+		it('IssueOne can be done by owner if whitelist is not enabled ', async () => {
+            await tokenSBT.setWhitelistEnabled(false);
+            expect(await
+                tokenSBT.connect(owner).issueOne(
+                    _recipient.address,
                     3888000
                 )
             )
@@ -85,7 +105,6 @@ describe("SoulBoundToken Contracts", function () {
             const ownerOfToken0 = await tokenSBT.ownerOf(0);
             expect(ownerOfToken0).to.equals(_recipient.address)
         })
-
 
     })
 
@@ -104,10 +123,9 @@ describe("SoulBoundToken Contracts", function () {
 			}
             const tx = tokenSBT.connect(owner).issueMany(
                 receipients,
-                urls,
                 expires
             )
-            await expect(tx).to.be.revertedWith('Address not whitelisted')
+            await expect(tx).to.be.revertedWith('SBT: Address not whitelisted')
         })
 
 		it('IssueMany cannot be done for more then the maxMintLimit limit', async () => {
@@ -124,10 +142,9 @@ describe("SoulBoundToken Contracts", function () {
 			}
 			const tx = tokenSBT.connect(owner).issueMany(
 				receipients,
-				urls,
 				expires
 			)
-			await expect(tx).to.be.revertedWith('SBT: Number of reciepient exceed the max mint limit')
+			await expect(tx).to.be.revertedWith('SBT: Exceeds Max Mint Limit Per Call')
 		})
         it('IssueMany can be done by owner if whitelist is not enabled ', async () => {
             await tokenSBT.setWhitelistEnabled(false);
@@ -138,7 +155,6 @@ describe("SoulBoundToken Contracts", function () {
                     account2.address,
                     account3.address,
                     account4.address],
-                    ["ipfsdotcom", "ipfsdotcom", "ipfsdotcom", "ipfsdotcom", "ipfsdotcom"],
                     [353535353, 353535353, 353535353, 353535353, 353535353]
                 )
             )
@@ -166,7 +182,6 @@ describe("SoulBoundToken Contracts", function () {
             expect(await
                 tokenSBT.connect(account2).issueOne(
                     account2.address,
-                    "ipfsdotcom",
                     388
                 )
             )
@@ -184,7 +199,6 @@ describe("SoulBoundToken Contracts", function () {
             await tokenSBT.setWhitelist([account2.address]);
             await tokenSBT.connect(account2).issueOne(
                 account2.address,
-                "ipfsdotcom",
                 1
             )
 
@@ -202,7 +216,6 @@ describe("SoulBoundToken Contracts", function () {
             await tokenSBT.setWhitelist([account2.address]);
             await tokenSBT.connect(account2).issueOne(
                 account2.address,
-                "ipfsdotcom",
                 1664904067
             )
             expect(await tokenSBT.extend(1696440067, 0))
@@ -210,4 +223,16 @@ describe("SoulBoundToken Contracts", function () {
         })
     });
 
+	describe('SBT Extend expiry check', async function () {
+        it('SBT Entend Expiry', async () => {
+            await tokenSBT.setWhitelistEnabled(true);
+            await tokenSBT.setWhitelist([account2.address]);
+            await tokenSBT.connect(account2).issueOne(
+                account2.address,
+                1664904067
+            )
+            expect(await tokenSBT.extend(1696440067, 0))
+                .emit(tokenSBT, "extendExpiry").withArgs(newExpiration, _tokenId);
+        })
+    });
 });

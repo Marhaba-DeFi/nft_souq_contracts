@@ -4,7 +4,8 @@ const hre = require("hardhat");
 async function main() {
 	let name='Soul Art Bound';
     let symbol='SAB';
-    
+	let baseURI = "https://api.marhaba.staging/sbt/";
+
 	console.log('Deploying SBTFactory: ',name,symbol)
 	const SBTFactory = await hre.ethers.getContractFactory("SBTFactory")
 	console.log('SBTFactory : ')

@@ -27,7 +27,6 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     mapping(uint256 => UserInfo) internal _users;
     mapping(uint256 => BurnAuth) internal _auth;
-    mapping(uint256 => string) private token_Uri;
 
 
     event ExpiryExtended(uint256 newExpiration, uint256 _tokenId);
@@ -39,12 +38,13 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
     /* @dev Emitted when `WhiteListEnabled` is toggled */
     event WhiteListEnabled(bool whitelistEnabled);
 
+
+
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
     mapping(address => bool) public whitelist;
 
     constructor(string memory name_, string memory symbol_) ERC4973(name_, symbol_) {
-
     }
 
     using Counters for Counters.Counter;
@@ -56,36 +56,21 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         return _auth[tokenId];
     }
 
-    /* @dev Set the URI of the contract. Only whitelisted member can call this function */
-    function setURI(uint256 tokenId, string memory newuri) public {
-        require(_exists(tokenId), "tokenURI: token doesn't exist");
-        if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "Address not whitelisted");
-        }
-        if (whitelistEnabled == true) {
-            require(whitelist[msg.sender], "Address not whitelisted");
-        }
-        token_Uri[tokenId] = newuri;
-		emit UriChanged(tokenId, newuri);
-    }
-
     /* @dev  MRHB or the whitelisted member can call this function to issue/mint only one SBT*/
     function issueOne(
         address _recipient,
-        string memory _uri,
         uint256 _expires
     ) external {
         if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "sender not owner");
+            require(msg.sender == owner(), "SBT: sender not owner");
         }
         if (whitelistEnabled == true) {
-            require(whitelist[msg.sender], "Address not whitelisted");
+            require(whitelist[msg.sender], "SBT: Address not whitelisted");
         }
         uint256 id = tokenIdCounter.current();
         tokenIdCounter.increment();
 
-        _mint(_recipient, id, _uri);
-        setURI(id, _uri);
+        _mint(_recipient, id);
         _auth[id] = BurnAuth.Both;
         nftToOwners[id] = _recipient;
         _setUser(id, _recipient, _expires);
@@ -96,35 +81,29 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
     /* @dev  MRHB or the whitelisted member can call this function to mint/issue 5 SBT at at time*/
     function issueMany(
         address[] memory _recipient,
-        string[] memory _uri,
         uint256[] memory _expires
     ) external {
-        require(_recipient.length <= maxMintLimit, "SBT: Number of reciepient exceed the max mint limit");
-        require(_recipient.length == _uri.length && _recipient.length == _expires.length, "SBT: Mismatch of recipientsor URI or exp Date");
+        require(_recipient.length <= maxMintLimit, "SBT: Exceeds Max Mint Limit Per Call");
+        require(_recipient.length == _expires.length, "SBT: Mismatch of recipientsor URI or exp Date");
         //require
         if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "Address not whitelisted");
+            require(msg.sender == owner(), "SBT: Address not whitelisted");
         }
         if (whitelistEnabled == true) {
-            require(whitelist[msg.sender], "Address not whitelisted");
+            require(whitelist[msg.sender], "SBT: Address not whitelisted");
         }
 
         for (uint256 i = 0; i < _recipient.length; i++) {
             uint256 id = tokenIdCounter.current();
             tokenIdCounter.increment();
 
-            _mint(_recipient[i], id, _uri[i]);
+            _mint(_recipient[i], id);
 
             _auth[id] = BurnAuth.Both;
             nftToOwners[id] = _recipient[i];
             _setUser(id, _recipient[i], _expires[i]);
             emit Issued(msg.sender, _recipient[i], id, _auth[id]);
         }
-    }
-
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "tokenURI: token doesn't exist");
-        return token_Uri[tokenId];
     }
 
     /* @dev  sets user of SB tokens*/
@@ -136,20 +115,19 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         UserInfo storage info = _users[tokenId];
         info.user = user;
         info.expires = expires;
-        // emit UpdateUser(tokenId, user, expires);
     }
 
     /* @dev  gets expiry date of an SBT*/
     function getExpDate(uint256 _tokenId) public view returns (uint256 _expDate, address _user) {
-        require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(_tokenId), "SBT: URI query for nonexistent token");
         uint256 expDate = _users[_tokenId].expires;
         address userAddress = _users[_tokenId].user;
         return (expDate, userAddress);
     }
 
     function extend (uint256 newExpiration, uint256 _tokenId) external onlyOwner {
-        require(newExpiration > block.timestamp, " Not valid time");
-        require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(newExpiration > block.timestamp, "SBT: Not valid time");
+        require(_exists(_tokenId), "SBT: URI query for nonexistent token");
         _users[_tokenId].expires = newExpiration;
 
         emit ExpiryExtended(newExpiration, _tokenId);
@@ -160,13 +138,23 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 		emit WhiteListEnabled(_state);
     }
 
+	/**
+  	* @dev Set the base URI of the contract. Only owner and Media contract(if configured)
+  	* can call this function.
+  	*/
+  	function setBaseURI(string memory baseURI_) public onlyOwner {
+		baseURI = baseURI_;
+		emit BaseURI(baseURI);
+  	}
+
+
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
-        require(newAddresses.length > 0, "No user details provided");
+        require(newAddresses.length > 0, "SBT: No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        require(newAddresses.length < 2000, "SBT: Too many users to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++) {
-            require(mapSize < 2000, "Maximum Users already whitelisted");
+            require(mapSize < 2000, "SBT: Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
             mapSize++;
 			emit Whitelisted(newAddresses[i],true);
@@ -175,9 +163,9 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     function removeWhitelist(address[] calldata currentAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.
-        require(currentAddresses.length > 0, "No user details provided");
+        require(currentAddresses.length > 0, "SBT: No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 5, "SBT: Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
 			emit Whitelisted(currentAddresses[i],false);
@@ -192,10 +180,10 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     function burn(uint256 tokenId) public override {
         if (_auth[tokenId] == BurnAuth.IssuerOnly) {
-            require(msg.sender == owner(), "Not Authorised");
+            require(msg.sender == owner(), "SBT: Not Authorised");
         }
         if (_auth[tokenId] == BurnAuth.OwnerOnly) {
-            require(msg.sender == nftToOwners[tokenId], "Not Authorised");
+            require(msg.sender == nftToOwners[tokenId], "SBT: Not Authorised");
         }
         if (_auth[tokenId] == BurnAuth.Both) {
             require(msg.sender == owner() || msg.sender == nftToOwners[tokenId], "Not Authorised");
