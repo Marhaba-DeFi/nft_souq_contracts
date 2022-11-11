@@ -8,8 +8,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title ERC721A factory contract
- * @dev This contract inherits from ERC721A Azuki smart contract, openzeppelin pausable
- * and ERC2981 royalty contracts.
+ * @dev This contract inherits from ERC721A Azuki smart contract.
  * ERC721A bulks mints NFTs while saving considerable gas by eliminating enumarable function
  */
 contract ERC721AFactory is ERC721A, Ownable {
@@ -17,7 +16,7 @@ contract ERC721AFactory is ERC721A, Ownable {
     string public uriSuffix = ".json";
     using Strings for uint256;
 
-    uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
+    uint256 public mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
 
     mapping(address => bool) public whitelist;
@@ -41,13 +40,14 @@ contract ERC721AFactory is ERC721A, Ownable {
     /**
      * @notice This function is used fot minting.
      * @dev 'msg.sender' will pass the 'quantity' and address of the creator.
+	 * required: Owner or whitelisted Addresses
      */
     function mint(uint256 _quantity, address _creator) public {
         if (whitelistEnabled == false) {
-            require(msg.sender == owner(), "Address not whitelisted");
+            require(msg.sender == owner(), "Ownable: Not the owner");
         }
         if (whitelistEnabled == true) {
-            require(whitelist[msg.sender], "Address not whitelisted");
+            require(whitelist[msg.sender] || msg.sender == owner(), "Address not whitelisted");
         }
         _safeMint(_creator, _quantity);
     }
@@ -65,7 +65,7 @@ contract ERC721AFactory is ERC721A, Ownable {
         // At least one royaltyReceiver is required.
         require(newAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(newAddresses.length < 2000, "Too many userss to whitelist");
+        require(newAddresses.length < 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < newAddresses.length; i++) {
             require(mapSize < 2000, "Maximum Users already whitelisted");
             whitelist[newAddresses[i]] = true;
@@ -80,7 +80,7 @@ contract ERC721AFactory is ERC721A, Ownable {
         // At least one royaltyReceiver is required.
         require(currentAddresses.length > 0, "No user details provided");
         // Check on the maximum size over which the for loop will run over.
-        require(currentAddresses.length <= 5, "Too many userss to whitelist");
+        require(currentAddresses.length <= 500, "Too many userss to whitelist");
         for (uint256 i = 0; i < currentAddresses.length; i++) {
             delete whitelist[currentAddresses[i]];
             mapSize--;

@@ -54,10 +54,33 @@ describe("ERCFactory contracts", function () {
                     [],
                     []
                 )
-            )
+            ).to.emit(token721, "Transfer")
+			.withArgs(ethers.constants.AddressZero, owner.address, 0)
             // check owner
             const ownerOfToken0 = await token721.ownerOf(0);
             expect(ownerOfToken0).to.equals(owner.address)  
+        })
+
+		it('mint an 721Factory token with royalty', async () => {
+            // alice mint a token
+            expect(await 
+                token721.safeMint(
+                    owner.address,
+                    true,
+                    [owner.address, account1.address],
+                    [1000,2000]
+                )
+            )
+            // check owner
+            const ownerOfToken0 = await token721.ownerOf(0);
+            expect(ownerOfToken0).to.equals(owner.address);
+
+			const royaltyInfo = await token721.royaltyInfo(0, 5000);
+
+			expect(royaltyInfo[0][0]).to.be.equal(owner.address);
+			expect(royaltyInfo[0][1]).to.be.equal(account1.address);
+			expect(Number(royaltyInfo[1][0])).to.be.equal(BigNumber.from(500));
+			expect(Number(royaltyInfo[1][1])).to.be.equal(BigNumber.from(1000));
         })
 
         it('mint an 721Factory token with more than 5 royalty receivers', async () => {
@@ -155,17 +178,18 @@ describe("ERCFactory contracts", function () {
         })
     })
   
-    // describe('ERC721Factory Burn', async function () {
-    //     it('ERC721Factory Burn', async () => {
-    //         expect(await 
-    //             token721.connect(owner).safeMint(
-    //                 owner.address,
-    //                 false,
-    //                 [],
-    //                 []
-    //             )
-    //         )
-    //     })
-    // });
+    describe('ERC721Factory Burn', async function () {
+        it('ERC721Factory Burn', async () => {
+            await 
+                token721.connect(owner).safeMint(
+                    owner.address,
+                    false,
+                    [],
+                    []
+                )
+			expect (await token721.connect(owner).burn(0))
+			.emit(token721, "Transfer").withArgs(owner, ethers.constants.AddressZero, 0);
+        })
+    });
   
 });
