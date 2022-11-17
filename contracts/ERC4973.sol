@@ -4,23 +4,15 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {IERC4973} from "./interfaces/IERC4973.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 
 abstract contract ERC4973 is ERC165, IERC721Metadata, IERC4973 {
-  using Strings for uint256;
-
   string private _name;
   string private _symbol;
-  string public baseURI = "";
 
   mapping(uint256 => address) private _owners;
+  mapping(uint256 => string) private _tokenURIs;
 
-  /**
-  * @dev Emitted when `BaseURI` is set.
-  */
-  event BaseURI(string uri);
-  
   constructor(
     string memory name_,
     string memory symbol_
@@ -44,19 +36,10 @@ abstract contract ERC4973 is ERC165, IERC721Metadata, IERC4973 {
     return _symbol;
   }
 
-  /**
-  * @dev Returns the base URI of the contract
-  */
-  function _baseURI() internal view returns (string memory) {
-    return baseURI;
+  function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    require(_exists(tokenId), "tokenURI: token doesn't exist");
+    return _tokenURIs[tokenId];
   }
-
-  function tokenURI(uint256 _tokenId) public view virtual override returns (string memory) {
-	require(_exists(_tokenId), "SBT: URI query for nonexistent token");
-	string memory currentBaseURI = _baseURI();
-	return bytes(currentBaseURI).length > 0 ? string(abi.encodePacked(currentBaseURI, _tokenId.toString())) : "";
-  }
-
 
   function burn(uint256 _tokenId) public virtual override {
     require(msg.sender == ownerOf(_tokenId), "burn: sender must be owner");
@@ -75,10 +58,12 @@ abstract contract ERC4973 is ERC165, IERC721Metadata, IERC4973 {
 
   function _mint(
     address to,
-    uint256 tokenId
+    uint256 tokenId,
+    string memory uri
   ) internal virtual returns (uint256) {
     require(!_exists(tokenId), "mint: tokenID exists");
     _owners[tokenId] = to;
+    _tokenURIs[tokenId] = uri;
     emit Attest(to, tokenId);
     return tokenId;
   }
@@ -87,6 +72,7 @@ abstract contract ERC4973 is ERC165, IERC721Metadata, IERC4973 {
     address owner = ownerOf(tokenId);
 
     delete _owners[tokenId];
+    delete _tokenURIs[tokenId];
 
     emit Revoke(owner, tokenId);
   }

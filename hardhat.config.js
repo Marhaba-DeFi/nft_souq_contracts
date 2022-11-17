@@ -20,7 +20,12 @@ module.exports = {
 		goerli: {
 			url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
 			accounts: [`0x${process.env.PRIVATE_KEY}`],
-			gasPrice: 45000000000 
+			gasPrice: 50000000000 
+		},
+		sepolia: {
+			url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+			accounts: [`0x${process.env.PRIVATE_KEY}`],
+			gasPrice: 50000000000 
 		}
 	},
 	etherscan: {
