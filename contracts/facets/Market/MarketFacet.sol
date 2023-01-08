@@ -291,17 +291,20 @@ contract MarketFacet is EIP712 {
         uint256 _bid,
         uint256 _copies,
         bytes memory _bidderSig,
-        bytes memory _sellerSig
+        bytes memory _sellerSig,
+		bool isFixedSale
     ) public mediaOrOwner {
         LibMarketStorage.MarketStorage storage es = LibMarketStorage.marketStorage();
         //Checking the erc20 currency is approved by the admin
         require(es._approvedCurrency[_currencyAddress] == true, "Not an approved cryptocurrency for bidding");
 
         //Checking the bidder signiture is valid
-        require(_verifyBidderOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
+		if(!isFixedSale) {
+			require(_verifyBidderOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _bidderSig, _bidder), "Bidders offer not verified");
+		}
 
         //Checking the seller signiture is valid
-        require(_verifySellerOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _sellerSig, _seller), "Sellers offer not verified");
+		require(_verifySellerOffer(_nftContAddress, _tokenID, _copies, _currencyAddress, _bid, _sellerSig, _seller), "Sellers offer not verified");
 
         ERC20 erc20 = ERC20(_currencyAddress);
         require(erc20.balanceOf(_bidder) >= _bid, "ERC20 in the payer address is not enough");
