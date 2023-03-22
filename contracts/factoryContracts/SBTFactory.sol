@@ -27,9 +27,10 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     mapping(uint256 => UserInfo) internal _users;
     mapping(uint256 => BurnAuth) internal _auth;
+    mapping(uint256 => string) private token_Uri;
 
 
-    event ExpiryExtended(uint256 newExpiration, uint256 _tokenId);
+    event ExpiryExtended(uint256 newExpiration, uint256 tokenId);
     event UriChanged(uint256 tokenId, string newuri);
 
 	event Whitelisted(address user, bool value);
@@ -37,8 +38,6 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
 
     /* @dev Emitted when `WhiteListEnabled` is toggled */
     event WhiteListEnabled(bool whitelistEnabled);
-
-
 
     uint256 mapSize = 0; //Keeps a count of white listed users. Max is 2000
     bool public whitelistEnabled = false;
@@ -56,9 +55,23 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         return _auth[tokenId];
     }
 
+    /* @dev Set the URI of the contract. Only whitelisted member can call this function */
+    function setURI(uint256 tokenId, string memory newuri) public {
+        require(_exists(tokenId), "SBT: token doesn't exist");
+        if (whitelistEnabled == false) {
+            require(msg.sender == owner(), "SBT: Address not whitelisted");
+        }
+        if (whitelistEnabled == true) {
+            require(whitelist[msg.sender], "SBT: Address not whitelisted");
+        }
+        token_Uri[tokenId] = newuri;
+		emit UriChanged(tokenId, newuri);
+    }
+
     /* @dev  MRHB or the whitelisted member can call this function to issue/mint only one SBT*/
     function issueOne(
         address _recipient,
+        string memory _uri,
         uint256 _expires
     ) external {
         if (whitelistEnabled == false) {
@@ -70,7 +83,8 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         uint256 id = tokenIdCounter.current();
         tokenIdCounter.increment();
 
-        _mint(_recipient, id);
+        _mint(_recipient, id, _uri);
+        setURI(id, _uri);
         _auth[id] = BurnAuth.Both;
         nftToOwners[id] = _recipient;
         _setUser(id, _recipient, _expires);
@@ -81,10 +95,11 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
     /* @dev  MRHB or the whitelisted member can call this function to mint/issue 5 SBT at at time*/
     function issueMany(
         address[] memory _recipient,
+        string[] memory _uri,
         uint256[] memory _expires
     ) external {
-        require(_recipient.length <= maxMintLimit, "SBT: Exceeds Max Mint Limit Per Call");
-        require(_recipient.length == _expires.length, "SBT: Mismatch of recipientsor URI or exp Date");
+        require(_recipient.length <= maxMintLimit, "SBT: Number of reciepient exceed the max mint limit");
+        require(_recipient.length == _uri.length && _recipient.length == _expires.length, "SBT: Mismatch of recipientsor URI or exp Date");
         //require
         if (whitelistEnabled == false) {
             require(msg.sender == owner(), "SBT: Address not whitelisted");
@@ -97,13 +112,19 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
             uint256 id = tokenIdCounter.current();
             tokenIdCounter.increment();
 
-            _mint(_recipient[i], id);
+            _mint(_recipient[i], id, _uri[i]);
+       	 	setURI(id, _uri[i]);
 
             _auth[id] = BurnAuth.Both;
             nftToOwners[id] = _recipient[i];
             _setUser(id, _recipient[i], _expires[i]);
             emit Issued(msg.sender, _recipient[i], id, _auth[id]);
         }
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "SBT: tokenURI: token doesn't exist");
+        return token_Uri[tokenId];
     }
 
     /* @dev  sets user of SB tokens*/
@@ -115,6 +136,7 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         UserInfo storage info = _users[tokenId];
         info.user = user;
         info.expires = expires;
+		emit ExpiryExtended(expires, tokenId);
     }
 
     /* @dev  gets expiry date of an SBT*/
@@ -137,16 +159,6 @@ contract SBTFactory is ERC4973, IERC5484, Ownable {
         whitelistEnabled = _state;
 		emit WhiteListEnabled(_state);
     }
-
-	/**
-  	* @dev Set the base URI of the contract. Only owner and Media contract(if configured)
-  	* can call this function.
-  	*/
-  	function setBaseURI(string memory baseURI_) public onlyOwner {
-		baseURI = baseURI_;
-		emit BaseURI(baseURI);
-  	}
-
 
     function setWhitelist(address[] calldata newAddresses) public onlyOwner {
         // At least one royaltyReceiver is required.

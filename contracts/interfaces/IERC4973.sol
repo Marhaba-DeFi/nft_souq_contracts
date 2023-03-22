@@ -9,12 +9,12 @@ interface IERC4973 /* is ERC165, ERC721Metadata */ {
   /// any mechanism.
   /// Note: For a reliable `_from` parameter, retrieve the transaction's
   /// authenticated `from` field.
-  event Attest(address indexed _to, uint256 indexed _tokenId);
+  event Attest(address indexed to, uint256 indexed tokenId);
   /// @dev This emits when an existing ABT is revoked from an account and
   /// destroyed by any mechanism.
   /// Note: For a reliable `_from` parameter, retrieve the transaction's
   /// authenticated `from` field.
-  event Revoke(address indexed _to, uint256 indexed _tokenId);
+  event Revoke(address indexed to, uint256 indexed tokenId);
   /// @notice Find the address bound to an ERC4973 account-bound token
   /// @dev ABTs assigned to zero address are considered invalid, and queries
   ///  about them do throw.
